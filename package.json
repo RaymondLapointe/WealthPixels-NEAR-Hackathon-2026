@@ -5,8 +5,12 @@
   "scripts": {
     "compile": "hardhat compile",
     "node": "hardhat node",
-    "test": "hardhat test",
-    "clean": "hardhat clean"
+    "test": "hardhat test test/portfolioSwap.test.ts",
+    "clean": "hardhat clean",
+    "near:inspect": "node --import tsx scripts/near-public.ts inspect",
+    "near:derive": "node --import tsx scripts/near-public.ts derive",
+    "test:near": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts",
+    "typecheck:near": "tsc --project tsconfig.near.json"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +35,10 @@
   "dependencies": {
     "@chainlink/contracts": "^0.4.0",
     "@openzeppelin/contracts": "^4.5.0",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "near-api-js": "7.4.0"
+  },
+  "engines": {
+    "node": ">=22.22.2 <23"
   }
 }

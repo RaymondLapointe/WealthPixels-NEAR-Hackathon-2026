@@ -1,0 +1,50 @@
+{
+  "reviewDate": "2026-11-02",
+  "rpc": "https://rpc.testnet.near.org",
+  "inspection": {
+    "networkId": "testnet",
+    "contractId": "v1.signer-prod.testnet",
+    "blockHash": "4xmSMMdZYVxrsm79BSKkvaRWodf2S16KzW9vyiZzA3z6",
+    "blockHeight": 275852728,
+    "version": "3.18.0",
+    "domainId": 0,
+    "domain": {
+      "id": 0,
+      "protocol": "CaitSith",
+      "purpose": "Sign",
+      "reconstructionThreshold": 11,
+      "keyEpoch": 27,
+      "keyAttempt": 1
+    },
+    "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+    "minimumGasTgas": 15,
+    "viewMethodsExercised": [
+      "version",
+      "config",
+      "state",
+      "public_key",
+      "derived_public_key"
+    ]
+  },
+  "derivationProbe": {
+    "purpose": "Read-only interface check using the existing MPC contract account, not a treasury or investor identity",
+    "nearAccountId": "v1.signer-prod.testnet",
+    "derivationPath": "wealthpixels/sepolia/v1",
+    "domainId": 0,
+    "blockHash": "4xmSMMdZYVxrsm79BSKkvaRWodf2S16KzW9vyiZzA3z6",
+    "blockHeight": 275852728,
+    "derivedPublicKey": "secp256k1:2wwQZufjTGRy6XPYYHnWKKSFxvwWLtejs18oGVyKXBF5bc2HMdzK1BgGzwzm2Zr3DVmhNJ2kws3wJXgc5XYEFUXt",
+    "derivedPublicKeySec1": "0x046164bb0889377e81bd637788e82134b99a96df86207cdbdd5ddeec85c88bac15f54fbfd6977d075ab5067ec262910aa1e24bff8186c4bbe2b58f0240d8311eab",
+    "evmAddress": "0xAf8c61f9CE1B74d32f41104ad4eABe5dBfC2E0FE",
+    "localMatchesContract": true
+  },
+  "projectAuthorities": {
+    "status": "Pending explicit treasury and investor NEAR account IDs",
+    "derivationPath": "wealthpixels/sepolia/v1",
+    "addresses": null,
+    "accountExistenceChecked": false,
+    "accountControlProven": false
+  },
+  "signingRequestsMade": false,
+  "transactionsBroadcast": false
+}
