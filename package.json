@@ -1,0 +1,36 @@
+{
+  "name": "wealthpixels-60-40-v0",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "node": "hardhat node",
+    "test": "hardhat test",
+    "clean": "hardhat clean"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.3",
+    "@nomicfoundation/hardhat-ethers-chai-matchers": "^3.0.2",
+    "@nomicfoundation/hardhat-mocha": "^3.0.8",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.3",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.19.2",
+    "chai": "^5.1.2",
+    "ethers": "^6.16.0",
+    "hardhat": "^3.1.0",
+    "mocha": "^11.7.5",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "@chainlink/contracts": "^0.4.0",
+    "@openzeppelin/contracts": "^4.5.0",
+    "dotenv": "^17.2.3"
+  }
+}

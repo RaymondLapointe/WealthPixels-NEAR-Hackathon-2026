@@ -1,0 +1,59 @@
+# Node modules
+/node_modules
+npm-debug.log*
+yarn-error.log
+
+# Compilation output
+/dist
+*.tsbuildinfo
+
+# pnpm deploy output
+/bundle
+
+# Hardhat Build Artifacts
+/artifacts
+
+# Hardhat compilation (v2) support directory
+/cache
+cache/edr-fork-cache/
+
+# Typechain output
+/types
+
+# Hardhat coverage reports
+/coverage
+
+# Environment variables (secrets, RPC keys, etc.)
+.env
+.env.*
+!.env.example
+
+# Local NEAR authorities, wallet credentials and signed transaction state
+.near-credentials/
+near-credentials/
+.credentials/
+credentials/
+.secrets/
+secrets/
+.local/
+treasury.credentials.*
+investor.credentials.*
+
+# Private key and seed material
+*.key
+*.key.json
+*.pem
+*.p12
+*.pfx
+*.keystore
+*.mnemonic
+*private-key*
+*private_key*
+*seed-phrase*
+*seed_phrase*
+
+# OS / IDE cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
