@@ -5,12 +5,16 @@
   "scripts": {
     "compile": "hardhat compile",
     "node": "hardhat node",
-    "test": "hardhat test test/portfolioSwap.test.ts",
+    "test": "npm run test:offline",
     "clean": "hardhat clean",
     "near:inspect": "node --import tsx scripts/near-public.ts inspect",
     "near:derive": "node --import tsx scripts/near-public.ts derive",
     "test:near": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts",
-    "typecheck:near": "tsc --project tsconfig.near.json"
+    "typecheck:near": "tsc --project tsconfig.near.json",
+    "test:offline": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts test/near/evidence.test.ts",
+    "test:legacy": "hardhat test test/portfolioSwap.test.ts",
+    "typecheck": "npm run typecheck:near",
+    "verify:evidence": "node --import tsx scripts/verify-evidence.ts"
   },
   "keywords": [],
   "author": "",

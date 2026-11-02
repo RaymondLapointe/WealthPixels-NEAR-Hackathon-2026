@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "live",
+  "status": "pending",
+  "operatorModel": "single-operator-demo",
+  "near": {
+    "networkId": "testnet",
+    "contractId": "v1.signer-prod.testnet",
+    "domainId": 0,
+    "derivationPath": "wealthpixels/sepolia/v1",
+    "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3"
+  },
+  "evm": {
+    "chainId": 11155111,
+    "tokenAddress": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+    "decimals": 18,
+    "minimumConfirmations": 2
+  },
+  "roles": {
+    "treasury": {
+      "nearAccountId": "wealthpixels-treasury.testnet",
+      "evmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87"
+    },
+    "investor": {
+      "nearAccountId": "wealthpixels-investor.testnet",
+      "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
+    }
+  },
+  "transfers": []
+}

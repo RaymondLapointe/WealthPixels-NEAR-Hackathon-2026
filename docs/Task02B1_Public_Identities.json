@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-11-02",
+  "operatorModel": "single-operator-demo",
+  "registration": {
+    "method": "official near-cli-rs 0.30.1 sponsor-by-faucet-service with manually supplied public keys",
+    "faucet": "https://helper.nearprotocol.com/account",
+    "treasuryCliExit": 0,
+    "investorCliExit": 0,
+    "creationTransactionHashesRecorded": false
+  },
+  "accountVerification": {
+    "networkId": "testnet",
+    "finality": "final",
+    "blockHash": "4KEGkZc516orruRASxdSZUpvh8MPDk3P1fXeiVhYeZp1",
+    "blockHeight": 275946908,
+    "accounts": {
+      "treasury": {
+        "accountId": "wealthpixels-treasury.testnet",
+        "publicKey": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1",
+        "permission": "FullAccess",
+        "registeredAccessKeys": [
+          {
+            "access_key": {
+              "nonce": 275945855000000,
+              "permission": "FullAccess"
+            },
+            "public_key": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1"
+          }
+        ],
+        "account": {
+          "amount": "10000000000000000000000000",
+          "block_hash": "4KEGkZc516orruRASxdSZUpvh8MPDk3P1fXeiVhYeZp1",
+          "block_height": 275946908,
+          "code_hash": "11111111111111111111111111111111",
+          "locked": "0",
+          "storage_paid_at": 0,
+          "storage_usage": 182
+        },
+        "balanceNear": "10.000000000000000000000000"
+      },
+      "investor": {
+        "accountId": "wealthpixels-investor.testnet",
+        "publicKey": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc",
+        "permission": "FullAccess",
+        "registeredAccessKeys": [
+          {
+            "access_key": {
+              "nonce": 275946428000000,
+              "permission": "FullAccess"
+            },
+            "public_key": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc"
+          }
+        ],
+        "account": {
+          "amount": "10000000000000000000000000",
+          "block_hash": "4KEGkZc516orruRASxdSZUpvh8MPDk3P1fXeiVhYeZp1",
+          "block_height": 275946908,
+          "code_hash": "11111111111111111111111111111111",
+          "locked": "0",
+          "storage_paid_at": 0,
+          "storage_usage": 182
+        },
+        "balanceNear": "10.000000000000000000000000"
+      }
+    },
+    "distinctPublicKeys": true
+  },
+  "mpc": {
+    "networkId": "testnet",
+    "contractId": "v1.signer-prod.testnet",
+    "domainId": 0,
+    "version": "3.18.0",
+    "blockHash": "2Gy8MBJVUhPTPz4fS5ho6jXDe6EsS94mYLgneLbm43CB",
+    "blockHeight": 275946939,
+    "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+    "rootPublicKeySec1": "0x04a8bb8176747682aab5c681d4ef375ca537023b2b287d8b5f9d89505277a5a291538ef3680882d8fb793a62a5fdb4c6974c7cd8f9eb0b9cbbf659314c30347000",
+    "domain": {
+      "id": 0,
+      "protocol": "CaitSith",
+      "purpose": "Sign",
+      "reconstructionThreshold": 11,
+      "keyEpoch": 27,
+      "keyAttempt": 1
+    },
+    "minimumGasTgas": 15
+  },
+  "derivations": {
+    "treasury": {
+      "nearAccountId": "wealthpixels-treasury.testnet",
+      "derivationPath": "wealthpixels/sepolia/v1",
+      "domainId": 0,
+      "blockHash": "2Gy8MBJVUhPTPz4fS5ho6jXDe6EsS94mYLgneLbm43CB",
+      "blockHeight": 275946939,
+      "derivedPublicKey": "secp256k1:3CvAL9Z9PycZW3PcsBChCN2E52ohCwCERGK1UYwmvcC85vdasey3yEtVA22AvKPzFetAGFyzWBwYwC2Mv8EXT7iM",
+      "derivedPublicKeySec1": "0x046e4f75d0ffdd0561764c6606095231cf42f5633b7cfaa8b987dff2795ae46294ec33595e782ac5e4e1c478976623323ce8b9b227246d7a49bd230f4949c85386",
+      "evmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+      "localMatchesContract": true
+    },
+    "investor": {
+      "nearAccountId": "wealthpixels-investor.testnet",
+      "derivationPath": "wealthpixels/sepolia/v1",
+      "domainId": 0,
+      "blockHash": "2Gy8MBJVUhPTPz4fS5ho6jXDe6EsS94mYLgneLbm43CB",
+      "blockHeight": 275946939,
+      "derivedPublicKey": "secp256k1:4Hb8S8CLHfpApiPuKm3v2ytFYo8gB34NgE91BNDQga9CdvUpW44a6k59hzJJXgtBj4yKcL5XMSVRiQQEwt8aTKa6",
+      "derivedPublicKeySec1": "0x04a45b30f6c2681b41d588870a439068f39414ae8188d1c750291a3cac876f73d34be888379790fa941b66d136dea3ab7309a5843b0ed465c5ab115853c6f23f47",
+      "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+      "localMatchesContract": true
+    }
+  },
+  "authorities": {
+    "schemaVersion": 1,
+    "networkId": "testnet",
+    "contractId": "v1.signer-prod.testnet",
+    "domainId": 0,
+    "derivationPath": "wealthpixels/sepolia/v1",
+    "targetChainId": 11155111,
+    "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+    "roles": {
+      "treasury": {
+        "accountId": "wealthpixels-treasury.testnet",
+        "publicKey": "secp256k1:3CvAL9Z9PycZW3PcsBChCN2E52ohCwCERGK1UYwmvcC85vdasey3yEtVA22AvKPzFetAGFyzWBwYwC2Mv8EXT7iM",
+        "evmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87"
+      },
+      "investor": {
+        "accountId": "wealthpixels-investor.testnet",
+        "publicKey": "secp256k1:4Hb8S8CLHfpApiPuKm3v2ytFYo8gB34NgE91BNDQga9CdvUpW44a6k59hzJJXgtBj4yKcL5XMSVRiQQEwt8aTKa6",
+        "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
+      }
+    },
+    "sourceBlock": {
+      "hash": "2Gy8MBJVUhPTPz4fS5ho6jXDe6EsS94mYLgneLbm43CB",
+      "height": 275946939
+    },
+    "bindingHash": "2ba55e2048470bdb629aeb0f767edf9c6fd154265857812c3bb8c799f1648fd6"
+  },
+  "security": {
+    "privateCredentialFilesReadByAssistant": false,
+    "keyGeneration": "performed locally by human operator before registration",
+    "mpcSigningRequestsMade": false,
+    "evmFundingPerformed": false,
+    "evmTransactionsBroadcast": false,
+    "productionCustodyIndependenceProven": false
+  },
+  "independentVerification": {
+    "status": "passed",
+    "method": "Independent pure Python base58 decoding, NIST SHA3-256, modular secp256k1 arithmetic, Keccak-f1600 and EIP55; no Ethers/NEAR SDK or RPC",
+    "checks": [
+      "known hash/address vectors",
+      "both complete SEC1 points",
+      "base58 public keys",
+      "both checksummed EVM addresses",
+      "recorded authority manifest role addresses"
+    ],
+    "treasuryEvmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+    "investorEvmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
+  },
+  "validation": {
+    "offlineTests": {
+      "command": "npm test",
+      "passed": 43,
+      "failed": 0
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "status": "passed"
+    }
+  }
+}
