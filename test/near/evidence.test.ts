@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { Interface, Signature, Transaction, computeAddress, getBytes, recoverAddress } from "ethers";
 import { KeyType, PublicKey } from "near-api-js";
-import { buildUnsignedErc20Transfer } from "../../src/evm/erc20-transfer.js";
+import { buildUnsignedErc20Transfer, normalizeMpcSignature } from "../../src/evm/erc20-transfer.js";
 import { deriveEvmPublicKey } from "../../src/near/mpc.js";
 import {
   EvidenceVerificationError, SEPOLIA_LINK, createReadOnlyEvidenceTransport,
@@ -74,10 +75,110 @@ function completeManifest() {
     near: { networkId: "testnet", contractId: "v1.signer-prod.testnet", domainId: 0, derivationPath: PATH, rootPublicKey: ROOT },
     evm: { chainId: 11155111, tokenAddress: SEPOLIA_LINK, decimals: 18, minimumConfirmations: 2 },
     roles: { treasury: role("fixture-treasury.testnet"), investor: role("fixture-investor.testnet") },
-    transfers: [proof().transfer, { ...proof().transfer, direction: "investor-to-treasury", nearTransactionHash: "2".repeat(44), evmTransactionHash: "0x" + "cd".repeat(32) }],
+    transfers: [proof().transfer, { ...proof().transfer, amountBaseUnits: "100000000000000000", direction: "investor-to-treasury", nearTransactionHash: "2".repeat(44), evmTransactionHash: "0x" + "cd".repeat(32) }],
   };
 }
 const noNetwork: EvidenceTransport = { async request() { throw new Error("Unexpected network/transport request"); } };
+
+// A complete synthetic two-role proof under the public toy root G. The scalar
+// identity s = z + r + r*epsilon (mod n), with R=G, supplies algebraic fixtures
+// for Q=G+epsilon*G. No key generation, private input, signing API or RPC is used.
+// These values are confined to an injected fixture transport, never live evidence.
+function twoLegFixture(returnBlock = 102) {
+  const manifest = completeManifest();
+  const order = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
+  const calls: string[] = [];
+  const proofs = (["treasury", "investor"] as const).map((role, index) => {
+    const sender = manifest.roles[role], recipient = manifest.roles[role === "treasury" ? "investor" : "treasury"];
+    const prepared = buildUnsignedErc20Transfer({
+      chainId: 11155111n, senderAddress: sender.evmAddress, recipientAddress: recipient.evmAddress,
+      tokenAddress: SEPOLIA_LINK, amount: index === 0 ? 1_000_000_000_000_000_000n : 100_000_000_000_000_000n,
+      nonce: 0, gasLimit: 65_000n, maxFeePerGas: 3_000_000_000n, maxPriorityFeePerGas: 1_000_000_000n,
+    });
+    const epsilon = BigInt("0x" + createHash("sha3-256")
+      .update("near-mpc-recovery v0.1.0 epsilon derivation:" + sender.nearAccountId + "," + PATH)
+      .digest("hex"));
+    const scalar = (BigInt(prepared.unsignedHash) + BigInt("0x" + R) * (1n + epsilon)) % order;
+    assert.ok(scalar > 0n);
+    const result = {
+      scheme: "Secp256k1", big_r: { affine_point: "02" + R },
+      s: { scalar: scalar.toString(16).padStart(64, "0") }, recovery_id: 0,
+    };
+    const signature = normalizeMpcSignature(result);
+    const transaction = Transaction.from(prepared.unsignedSerialized);
+    transaction.signature = signature;
+    assert.equal(transaction.from, sender.evmAddress);
+    const transfer: EvidenceTransfer = {
+      direction: index === 0 ? "treasury-to-investor" : "investor-to-treasury",
+      amountBaseUnits: prepared.amount.toString(), nearTransactionHash: String(index + 3).repeat(44),
+      evmTransactionHash: transaction.hash!,
+    };
+    const blockNumber = "0x" + (index === 0 ? 100 : returnBlock).toString(16);
+    const blockHash = "0x" + (index === 0 ? "ab" : "cd").repeat(32);
+    const event = new Interface(["event Transfer(address indexed from,address indexed to,uint256 value)"]);
+    const log = event.encodeEventLog(event.getEvent("Transfer")!, [sender.evmAddress, recipient.evmAddress, prepared.amount]);
+    return {
+      transfer,
+      nearTransaction: {
+        final_execution_status: "FINAL",
+        transaction: {
+          hash: transfer.nearTransactionHash, signer_id: sender.nearAccountId, receiver_id: "v1.signer-prod.testnet",
+          actions: [{ FunctionCall: { method_name: "sign", args: base64({ request: {
+            payload_v2: { Ecdsa: prepared.unsignedHash.slice(2) }, path: PATH, domain_id: 0,
+          } }) } }],
+        },
+        status: { SuccessValue: base64(result) },
+      },
+      evmTransaction: {
+        type: "0x2", chainId: "0xaa36a7", hash: transaction.hash, from: sender.evmAddress, to: SEPOLIA_LINK,
+        value: "0x0", input: prepared.data, accessList: [], nonce: "0x0", gas: "0xfde8",
+        maxFeePerGas: "0xb2d05e00", maxPriorityFeePerGas: "0x3b9aca00",
+        r: signature.r, s: signature.s, v: "0x" + signature.yParity.toString(16), blockHash, blockNumber,
+      },
+      receipt: {
+        transactionHash: transaction.hash, blockHash, blockNumber, from: sender.evmAddress, to: SEPOLIA_LINK, status: "0x1",
+        logs: [{ ...log, address: SEPOLIA_LINK, removed: false, transactionHash: transaction.hash, blockHash }],
+      },
+    };
+  });
+  manifest.transfers = proofs.map(item => item.transfer);
+  const transport: EvidenceTransport = { async request(chain, method, params) {
+    calls.push(`${chain}:${method}`);
+    if (chain === "near" && method === "status") return { chain_id: "testnet" };
+    if (chain === "evm" && method === "eth_chainId") return "0xaa36a7";
+    if (chain === "evm" && method === "eth_blockNumber") return "0x69";
+    if (chain === "near" && method === "tx_status") {
+      const hash = (params as { tx_hash: string }).tx_hash;
+      const item = proofs.find(item => item.transfer.nearTransactionHash === hash);
+      assert.ok(item, "Unexpected fixture NEAR transaction");
+      return item.nearTransaction;
+    }
+    if (chain === "evm" && (method === "eth_getTransactionByHash" || method === "eth_getTransactionReceipt")) {
+      const item = proofs.find(item => item.transfer.evmTransactionHash === (params as string[])[0]);
+      assert.ok(item, "Unexpected fixture EVM transaction");
+      return method === "eth_getTransactionByHash" ? item.evmTransaction : item.receipt;
+    }
+    throw new Error("Unexpected fixture RPC method");
+  } };
+  return { manifest, transport, calls };
+}
+
+test("verifies both fixed LINK legs under one public fixture root without network or signing APIs", async () => {
+  const fixture = twoLegFixture();
+  const result = await verifyEvidence(fixture.manifest, { transport: fixture.transport, allowFixtures: true });
+  assert.equal(result.status, "verified");
+  assert.equal(result.operatorModel, "single-operator-demo");
+  assert.equal(result.transfers.length, 2);
+  assert.deepEqual(result.transfers.map(leg => leg.amountBaseUnits), ["1000000000000000000", "100000000000000000"]);
+  assert.deepEqual(result.transfers.map(leg => leg.blockNumber), ["100", "102"]);
+  assert.equal(fixture.calls.filter(call => call === "near:tx_status").length, 2);
+  assert.equal(fixture.calls.filter(call => call === "evm:eth_getTransactionReceipt").length, 2);
+});
+
+test("rejects otherwise valid two-leg fixture evidence whose investor return is not in a later block", async () => {
+  const fixture = twoLegFixture(100);
+  await assert.rejects(verifyEvidence(fixture.manifest, { transport: fixture.transport, allowFixtures: true }), /later block/);
+});
 
 test("pending live manifest fails actionably before network or endpoint construction", async () => {
   await assert.rejects(verifyEvidence({ schemaVersion: 1, kind: "live", status: "pending", transfers: [] }, {

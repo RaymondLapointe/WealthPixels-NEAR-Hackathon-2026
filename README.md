@@ -2,7 +2,7 @@
 
 WealthPixels is preparing a testnet demonstration of treasury-owned LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
 
-**Current status, November 2, 2026:** both NEAR testnet accounts are registered with distinct supplied FullAccess keys and observed balances of 10 test NEAR each. Their EVM addresses are verified by public MPC views, local derivation and independent public math. No live MPC signatures or Sepolia transfers have been demonstrated. The transfer-evidence manifest remains pending. The eventual 100-USDC, 60/40 WETH/LINK purchase remains a later milestone.
+**Current status, November 2, 2026:** both NEAR testnet accounts and derived EVM addresses are verified. Task 02B-2A implements role-specific MPC signing, fixed 1 LINK delivery / 0.1 LINK return, separate execution approvals and read-only recovery. All 77 offline tests pass. No live MPC signing or Sepolia transfer has been demonstrated; public transfer evidence remains pending. The eventual 100-USDC, 60/40 WETH/LINK purchase remains a later milestone.
 
 The hackathon demonstrator may control both disposable testnet roles on one computer. Separate accounts and authorizations demonstrate protocol behavior, **not independent production custody**.
 
@@ -61,11 +61,17 @@ See [evidence format and verification limits](evidence/README.md). Public MPC in
 
 ### 3. Optional live reproduction
 
-Judges do not need to run this mode. It is not implemented or authorized by the evaluation-workflow revision.
+Judges do not need to run this mode. The operator CLI is implemented and tested with mocks; funding, live MPC signing and EVM broadcasting still require separate approval.
 
-The recommended setup is **one laptop, one Windows user, two disposable NEAR accounts, two separate credential files, and a fresh explicitly selected process for each role**. A future live invocation must select one --role and one --credential-file; it must not load a directory, both files, a shared private-key environment variable or a fallback identity.
+The recommended setup is **one laptop, one Windows user, two disposable NEAR accounts, two separate credential files, and a fresh explicitly selected process for each role**. Each signing invocation must select one `--role` and one explicit `--credential` path. It cannot load a directory or both role files. The current live adapter pins the reviewed WealthPixels public identities; using different identities requires a separately reviewed public configuration change.
 
-Example storage locations, to be created only after separate approval:
+~~~text
+npm run transfer -- --help
+~~~
+
+Read the [Task 02B-2A implementation report and execution runbook](docs/Task02B2A_Live_Transfer_Implementation.md) for preparation, exact fee caps, funding destinations, separate signing/broadcast approvals and recovery. Help and offline tests never load credentials.
+
+Existing operator credential locations (plaintext private keys; keep the protected store outside the repository):
 
 ~~~text
 %LOCALAPPDATA%\WealthPixels\testnet-credentials\treasury.json

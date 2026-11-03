@@ -14,7 +14,8 @@
     "scripts/near-public.ts",
     "test/near/**/*.test.ts",
     "scripts/verify-evidence.ts",
-    "scripts/provision-role-key.ts"
+    "scripts/provision-role-key.ts",
+    "scripts/transfer.ts"
   ],
   "exclude": [
     "node_modules"

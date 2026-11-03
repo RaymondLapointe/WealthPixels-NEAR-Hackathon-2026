@@ -201,6 +201,7 @@ export async function verifyEvidence(value: unknown, options: {
   requireThat(evmAddress(treasury.evmAddress) !== evmAddress(investor.evmAddress), "EVM role addresses must be distinct.");
   requireThat(Array.isArray(manifest.transfers) && manifest.transfers.length === 2, "Require treasury delivery and investor return evidence.");
   const legs = manifest.transfers.map(transferRecord);
+  requireThat(legs[0].amountBaseUnits === "1000000000000000000" && legs[1].amountBaseUnits === "100000000000000000", "Completed evidence must show exactly 1 LINK delivery and 0.1 LINK return.");
   requireThat(legs[0].direction === "treasury-to-investor" && legs[1].direction === "investor-to-treasury" && legs[0].nearTransactionHash !== legs[1].nearTransactionHash && legs[0].evmTransactionHash !== legs[1].evmTransactionHash, "Require two distinct, ordered treasury and investor authorizations.");
   const transport = options.transport ?? createReadOnlyEvidenceTransport(options);
   requireThat(object(await transport.request("near", "status", []), "NEAR node status").chain_id === "testnet", "NEAR RPC must report testnet.");
