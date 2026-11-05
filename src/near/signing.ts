@@ -2,7 +2,7 @@
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { recoverAddress } from "ethers";
+import { recoverAddress, SigningKey } from "ethers";
 import {
   actions, baseDecode, baseEncode, createTransaction, KeyPairSigner, PublicKey,
   type KeyPairString, type SignedTransaction, type Transaction,
@@ -10,7 +10,7 @@ import {
 import { normalizeMpcSignature, type MpcEcdsaSignature } from "../evm/erc20-transfer.js";
 import { DERIVATION_PATH, ECDSA_DOMAIN_ID, MPC_CONTRACT_ID, type AuthorityRole } from "./config.js";
 import { requireRole, VERIFIED_IDENTITIES, VERIFIED_MPC_ROOT } from "./identities.js";
-import { ReadOnlyMpcClient, type MpcDerivation, type MpcInspection } from "./mpc.js";
+import { deriveEvmPublicKey, ReadOnlyMpcClient, type MpcDerivation, type MpcInspection } from "./mpc.js";
 
 export const MPC_SIGNING_GAS_TGAS = 100;
 export const MPC_SIGNING_DEPOSIT_YOCTO = "1";
@@ -310,7 +310,10 @@ export function normalizeMpcOutcome(
     const signature = base64Json(status.SuccessValue);
     requireThat(signature.scheme === "Secp256k1", "INVALID_OUTCOME", "Require the Secp256k1 signature scheme.");
     const normalized = normalizeMpcSignature(signature);
-    requireThat(recoverAddress(digest, normalized) === expected.evmAddress, "INVALID_OUTCOME", "The MPC signature does not recover the selected role address.");
+    const trustedPublicKey = deriveEvmPublicKey(VERIFIED_MPC_ROOT, expected.accountId, DERIVATION_PATH);
+    requireThat(SigningKey.recoverPublicKey(digest, normalized).toLowerCase() === trustedPublicKey.toLowerCase() &&
+      recoverAddress(digest, normalized) === expected.evmAddress,
+    "INVALID_OUTCOME", "The MPC signature does not recover the selected role's full derived public key and address.");
     return Object.freeze({
       scheme: "Secp256k1", big_r: Object.freeze({ affine_point: signature.big_r.affine_point }),
       s: Object.freeze({ scalar: signature.s.scalar }), recovery_id: signature.recovery_id,

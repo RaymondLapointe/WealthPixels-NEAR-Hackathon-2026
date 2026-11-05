@@ -1,6 +1,7 @@
+import { baseDecode } from "near-api-js";
 import { assembleSignedErc20Transfer } from "../evm/erc20-transfer.js";
 import { authorizeEvmBroadcast, type EvmBroadcastTransport } from "../evm/broadcast.js";
-import { recheckSepoliaLinkTransfer, verifySepoliaLinkReceipt, type SepoliaReadRpc } from "../evm/sepolia-link.js";
+import { assertLinkPreflight, recheckSepoliaLinkTransfer, verifySepoliaLinkReceipt, type SepoliaReadRpc } from "../evm/sepolia-link.js";
 import { normalizeMpcOutcome, type prepareMpcSigning, type verifyRoleMpc, type readMpcSigningOutcome } from "../near/signing.js";
 import type { ExecutionState } from "./state.js";
 
@@ -13,6 +14,10 @@ export interface ExecutionPorts {
   /** Must durably save state; an error aborts BEFORE any external mutation. */
   save(state: ExecutionState): Promise<void>;
 }
+
+/** Reconciliation can read public proof and persist locally; it has no signing or submission ports. */
+export type ReconciliationPorts = Pick<ExecutionPorts, "verifyMpc" | "readOutcome" | "save">;
+export type EvmReconciliationPorts = Pick<ExecutionPorts, "evm" | "save">;
 
 function assertFresh(state: ExecutionState): void {
   const age = Date.now() - Date.parse(state.createdAt);
@@ -43,35 +48,53 @@ export async function requestSignature(
   await ports.save(state);
 }
 
-export async function reconcileSigning(state: ExecutionState, nearRpcUrl: string, ports: ExecutionPorts): Promise<void> {
-  if (!["near-submitting", "near-submitted", "near-uncertain"].includes(state.status) || !state.nearTransactionHash) {
-    throw new Error("This operation has no unresolved NEAR signing submission.");
+export async function reconcileSigning(state: ExecutionState, nearRpcUrl: string, ports: ReconciliationPorts): Promise<void> {
+  if (!["near-submitting", "near-submitted", "near-uncertain", "near-failed", "signed"].includes(state.status)) {
+    throw new Error("This operation has no recorded NEAR signing submission to reconcile.");
   }
-  const verified = await ports.verifyMpc(state.role, nearRpcUrl);
+  const nearHash = state.nearTransactionHash;
+  try {
+    if (typeof nearHash !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(nearHash) || baseDecode(nearHash).length !== 32) throw new Error();
+  } catch {
+    throw new Error("A valid existing NEAR transaction hash is required; state was not changed.");
+  }
+  assertLinkPreflight(state.preflight);
+  if (state.role !== state.preflight.role) throw new Error("Saved authority role differs from the original prepared intent.");
   let outcome: unknown;
-  try { outcome = await ports.readOutcome(state.role, state.nearTransactionHash, nearRpcUrl); }
-  catch {
-    state.recovery = `NEAR result is unavailable. Finalized access-key nonce: ${verified.accessKeyNonce}. Keep the saved hash; reconcile later without another sign call.`;
-    await ports.save(state);
-    return;
+  try {
+    await ports.verifyMpc(state.role, nearRpcUrl);
+    outcome = await ports.readOutcome(state.role, nearHash, nearRpcUrl);
+  } catch {
+    throw new Error("Public NEAR reconciliation reads failed. Keep the saved hash; state was not changed and no new signing request was made.");
   }
   if (!outcome || typeof outcome !== "object" || !("final_execution_status" in outcome) || outcome.final_execution_status !== "FINAL") {
-    state.recovery = `NEAR execution is not FINAL. Finalized access-key nonce: ${verified.accessKeyNonce}. Reconcile the saved hash later; no new signing request.`;
-    await ports.save(state);
-    return;
+    throw new Error("NEAR execution is not FINAL. Reconcile the saved hash later; state was not changed.");
   }
+  let signed: ReturnType<typeof assembleSignedErc20Transfer>;
   try {
-    const signature = normalizeMpcOutcome(outcome, state.role, state.nearTransactionHash, state.preflight.prepared.unsignedHash);
-    state.signed = assembleSignedErc20Transfer(state.preflight.prepared, signature, state.preflight.prepared.senderAddress);
-    state.nearOutcome = outcome;
-    state.status = "signed";
-    delete state.recovery;
+    const signature = normalizeMpcOutcome(outcome, state.role, nearHash, state.preflight.prepared.unsignedHash);
+    signed = assembleSignedErc20Transfer(state.preflight.prepared, signature, state.preflight.prepared.senderAddress);
+    if (state.status === "signed") {
+      if (!state.signed || !state.nearOutcome) throw new Error();
+      const priorSignature = normalizeMpcOutcome(state.nearOutcome, state.role, nearHash, state.preflight.prepared.unsignedHash);
+      const prior = assembleSignedErc20Transfer(state.preflight.prepared, priorSignature, state.preflight.prepared.senderAddress);
+      const same = (entry: typeof signed) => entry.hash === signed.hash && entry.serialized === signed.serialized && entry.senderAddress === signed.senderAddress;
+      if (!same(prior) || !same(state.signed)) throw new Error();
+      // Both saved and freshly fetched FINAL proofs authorize these exact bytes.
+      // Preserve the complete existing state, including public RPC metadata order.
+      return;
+    }
   } catch {
-    // A failed, malformed or incompatible final result cannot authorize EVM submission.
-    state.status = "near-failed";
-    state.recovery = "Final NEAR result failed validation. Inspect public transaction evidence before preparing any new operation.";
+    throw new Error("Final NEAR proof or saved signed bytes do not validate the original approved transaction; state was not changed.");
   }
-  await ports.save(state);
+  const candidate: ExecutionState = {
+    ...structuredClone(state), status: "signed", signed, nearOutcome: structuredClone(outcome),
+  };
+  delete candidate.recovery;
+  try { await ports.save(candidate); }
+  catch { throw new Error("Verified MPC result could not be saved; the original in-memory state was not changed."); }
+  Object.assign(state, candidate);
+  delete state.recovery;
 }
 
 export async function broadcastTransfer(
@@ -102,7 +125,7 @@ export async function broadcastTransfer(
   await ports.save(state);
 }
 
-export async function reconcileEvm(state: ExecutionState, ports: ExecutionPorts): Promise<void> {
+export async function reconcileEvm(state: ExecutionState, ports: EvmReconciliationPorts): Promise<void> {
   if (!["evm-submitting", "evm-submitted", "evm-uncertain", "confirmed"].includes(state.status) || !state.signed) {
     throw new Error("This operation has no EVM submission to reconcile.");
   }

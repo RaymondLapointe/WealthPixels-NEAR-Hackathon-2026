@@ -262,10 +262,8 @@ export function normalizeMpcSignature(raw: unknown): Signature {
   if (response.recovery_id !== 0 && response.recovery_id !== 1) {
     throw new Error("MPC recovery_id must be 0 or 1 for an Ethereum signature");
   }
-  const pointParity = point.startsWith("02") ? 0 : 1;
-  if (response.recovery_id !== pointParity) {
-    throw new Error("MPC recovery_id does not match big_r point parity");
-  }
+  // MPC may retain the original R point when canonicalizing s. Recovery uses
+  // the supplied (r, s, recovery_id); the raw point's y parity may differ.
   let yParity: 0 | 1 = response.recovery_id;
   if (s > SECP256K1_ORDER / 2n) {
     s = SECP256K1_ORDER - s;

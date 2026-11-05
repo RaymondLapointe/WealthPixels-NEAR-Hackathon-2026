@@ -10,6 +10,9 @@ import {
   type Erc20TransferInput,
   type TransferPreflightSnapshot,
 } from "../../src/evm/erc20-transfer.js";
+import {
+  recordedOutcome, recordedState, RECORDED_EVM_HASH, RECORDED_SENDER, RECORDED_UNSIGNED_HASH,
+} from "./fixtures/recorded-mpc.js";
 
 // Public algebraic fixture only: generator R, s=1, parity=0. No private key,
 // Wallet, signing call, NEAR account, RPC, or network signature is involved.
@@ -143,23 +146,33 @@ test("normalizes MPC scalars and preserves recovery when canonicalizing high-s",
   assert.equal(high.serialized, low.serialized);
 });
 
-test("rejects raw R parity and recovery_id disagreement before canonicalizing s", () => {
-  assert.throws(
-    () => normalizeMpcSignature({ ...SIGNATURE, recovery_id: 1 }),
-    /does not match big_r point parity/,
-  );
-  assert.throws(
-    () => normalizeMpcSignature({ ...SIGNATURE, big_r: { affine_point: `03${GENERATOR_X}` } }),
-    /does not match big_r point parity/,
-  );
-  assert.throws(
-    () => normalizeMpcSignature({
-      ...SIGNATURE,
-      s: { scalar: (ORDER - 1n).toString(16) },
-      recovery_id: 1,
-    }),
-    /does not match big_r point parity/,
-  );
+test("uses the supplied recovery ID independently of raw R parity while preserving high-s canonicalization", () => {
+  const original = normalizeMpcSignature(SIGNATURE);
+  const oppositeRawPoint = normalizeMpcSignature({ ...SIGNATURE, big_r: { affine_point: `03${GENERATOR_X}` } });
+  assert.equal(oppositeRawPoint.serialized, original.serialized);
+  const oppositeRecovery = normalizeMpcSignature({ ...SIGNATURE, recovery_id: 1 });
+  assert.equal(oppositeRecovery.yParity, 1);
+  assert.notEqual(oppositeRecovery.serialized, original.serialized);
+  const high = normalizeMpcSignature({ ...SIGNATURE, s: { scalar: (ORDER - 1n).toString(16) }, recovery_id: 1 });
+  assert.equal(high.serialized, original.serialized);
+  assert.throws(() => assembleSignedErc20Transfer(buildUnsignedErc20Transfer(INPUT),
+    { ...SIGNATURE, recovery_id: 1 }, FIXTURE_SENDER), /different from expectedSender/);
+});
+
+test("replays the recorded public MPC response with opposite raw R parity and assembles the independently verified hash", () => {
+  const outcome = recordedOutcome(), state = recordedState();
+  const signature = JSON.parse(Buffer.from(outcome.status.SuccessValue, "base64").toString("utf8"));
+  assert.equal(signature.big_r.affine_point.slice(0, 2), "03");
+  assert.equal(signature.recovery_id, 0);
+  assert.ok(BigInt("0x" + signature.s.scalar) <= ORDER / 2n);
+  const normalized = normalizeMpcSignature(signature);
+  assert.equal(normalized.yParity, 0);
+  const assembled = assembleSignedErc20Transfer(state.preflight.prepared, signature, RECORDED_SENDER);
+  assert.equal(assembled.hash, RECORDED_EVM_HASH);
+  assert.equal(assembled.senderAddress, RECORDED_SENDER);
+  assert.equal(Transaction.from(assembled.serialized).unsignedHash, RECORDED_UNSIGNED_HASH);
+  assert.throws(() => assembleSignedErc20Transfer(state.preflight.prepared,
+    { ...signature, recovery_id: 1 }, RECORDED_SENDER), /different from expectedSender/);
 });
 
 test("rejects malformed MPC responses, invalid points, scalars and recovery identifiers", () => {

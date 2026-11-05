@@ -18,6 +18,13 @@ export interface ExecutionState {
   signed?: AssembledErc20Transfer;
   receipt?: unknown;
   recovery?: string;
+  recoveryBroadcastAudit?: {
+    auditSha256: string;
+    checkedAt: string;
+    expiredPreparationAcknowledgment: string;
+    approvedSignedHash: string;
+    auditFile?: string;
+  };
 }
 const statuses: ReadonlySet<string> = new Set([
   "prepared", "near-submitting", "near-submitted", "near-uncertain", "near-failed", "signed",
@@ -67,6 +74,7 @@ export function publicExecutionSummary(state: ExecutionState): unknown {
     nearTransactionHash: state.nearTransactionHash,
     evmTransactionHash: state.signed?.hash,
     recoveredSender: state.signed?.senderAddress,
+    recoveryBroadcastAudit: state.recoveryBroadcastAudit,
     receipt: state.receipt, recovery: state.recovery,
   };
 }

@@ -7,6 +7,11 @@ import { baseEncode, PublicKey, SignedTransaction, Signature as NearSignature } 
 import { DERIVATION_PATH, MPC_CONTRACT_ID, type AuthorityRole } from "../../src/near/config.js";
 import { VERIFIED_IDENTITIES, VERIFIED_MPC_ROOT } from "../../src/near/identities.js";
 import { deriveEvmPublicKey, type MpcDerivation, type MpcInspection } from "../../src/near/mpc.js";
+import { assembleSignedErc20Transfer, normalizeMpcSignature } from "../../src/evm/erc20-transfer.js";
+import {
+  recordedOutcome, recordedState, RECORDED_EVM_HASH, RECORDED_NEAR_HASH,
+  RECORDED_PUBLIC_KEY, RECORDED_SENDER, RECORDED_UNSIGNED_HASH,
+} from "./fixtures/recorded-mpc.js";
 import {
   MPC_SIGNING_DEPOSIT_YOCTO, MPC_SIGNING_GAS_TGAS, MpcSigningError, normalizeMpcOutcome,
   prepareMpcSigning, readMpcSigningOutcome, verifyRoleMpc,
@@ -267,4 +272,50 @@ test("normalizer rejects changed role/hash/digest, indirect actions, gas/deposit
   }
   assert.throws(() => normalizeMpcOutcome(f.result, "investor", HASH, f.digest), isCode("INVALID_OUTCOME"));
   assert.throws(() => normalizeMpcOutcome(f.result, "treasury", HASH, DIGEST), isCode("INVALID_OUTCOME"));
+});
+
+test("recorded live public response recovers the full trusted NEAR-derived key and approved EVM hash offline", () => {
+  const outcome = recordedOutcome(), state = recordedState();
+  assert.equal(state.status, "near-failed"); // Historical saved status; no live operation is executed.
+  assert.equal(state.preflight.prepared.unsignedHash, RECORDED_UNSIGNED_HASH);
+  const response = normalizeMpcOutcome(outcome, "treasury", RECORDED_NEAR_HASH, RECORDED_UNSIGNED_HASH);
+  assert.equal(response.big_r.affine_point.slice(0, 2), "03");
+  assert.equal(response.recovery_id, 0);
+  assert.equal(SigningKey.recoverPublicKey(RECORDED_UNSIGNED_HASH, normalizeMpcSignature(response)), RECORDED_PUBLIC_KEY);
+  assert.equal(deriveEvmPublicKey(VERIFIED_MPC_ROOT, VERIFIED_IDENTITIES.treasury.accountId, DERIVATION_PATH), RECORDED_PUBLIC_KEY);
+  assert.equal(assembleSignedErc20Transfer(state.preflight.prepared, response, RECORDED_SENDER).hash, RECORDED_EVM_HASH);
+  assert.equal(recordedState().status, "near-failed");
+});
+
+test("recorded response rejects wrong recovery, altered scalars, points, digest, role and final status", () => {
+  const original = recordedOutcome();
+  const signature = JSON.parse(Buffer.from(original.status.SuccessValue, "base64").toString("utf8"));
+  for (const mutate of [
+    (value: typeof signature) => { value.recovery_id = 1; },
+    (value: typeof signature) => { value.s.scalar = (BigInt("0x" + value.s.scalar) + 1n).toString(16).padStart(64, "0"); },
+    (value: typeof signature) => { value.big_r.affine_point = "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"; },
+    (value: typeof signature) => { value.big_r.affine_point = "02" + "ff".repeat(32); },
+    (value: typeof signature) => { value.scheme = "Ed25519"; },
+  ]) {
+    const outcome = recordedOutcome(), altered = structuredClone(signature);
+    mutate(altered);
+    outcome.status.SuccessValue = Buffer.from(JSON.stringify(altered)).toString("base64");
+    assert.throws(() => normalizeMpcOutcome(outcome, "treasury", RECORDED_NEAR_HASH, RECORDED_UNSIGNED_HASH), isCode("INVALID_OUTCOME"));
+  }
+  assert.throws(() => normalizeMpcOutcome(original, "treasury", RECORDED_NEAR_HASH, DIGEST), isCode("INVALID_OUTCOME"));
+  assert.throws(() => normalizeMpcOutcome(original, "investor", RECORDED_NEAR_HASH, RECORDED_UNSIGNED_HASH), isCode("INVALID_OUTCOME"));
+  original.final_execution_status = "EXECUTED_OPTIMISTIC";
+  assert.throws(() => normalizeMpcOutcome(original, "treasury", RECORDED_NEAR_HASH, RECORDED_UNSIGNED_HASH), isCode("INVALID_OUTCOME"));
+});
+
+test("a high-s equivalent recorded response preserves recovery and the exact signed hash", () => {
+  const outcome = recordedOutcome();
+  const signature = JSON.parse(Buffer.from(outcome.status.SuccessValue, "base64").toString("utf8"));
+  const order = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
+  signature.s.scalar = (order - BigInt("0x" + signature.s.scalar)).toString(16).padStart(64, "0");
+  signature.recovery_id = 1;
+  outcome.status.SuccessValue = Buffer.from(JSON.stringify(signature)).toString("base64");
+  const response = normalizeMpcOutcome(outcome, "treasury", RECORDED_NEAR_HASH, RECORDED_UNSIGNED_HASH);
+  assert.equal(normalizeMpcSignature(response).yParity, 0);
+  assert.equal(assembleSignedErc20Transfer(recordedState().preflight.prepared, response, RECORDED_SENDER).hash, RECORDED_EVM_HASH);
 });

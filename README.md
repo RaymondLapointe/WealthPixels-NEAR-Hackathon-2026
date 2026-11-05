@@ -2,7 +2,7 @@
 
 WealthPixels is preparing a testnet demonstration of treasury-owned LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
 
-**Current status, November 2, 2026:** both NEAR testnet accounts and derived EVM addresses are verified. Task 02B-2A implements role-specific MPC signing, fixed 1 LINK delivery / 0.1 LINK return, separate execution approvals and read-only recovery. All 77 offline tests pass. No live MPC signing or Sepolia transfer has been demonstrated; public transfer evidence remains pending. The eventual 100-USDC, 60/40 WETH/LINK purchase remains a later milestone.
+**Current status, November 4, 2026:** one real Treasury NEAR MPC signing request succeeded, and its signature was verified and recovered into the exact signed Sepolia 1 LINK transaction. The transaction has not been broadcast; public transfer evidence remains pending. Offline tests include the recorded public MPC response and mocked recovery-broadcast safety tests. The eventual 100-USDC, 60/40 WETH/LINK purchase remains a later milestone.
 
 The hackathon demonstrator may control both disposable testnet roles on one computer. Separate accounts and authorizations demonstrate protocol behavior, **not independent production custody**.
 
@@ -70,6 +70,8 @@ npm run transfer -- --help
 ~~~
 
 Read the [Task 02B-2A implementation report and execution runbook](docs/Task02B2A_Live_Transfer_Implementation.md) for preparation, exact fee caps, funding destinations, separate signing/broadcast approvals and recovery. Help and offline tests never load credentials.
+
+For the existing recovered Treasury transaction, the [Phase 3F recovery report](docs/Task02B2B_Phase3F_Controlled_Broadcast_Recovery.md) documents a read-only `recovery-audit` command and a separate `broadcast-recovered` command. Recovery is pinned to that one recorded signature; it requires the exact signed hash, explicit acknowledgment of the original expired timestamp, and a newly preserved audit before any submission. Inspection audits cannot be reused to authorize broadcasting. The normal preparation-age rule remains enforced. No recovery broadcast is authorized until separately approved.
 
 Existing operator credential locations (plaintext private keys; keep the protected store outside the repository):
 
