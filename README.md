@@ -6,6 +6,20 @@ WealthPixels has demonstrated treasury-owned test LINK delivered to an investor 
 
 The hackathon demonstrator may control both disposable testnet roles on one computer. Separate accounts and authorizations demonstrate protocol behavior, **not independent production custody**.
 
+## Portfolio purchase development: Task 03B
+
+The next live demonstration targets **10 test USDC**, with an illustrative 50% native ETH / 50% LINK allocation from Treasury principal inventory. The amount is configurable; 10 USDC is a demonstration target, with no production minimum implied. The earlier 100-USDC planning example is superseded. The completed live evidence above proves the two LINK transfers; a portfolio purchase has not yet executed.
+
+Task 03B adds pure TypeScript modules for exact six-decimal USDC parsing, immutable allocation terms, Investor-to-Treasury USDC intents, quote-sized Treasury-to-Investor LINK intents, and fee accounting. `npm test` includes 1, 5, 10, 20 and 100 USDC cases, precision/rounding, role/token/recipient checks and duplicate payment-claim guards. These are offline tests with labelled fixtures. Purchase intents are not yet exposed through the live CLI, and the payment-claim guard is not yet a durable payment registry.
+
+Before payment authorization, total expected system execution costs must be at most `MAX_EXPECTED_FEE_BPS = 1000` (10%) of the investment. This includes all three EVM transactions and all three NEAR MPC signing operations, regardless of payer. Calculations use exact rational USDC equivalents, at least 20% gas buffers, documented conversion inputs and separate expected-fee assumptions and maximum reserves. Missing, expired or unverified inputs fail closed; offline price fixtures cannot authorize payment. Fee-estimation work is a WealthPixels operating expense. The 10% testnet policy makes no claim about production economic viability.
+
+Task 03D must collect fresh verified estimates/prices, bind the assessment into the approved quote, revalidate before payment, persist replay protection, and record actual costs and the realized fee ratio in completion evidence. After accepted payment, a fee increase must leave the delivery obligation outstanding. The accounting interface preserves that rule; the coordinator remains future work.
+
+Official Sepolia USDC is [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://developers.circle.com/stablecoins/usdc-contract-addresses), with six decimals. The read-only November 5 check found 0 USDC at both roles. One approved [Circle faucet](https://faucet.circle.com/) allocation of 20 test USDC to Investor would cover the 10-USDC target. Funding has not been requested. Fresh balances are required before any future live preparation.
+
+See the [Task 03B implementation report](docs/Task03B_ERC20_Intents_and_Fee_Eligibility.md) for pricing gaps, module interfaces and the Task 03C–03F sequence. Native ETH execution, complete quoting and three-leg orchestration remain to be implemented and reviewed.
+
 ## Quick start for judges
 
 Use Node **22.23.4** (pinned in .node-version), or another supported Node 22 patch >=22.22.2, and npm. These commands work on Windows, macOS and Linux:
