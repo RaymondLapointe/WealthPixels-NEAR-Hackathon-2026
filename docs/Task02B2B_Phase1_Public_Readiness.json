@@ -1,0 +1,649 @@
+{
+  "schemaVersion": 1,
+  "reportDate": "2026-11-03",
+  "scope": "Task02B-2B Phase1 read-only readiness",
+  "implementationCommit": "c8a3d11de86e5f90634efac962d203a24f4a9879",
+  "validation": {
+    "offlineTestsPassed": 77,
+    "typecheck": "passed"
+  },
+  "near": {
+    "schemaVersion": 1,
+    "kind": "public-read-only-snapshot",
+    "endpoint": "https://archival-rpc.testnet.fastnear.com",
+    "block": {
+      "hash": "Cjnf46RKNDvzzLFD3bA1f3nKHhf3ftwMASSKEruajjwG",
+      "height": 276052258,
+      "timestampNanosec": "1793710829857213733"
+    },
+    "mpc": {
+      "contractId": "v1.signer-prod.testnet",
+      "version": "3.18.0",
+      "domainId": 0,
+      "domain": {
+        "id": 0,
+        "protocol": "CaitSith",
+        "purpose": "Sign",
+        "reconstructionThreshold": 11,
+        "keyEpoch": 27,
+        "keyAttempt": 1
+      },
+      "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+      "rootPublicKeySec1": "0x04a8bb8176747682aab5c681d4ef375ca537023b2b287d8b5f9d89505277a5a291538ef3680882d8fb793a62a5fdb4c6974c7cd8f9eb0b9cbbf659314c30347000",
+      "minimumGasTgas": 15,
+      "config": {
+        "key_event_timeout_blocks": 150,
+        "tee_upgrade_deadline_duration_seconds": 604800,
+        "apply_contract_update_tera_gas": 50,
+        "sign_call_gas_attachment_requirement_tera_gas": 15,
+        "ckd_call_gas_attachment_requirement_tera_gas": 15,
+        "return_signature_and_clean_state_on_success_call_tera_gas": 7,
+        "return_ck_and_clean_state_on_success_call_tera_gas": 7,
+        "fail_on_timeout_tera_gas": 2,
+        "fail_attestation_submission_tera_gas": 2,
+        "clean_tee_status_tera_gas": 10,
+        "clean_invalid_attestations_tera_gas": 15,
+        "cleanup_orphaned_node_migrations_tera_gas": 7,
+        "remove_non_participant_update_votes_tera_gas": 5,
+        "clean_foreign_chain_data_tera_gas": 8,
+        "remove_non_participant_tee_verifier_votes_tera_gas": 5,
+        "verifier_tera_gas": 200,
+        "resolve_verification_tera_gas": 60,
+        "launcher_hash_unused_ttl_seconds": 1814400,
+        "attestation_storage_fee_millinear": 20
+      }
+    },
+    "protocol": {
+      "version": 88,
+      "storageAmountPerByte": "10000000000000000000",
+      "transactionCosts": {
+        "action_creation_config": {
+          "add_key_cost": {
+            "full_access_cost": {
+              "execution": 101765125000,
+              "send_not_sir": 101765125000,
+              "send_sir": 101765125000
+            },
+            "function_call_cost": {
+              "execution": 102217625000,
+              "send_not_sir": 102217625000,
+              "send_sir": 102217625000
+            },
+            "function_call_cost_per_byte": {
+              "execution": 1925331,
+              "send_not_sir": 47683715,
+              "send_sir": 1925331
+            }
+          },
+          "create_account_cost": {
+            "execution": 7200000000000,
+            "send_not_sir": 500000000000,
+            "send_sir": 500000000000
+          },
+          "delegate_cost": {
+            "execution": 200000000000,
+            "send_not_sir": 200000000000,
+            "send_sir": 200000000000
+          },
+          "delete_account_cost": {
+            "execution": 147489000000,
+            "send_not_sir": 147489000000,
+            "send_sir": 147489000000
+          },
+          "delete_key_cost": {
+            "execution": 94946625000,
+            "send_not_sir": 94946625000,
+            "send_sir": 94946625000
+          },
+          "deploy_contract_cost": {
+            "execution": 184765750000,
+            "send_not_sir": 184765750000,
+            "send_sir": 184765750000
+          },
+          "deploy_contract_cost_per_byte": {
+            "execution": 64572944,
+            "send_not_sir": 47683715,
+            "send_sir": 6812999
+          },
+          "function_call_cost": {
+            "execution": 780000000000,
+            "send_not_sir": 200000000000,
+            "send_sir": 200000000000
+          },
+          "function_call_cost_per_byte": {
+            "execution": 2235934,
+            "send_not_sir": 47683715,
+            "send_sir": 2235934
+          },
+          "stake_cost": {
+            "execution": 102217625000,
+            "send_not_sir": 141715687500,
+            "send_sir": 141715687500
+          },
+          "transfer_cost": {
+            "execution": 115123062500,
+            "send_not_sir": 115123062500,
+            "send_sir": 115123062500
+          }
+        },
+        "action_receipt_creation_config": {
+          "execution": 108059500000,
+          "send_not_sir": 108059500000,
+          "send_sir": 108059500000
+        },
+        "burnt_gas_reward": [
+          0,
+          1
+        ],
+        "data_receipt_creation_config": {
+          "base_cost": {
+            "execution": 36486732312,
+            "send_not_sir": 36486732312,
+            "send_sir": 36486732312
+          },
+          "cost_per_byte": {
+            "execution": 17212011,
+            "send_not_sir": 47683715,
+            "send_sir": 17212011
+          }
+        },
+        "ml_dsa_65_verification_cost": 100000000000,
+        "pessimistic_gas_price_inflation_ratio": [
+          1,
+          1
+        ],
+        "storage_usage_config": {
+          "num_bytes_account": 100,
+          "num_extra_bytes_record": 40
+        }
+      },
+      "minGasPurchasePrice": "1000000000"
+    },
+    "gasPriceYocto": "100000000",
+    "proposedSigningGasTgas": 100,
+    "depositYocto": "1",
+    "derivationPath": "wealthpixels/sepolia/v1",
+    "roles": [
+      {
+        "role": "treasury",
+        "accountId": "wealthpixels-treasury.testnet",
+        "account": {
+          "amount": "10000000000000000000000000",
+          "block_hash": "Cjnf46RKNDvzzLFD3bA1f3nKHhf3ftwMASSKEruajjwG",
+          "block_height": 276052258,
+          "code_hash": "11111111111111111111111111111111",
+          "locked": "0",
+          "storage_paid_at": 0,
+          "storage_usage": 182
+        },
+        "keys": {
+          "block_hash": "Cjnf46RKNDvzzLFD3bA1f3nKHhf3ftwMASSKEruajjwG",
+          "block_height": 276052258,
+          "keys": [
+            {
+              "access_key": {
+                "nonce": 275945855000000,
+                "permission": "FullAccess"
+              },
+              "public_key": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1"
+            }
+          ]
+        },
+        "derivation": {
+          "nearAccountId": "wealthpixels-treasury.testnet",
+          "derivationPath": "wealthpixels/sepolia/v1",
+          "domainId": 0,
+          "blockHash": "Cjnf46RKNDvzzLFD3bA1f3nKHhf3ftwMASSKEruajjwG",
+          "blockHeight": 276052258,
+          "derivedPublicKey": "secp256k1:3CvAL9Z9PycZW3PcsBChCN2E52ohCwCERGK1UYwmvcC85vdasey3yEtVA22AvKPzFetAGFyzWBwYwC2Mv8EXT7iM",
+          "derivedPublicKeySec1": "0x046e4f75d0ffdd0561764c6606095231cf42f5633b7cfaa8b987dff2795ae46294ec33595e782ac5e4e1c478976623323ce8b9b227246d7a49bd230f4949c85386",
+          "evmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+          "localMatchesContract": true
+        },
+        "adapter": {
+          "status": "passed",
+          "blockHash": "6pDCV2ZoMdPWsYSbfaFyhs6m73McrzPm7NZvhJHrs9U2",
+          "blockHeight": 276052261,
+          "accessKeyNonce": "275945855000000"
+        },
+        "fundingCheck": {
+          "storageReserveYocto": "1820000000000000000000",
+          "conservativeSpendableYocto": "9998180000000000000000000",
+          "signingGasAtObservedPriceYocto": "10000000000000000000000",
+          "planningReserveYocto": "250000000000000000000000",
+          "coversQuarterNearReserve": true
+        }
+      },
+      {
+        "role": "investor",
+        "accountId": "wealthpixels-investor.testnet",
+        "account": {
+          "amount": "10000000000000000000000000",
+          "block_hash": "Cjnf46RKNDvzzLFD3bA1f3nKHhf3ftwMASSKEruajjwG",
+          "block_height": 276052258,
+          "code_hash": "11111111111111111111111111111111",
+          "locked": "0",
+          "storage_paid_at": 0,
+          "storage_usage": 182
+        },
+        "keys": {
+          "block_hash": "Cjnf46RKNDvzzLFD3bA1f3nKHhf3ftwMASSKEruajjwG",
+          "block_height": 276052258,
+          "keys": [
+            {
+              "access_key": {
+                "nonce": 275946428000000,
+                "permission": "FullAccess"
+              },
+              "public_key": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc"
+            }
+          ]
+        },
+        "derivation": {
+          "nearAccountId": "wealthpixels-investor.testnet",
+          "derivationPath": "wealthpixels/sepolia/v1",
+          "domainId": 0,
+          "blockHash": "Cjnf46RKNDvzzLFD3bA1f3nKHhf3ftwMASSKEruajjwG",
+          "blockHeight": 276052258,
+          "derivedPublicKey": "secp256k1:4Hb8S8CLHfpApiPuKm3v2ytFYo8gB34NgE91BNDQga9CdvUpW44a6k59hzJJXgtBj4yKcL5XMSVRiQQEwt8aTKa6",
+          "derivedPublicKeySec1": "0x04a45b30f6c2681b41d588870a439068f39414ae8188d1c750291a3cac876f73d34be888379790fa941b66d136dea3ab7309a5843b0ed465c5ab115853c6f23f47",
+          "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+          "localMatchesContract": true
+        },
+        "adapter": {
+          "status": "passed",
+          "blockHash": "6pDCV2ZoMdPWsYSbfaFyhs6m73McrzPm7NZvhJHrs9U2",
+          "blockHeight": 276052261,
+          "accessKeyNonce": "275946428000000"
+        },
+        "fundingCheck": {
+          "storageReserveYocto": "1820000000000000000000",
+          "conservativeSpendableYocto": "9998180000000000000000000",
+          "signingGasAtObservedPriceYocto": "10000000000000000000000",
+          "planningReserveYocto": "250000000000000000000000",
+          "coversQuarterNearReserve": true
+        }
+      }
+    ],
+    "privateCredentialsRead": false,
+    "signingSubmissions": 0,
+    "broadcasts": 0,
+    "node": {
+      "version": {
+        "build": "2.14.0-rc.5",
+        "commit": "b7b4737cab46f17a6daa2ed694d7aebbd204363a",
+        "rustc_version": "1.95.0",
+        "version": "2.14.0-rc.5"
+      },
+      "protocolVersion": 88,
+      "latestProtocolVersion": 88
+    },
+    "feeReservation": {
+      "description": "Observed protocol fees for one100Tgas/1yocto direct sign action,154method/argumentbytes,classicalEd25519zeroextra surcharge per upstream source; futurefees notguaranteed",
+      "gasBurnt": "315402792110",
+      "gasRemaining": "100888403833836",
+      "minGasPurchasePriceYocto": "1000000000",
+      "computedPrepaidReservationYocto": "100919944113047000000001",
+      "operatingReserveYocto": "250000000000000000000000"
+    },
+    "reconciliationReadProbe": {
+      "nonexistentHash": {
+        "outcome": "20-second client timeout; no submission occurred"
+      },
+      "methodChecks": [
+        {
+          "stage": "methodParameterProbes",
+          "methods": [
+            {
+              "method": "tx_status",
+              "invalidParameterProbe": {
+                "jsonrpc": "2.0",
+                "error": {
+                  "name": "REQUEST_VALIDATION_ERROR",
+                  "cause": {
+                    "name": "PARSE_ERROR",
+                    "info": {
+                      "error_message": "Failed parsing args: data did not match any variant of untagged enum TransactionInfo"
+                    }
+                  },
+                  "code": -32700,
+                  "message": "Parse error",
+                  "data": "Failed parsing args: data did not match any variant of untagged enum TransactionInfo"
+                },
+                "id": 1
+              }
+            },
+            {
+              "method": "EXPERIMENTAL_tx_status",
+              "invalidParameterProbe": {
+                "jsonrpc": "2.0",
+                "error": {
+                  "name": "REQUEST_VALIDATION_ERROR",
+                  "cause": {
+                    "name": "PARSE_ERROR",
+                    "info": {
+                      "error_message": "Failed parsing args: data did not match any variant of untagged enum TransactionInfo"
+                    }
+                  },
+                  "code": -32700,
+                  "message": "Parse error",
+                  "data": "Failed parsing args: data did not match any variant of untagged enum TransactionInfo"
+                },
+                "id": 1
+              }
+            }
+          ]
+        },
+        {
+          "stage": "noPublicProbeTransaction"
+        }
+      ],
+      "interpretation": "Both status routes recognized and returned expected validation errors for missing parameters; successful FINAL MPC outcome remains unproven until approved execution."
+    }
+  },
+  "evm": {
+    "schemaVersion": 1,
+    "kind": "public-read-only-snapshot",
+    "endpoint": "https://ethereum-sepolia-rpc.publicnode.com",
+    "chainId": 11155111,
+    "block": {
+      "number": "12055461",
+      "hash": "0x66d340b7736865a0633ae857573823d21a9c0021773a86d9b0f4743248fb7bbd",
+      "timestampUnix": "1793711016",
+      "headAtEnd": "12055461"
+    },
+    "token": {
+      "address": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+      "decimals": 18,
+      "codeBytes": 4282,
+      "codeHash": "0xcafbd9135200b24454a9ffcac5a8db40947a17f8a8a542062d0f1fb48bd8b269"
+    },
+    "roles": [
+      {
+        "role": "treasury",
+        "address": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+        "ethBalanceWei": "0",
+        "ethBalance": "0.0",
+        "linkBalanceBaseUnits": "0",
+        "linkBalance": "0.0",
+        "confirmedNonce": "0",
+        "pendingNonce": "0",
+        "code": "0x",
+        "parentBlockLinkBalanceBaseUnits": "0",
+        "additionalFunding": {
+          "ethWei": "5000000000000000",
+          "linkBaseUnits": "2000000000000000000"
+        }
+      },
+      {
+        "role": "investor",
+        "address": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+        "ethBalanceWei": "0",
+        "ethBalance": "0.0",
+        "linkBalanceBaseUnits": "0",
+        "linkBalance": "0.0",
+        "confirmedNonce": "0",
+        "pendingNonce": "0",
+        "code": "0x",
+        "parentBlockLinkBalanceBaseUnits": "0",
+        "additionalFunding": {
+          "ethWei": "5000000000000000",
+          "linkBaseUnits": "0"
+        }
+      }
+    ],
+    "fees": {
+      "baseFeePerGasWei": "17",
+      "suggestedPriorityFeePerGasWei": "2",
+      "selectedMaxFeePerGasWei": "36",
+      "selectedMaxFeeGwei": "0.000000036",
+      "within30GweiCap": true,
+      "gasLimitCap": "120000",
+      "maxTotalFeeCapWei": "3600000000000000",
+      "feeAt120kAndCurrentSelectionWei": "4320000"
+    },
+    "probes": {
+      "simulation": {
+        "rpcError": {
+          "code": 3,
+          "message": "execution reverted: ERC20: transfer amount exceeds balance",
+          "data": "0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002645524332303a207472616e7366657220616d6f756e7420657863656564732062616c616e63650000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "transferEstimate": {
+        "rpcError": {
+          "code": 3,
+          "message": "execution reverted: ERC20: transfer amount exceeds balance",
+          "data": "0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002645524332303a207472616e7366657220616d6f756e7420657863656564732062616c616e63650000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "metadataEstimate": "0x44c6",
+      "logsReturned": 0,
+      "minedTransactionProbeHash": "0xa01eba2531e34054b1300ca66bba3d82b8547c26f486e4497284915130a46931",
+      "minedTransactionFound": true,
+      "minedReceiptFound": true
+    },
+    "requiredReadMethods": [
+      {
+        "method": "eth_chainId",
+        "observations": [
+          {
+            "method": "eth_chainId",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_getBlockByNumber",
+        "observations": [
+          {
+            "method": "eth_getBlockByNumber",
+            "status": "passed"
+          },
+          {
+            "method": "eth_getBlockByNumber",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_getCode",
+        "observations": [
+          {
+            "method": "eth_getCode",
+            "status": "passed"
+          },
+          {
+            "method": "eth_getCode",
+            "status": "passed"
+          },
+          {
+            "method": "eth_getCode",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_call",
+        "observations": [
+          {
+            "method": "eth_call",
+            "status": "passed"
+          },
+          {
+            "method": "eth_call",
+            "status": "passed"
+          },
+          {
+            "method": "eth_call",
+            "status": "passed"
+          },
+          {
+            "method": "eth_call",
+            "status": "passed"
+          },
+          {
+            "method": "eth_call",
+            "status": "passed"
+          },
+          {
+            "method": "eth_call",
+            "status": "recognized-error",
+            "code": 3,
+            "message": "execution reverted: ERC20: transfer amount exceeds balance"
+          }
+        ]
+      },
+      {
+        "method": "eth_getBalance",
+        "observations": [
+          {
+            "method": "eth_getBalance",
+            "status": "passed"
+          },
+          {
+            "method": "eth_getBalance",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_getTransactionCount",
+        "observations": [
+          {
+            "method": "eth_getTransactionCount",
+            "status": "passed"
+          },
+          {
+            "method": "eth_getTransactionCount",
+            "status": "passed"
+          },
+          {
+            "method": "eth_getTransactionCount",
+            "status": "passed"
+          },
+          {
+            "method": "eth_getTransactionCount",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_estimateGas",
+        "observations": [
+          {
+            "method": "eth_estimateGas",
+            "status": "recognized-error",
+            "code": 3,
+            "message": "execution reverted: ERC20: transfer amount exceeds balance"
+          },
+          {
+            "method": "eth_estimateGas",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_maxPriorityFeePerGas",
+        "observations": [
+          {
+            "method": "eth_maxPriorityFeePerGas",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_getTransactionByHash",
+        "observations": [
+          {
+            "method": "eth_getTransactionByHash",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_getTransactionReceipt",
+        "observations": [
+          {
+            "method": "eth_getTransactionReceipt",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_blockNumber",
+        "observations": [
+          {
+            "method": "eth_blockNumber",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "method": "eth_getLogs",
+        "observations": [
+          {
+            "method": "eth_getLogs",
+            "status": "passed"
+          }
+        ]
+      }
+    ],
+    "fundingRequests": 0,
+    "signingSubmissions": 0,
+    "broadcasts": 0
+  },
+  "evmType2Compatibility": {
+    "blockNumber": "12055461",
+    "blockHash": "0x66d340b7736865a0633ae857573823d21a9c0021773a86d9b0f4743248fb7bbd",
+    "transactionTypes": [
+      "0x3",
+      "0x2",
+      "0x0"
+    ],
+    "type2Probes": [
+      {
+        "hash": "0x69066f0ac7fe305dfab3ecbf2918889167f6b3d56225bf79a2808b5d0bd511c4",
+        "chainId": "0xaa36a7",
+        "allTransactionFieldsPresent": true,
+        "allReceiptFieldsPresent": true,
+        "logsCount": 1,
+        "allLogFieldsPresent": true
+      },
+      {
+        "hash": "0x1367b15baef6ff64fd156208359d6236a3287b8d4f0dc3b307c3b19a2e7e484d",
+        "chainId": "0xaa36a7",
+        "allTransactionFieldsPresent": true,
+        "allReceiptFieldsPresent": true,
+        "logsCount": 3,
+        "allLogFieldsPresent": true
+      },
+      {
+        "hash": "0x611e2fb064e875e3fe05ca7fd1361ff95e482571bb6db818649b9e7013b04a2f",
+        "chainId": "0xaa36a7",
+        "allTransactionFieldsPresent": true,
+        "allReceiptFieldsPresent": true,
+        "logsCount": 1,
+        "allLogFieldsPresent": true
+      }
+    ]
+  },
+  "independentDerivation": {
+    "status": "passed",
+    "method": "Independent purePython NIST-SHA3,secp256k1,Keccak/EIP55",
+    "treasury": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+    "investor": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
+  },
+  "observedBlockTimesUtc": {
+    "near": "2026-11-03T13:00:29.857Z",
+    "evm": "2026-11-03T13:03:36.000Z"
+  },
+  "security": {
+    "privateCredentialFilesAccessed": false,
+    "accountsCreated": 0,
+    "keysGenerated": 0,
+    "faucetRequests": 0,
+    "mpcSigningSubmissions": 0,
+    "evmBroadcasts": 0
+  }
+}

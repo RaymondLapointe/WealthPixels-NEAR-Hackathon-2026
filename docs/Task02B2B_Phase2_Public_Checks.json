@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "reportDate": "2026-11-04",
+  "phase": "Task02B-2B Phase2",
+  "status": "funding-verified; transaction-preparation-blocked-by-gas-cap",
+  "near": {
+    "endpoint": "https://archival-rpc.testnet.fastnear.com",
+    "roles": [
+      {
+        "role": "treasury",
+        "accountId": "wealthpixels-treasury.testnet",
+        "accessPublicKey": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1",
+        "soleVerifiedFullAccessKey": true,
+        "accessKeyNonce": "275945855000000",
+        "account": {
+          "amount": "10000000000000000000000000",
+          "block_hash": "6L8atN2Tb1BsdqTJ9xZWtTZZSxRJmG4FmRb7UGLe1x9P",
+          "block_height": 276228734,
+          "code_hash": "11111111111111111111111111111111",
+          "locked": "0",
+          "storage_paid_at": 0,
+          "storage_usage": 182
+        },
+        "inspection": {
+          "blockHash": "6L8atN2Tb1BsdqTJ9xZWtTZZSxRJmG4FmRb7UGLe1x9P",
+          "blockHeight": 276228734,
+          "version": "3.18.0",
+          "contractId": "v1.signer-prod.testnet",
+          "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+          "domainId": 0,
+          "domain": {
+            "id": 0,
+            "protocol": "CaitSith",
+            "purpose": "Sign",
+            "reconstructionThreshold": 11,
+            "keyEpoch": 27,
+            "keyAttempt": 1
+          },
+          "minimumGasTgas": 15
+        },
+        "derivation": {
+          "nearAccountId": "wealthpixels-treasury.testnet",
+          "derivationPath": "wealthpixels/sepolia/v1",
+          "domainId": 0,
+          "blockHash": "6L8atN2Tb1BsdqTJ9xZWtTZZSxRJmG4FmRb7UGLe1x9P",
+          "blockHeight": 276228734,
+          "derivedPublicKey": "secp256k1:3CvAL9Z9PycZW3PcsBChCN2E52ohCwCERGK1UYwmvcC85vdasey3yEtVA22AvKPzFetAGFyzWBwYwC2Mv8EXT7iM",
+          "derivedPublicKeySec1": "0x046e4f75d0ffdd0561764c6606095231cf42f5633b7cfaa8b987dff2795ae46294ec33595e782ac5e4e1c478976623323ce8b9b227246d7a49bd230f4949c85386",
+          "evmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+          "localMatchesContract": true
+        },
+        "adapterPublicChecks": "passed"
+      },
+      {
+        "role": "investor",
+        "accountId": "wealthpixels-investor.testnet",
+        "accessPublicKey": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc",
+        "soleVerifiedFullAccessKey": true,
+        "accessKeyNonce": "275946428000000",
+        "account": {
+          "amount": "10000000000000000000000000",
+          "block_hash": "ADxhn1P6XoowTh5zTja9SWeM9fow1Vm8vuoVjsPRXkZ3",
+          "block_height": 276228733,
+          "code_hash": "11111111111111111111111111111111",
+          "locked": "0",
+          "storage_paid_at": 0,
+          "storage_usage": 182
+        },
+        "inspection": {
+          "blockHash": "ADxhn1P6XoowTh5zTja9SWeM9fow1Vm8vuoVjsPRXkZ3",
+          "blockHeight": 276228733,
+          "version": "3.18.0",
+          "contractId": "v1.signer-prod.testnet",
+          "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+          "domainId": 0,
+          "domain": {
+            "id": 0,
+            "protocol": "CaitSith",
+            "purpose": "Sign",
+            "reconstructionThreshold": 11,
+            "keyEpoch": 27,
+            "keyAttempt": 1
+          },
+          "minimumGasTgas": 15
+        },
+        "derivation": {
+          "nearAccountId": "wealthpixels-investor.testnet",
+          "derivationPath": "wealthpixels/sepolia/v1",
+          "domainId": 0,
+          "blockHash": "ADxhn1P6XoowTh5zTja9SWeM9fow1Vm8vuoVjsPRXkZ3",
+          "blockHeight": 276228733,
+          "derivedPublicKey": "secp256k1:4Hb8S8CLHfpApiPuKm3v2ytFYo8gB34NgE91BNDQga9CdvUpW44a6k59hzJJXgtBj4yKcL5XMSVRiQQEwt8aTKa6",
+          "derivedPublicKeySec1": "0x04a45b30f6c2681b41d588870a439068f39414ae8188d1c750291a3cac876f73d34be888379790fa941b66d136dea3ab7309a5843b0ed465c5ab115853c6f23f47",
+          "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+          "localMatchesContract": true
+        },
+        "adapterPublicChecks": "passed"
+      }
+    ],
+    "privateCredentialsAccessed": false,
+    "signingRequests": 0,
+    "broadcasts": 0
+  },
+  "evm": {
+    "endpoint": "https://ethereum-sepolia-rpc.publicnode.com",
+    "chainId": 11155111,
+    "blockNumber": "12064055",
+    "blockHash": "0x2f96b2fdef561b475daa71bf577679150d45a05288163f998c06c15a79e20d56",
+    "blockTimestampUtc": "2026-11-04T17:58:36.000Z",
+    "token": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+    "roles": [
+      {
+        "role": "treasury",
+        "address": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+        "ethWei": "50000000000000000",
+        "eth": "0.05",
+        "linkBaseUnits": "25000000000000000000",
+        "link": "25.0",
+        "nonce": "0",
+        "pendingNonce": "0",
+        "canCoverApprovedMaximumFee": true,
+        "hasRequiredLink": true
+      },
+      {
+        "role": "investor",
+        "address": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+        "ethWei": "50000000000000000",
+        "eth": "0.05",
+        "linkBaseUnits": "0",
+        "link": "0.0",
+        "nonce": "0",
+        "pendingNonce": "0",
+        "canCoverApprovedMaximumFee": true,
+        "hasRequiredLink": false
+      }
+    ],
+    "details": [
+      {
+        "method": "eth_getCode",
+        "status": "passed",
+        "value": {
+          "codeBytes": 4282
+        }
+      },
+      {
+        "method": "decimals",
+        "status": "passed",
+        "value": {
+          "decimals": 18
+        }
+      },
+      {
+        "method": "eth_maxPriorityFeePerGas",
+        "status": "passed",
+        "value": "0x2"
+      }
+    ],
+    "baseFeePerGasWei": "16",
+    "privateCredentialsAccessed": false,
+    "signingRequests": 0,
+    "broadcasts": 0
+  },
+  "preparation": {
+    "command": "npm run transfer -- prepare --role treasury --state .local/transfers/treasury-link.json --gas-limit-cap 120000 --max-fee-gwei 30 --max-total-fee-eth 0.0036",
+    "exitCode": 1,
+    "error": "PREFLIGHT_FAILED: Buffered gas limit exceeds the approved gasLimitCap.",
+    "attempts": 1,
+    "inspectionExecuted": false,
+    "unsignedHash": null
+  },
+  "readOnlyGasDiagnostic": {
+    "endpoint": "https://ethereum-sepolia-rpc.publicnode.com",
+    "chainId": 11155111,
+    "blockNumber": "12064064",
+    "blockHash": "0xa1ff3734fd3c22f1f228a914f1ba88f08f682fd0e3a81f0dc6b6374f23e20187",
+    "blockTimestampUtc": "2026-11-04T18:00:24.000Z",
+    "sender": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+    "recipient": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+    "token": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+    "amountBaseUnits": "1000000000000000000",
+    "data": "0xa9059cbb00000000000000000000000007fe574edb1b2f537f9be452312c15a5b94278200000000000000000000000000000000000000000000000000de0b6b3a7640000",
+    "nonce": "0",
+    "pendingNonce": "0",
+    "estimatedGas": "142020",
+    "bufferPercent": 20,
+    "requiredBufferedGasLimit": "170424",
+    "approvedGasLimitCap": "120000",
+    "capPass": false,
+    "simulationSuccess": true,
+    "baseFeePerGasWei": "16",
+    "priorityFeePerGasWei": "2",
+    "provisionalSelectedMaxFeePerGasWei": "34",
+    "provisionalMaximumFeeWei": "5794416",
+    "provisionalMaximumFeeEth": "0.000000000005794416",
+    "proposedCapForSeparateReview": "180000",
+    "stateFileExists": false,
+    "lockExists": false,
+    "transactionPrepared": false,
+    "privateCredentialsAccessed": false,
+    "signingRequests": 0,
+    "broadcasts": 0
+  },
+  "proposedNextStep": {
+    "requiresSeparateApproval": true,
+    "gasLimitCap": "180000",
+    "maxFeePerGasCapGwei": "30",
+    "maxTotalFeeCapEth": "0.0036",
+    "amountLink": "1",
+    "note": "No change applied; freshly prepare and inspect only after approval."
+  },
+  "security": {
+    "privateCredentialsAccessed": false,
+    "mpcSigningRequests": 0,
+    "evmBroadcasts": 0,
+    "faucetRequests": 0,
+    "sourceFilesChanged": false
+  }
+}

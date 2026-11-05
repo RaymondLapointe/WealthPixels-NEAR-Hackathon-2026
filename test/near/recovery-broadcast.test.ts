@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import { Interface } from "ethers";
 import { assembleSignedErc20Transfer } from "../../src/evm/erc20-transfer.js";
+import { SepoliaLinkError } from "../../src/evm/sepolia-link.js";
 import { encodeState, type ExecutionState } from "../../src/execution/state.js";
 import { VERIFIED_IDENTITIES, VERIFIED_MPC_ROOT } from "../../src/near/identities.js";
 import { normalizeMpcOutcome } from "../../src/near/signing.js";
@@ -181,6 +182,74 @@ test("existing transaction or receipt, and a changed canonical block, require re
     const value = signedState(), before = encodeState(value), f = fixture(value, options);
     await assert.rejects(broadcastRecoveredTransfer(value, approval, f.ports), isCode(options.reorgAtFinalRead ? "PREFLIGHT_FAILED" : "ALREADY_KNOWN"));
     assert.equal(encodeState(value), before); assert.equal(f.counts.audits + f.counts.saves + f.counts.sends, 0);
+  }
+});
+
+test("recovery diagnostics identify a signed-fee state-validation failure without mutation or submission", async () => {
+  const value = signedState(), before = encodeState(value), f = fixture(value, { baseFee: 29n });
+  await assert.rejects(broadcastRecoveredTransfer(value, approval, f.ports), (error: unknown) => {
+    assert.ok(error instanceof RecoveryBroadcastError);
+    assert.equal(error.code, "PREFLIGHT_FAILED");
+    assert.match(error.message, /Sepolia signed-transaction preflight failed/);
+    assert.match(error.message, /STATE_VALIDATION: maxFeePerGas cannot cover the snapshot base fee plus priority fee/);
+    assert.ok(!error.message.includes("RPC_FAILED"));
+    return true;
+  });
+  assert.equal(encodeState(value), before);
+  assert.equal(f.counts.audits + f.counts.saves + f.counts.sends, 0);
+});
+
+test("recovery diagnostics retain the exact sanitized RPC timeout operation without retrying", async () => {
+  const value = signedState(), before = encodeState(value), f = fixture(value);
+  const request = f.ports.evm.request;
+  let failedReads = 0;
+  f.ports.evm = { async request(method, params) {
+    if (method === "eth_getCode" && params[0] === TOKEN) {
+      failedReads++;
+      throw new SepoliaLinkError("RPC_FAILED", "Sepolia read failed (eth_getCode): timeout.");
+    }
+    return request(method, params);
+  } };
+  await assert.rejects(broadcastRecoveredTransfer(value, approval, f.ports), (error: unknown) => {
+    assert.ok(error instanceof RecoveryBroadcastError);
+    assert.equal(error.code, "PREFLIGHT_FAILED");
+    assert.match(error.message, /Sepolia signed-transaction preflight failed/);
+    assert.match(error.message, /RPC_FAILED: Sepolia read failed \(eth_getCode\): timeout/);
+    assert.ok(!error.message.includes("STATE_VALIDATION"));
+    return true;
+  });
+  assert.equal(failedReads, 1);
+  assert.equal(encodeState(value), before);
+  assert.equal(f.counts.audits + f.counts.saves + f.counts.sends, 0);
+});
+
+test("recovery diagnostics identify receipt lookup failures while suppressing unknown provider details", async () => {
+  const secret = "DO_NOT_LOG_https://example.invalid/operator-secret";
+  for (const failure of [
+    new SepoliaLinkError("RPC_FAILED", "Sepolia read failed (eth_getTransactionReceipt): timeout."),
+    new Error(secret),
+  ]) {
+    const value = signedState(), before = encodeState(value), f = fixture(value);
+    const request = f.ports.evm.request;
+    let failedReads = 0;
+    f.ports.evm = { async request(method, params) {
+      if (method === "eth_getTransactionReceipt") { failedReads++; throw failure; }
+      return request(method, params);
+    } };
+    await assert.rejects(broadcastRecoveredTransfer(value, approval, f.ports), (error: unknown) => {
+      assert.ok(error instanceof RecoveryBroadcastError);
+      assert.equal(error.code, "PREFLIGHT_FAILED");
+      assert.match(error.message, /Sepolia public transaction lookups and investor balances failed/);
+      assert.match(error.message, /signed receipt lookup \(eth_getTransactionReceipt\)/);
+      assert.match(error.message, failure instanceof SepoliaLinkError ? /RPC_FAILED:.*timeout/ : /unclassified failure; raw provider details suppressed/);
+      assert.ok(!error.message.includes(secret));
+      assert.ok(!error.message.includes("operator-secret"));
+      assert.ok(!error.message.includes("https://"));
+      return true;
+    });
+    assert.equal(failedReads, 1);
+    assert.equal(encodeState(value), before);
+    assert.equal(f.counts.audits + f.counts.saves + f.counts.sends, 0);
   }
 });
 

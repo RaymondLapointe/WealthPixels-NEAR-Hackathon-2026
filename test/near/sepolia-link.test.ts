@@ -185,3 +185,40 @@ test("fetch adapter exposes only read methods, has no retries and sanitizes endp
     assert.equal(calls, 1);
   } finally { globalThis.fetch = original; }
 });
+
+test("public RPC diagnostics identify safe failure categories through preflight without retries or secret leakage", async () => {
+  const secret = "DO_NOT_LOG_PRIVATE_BODY_https://example.invalid/operator-secret";
+  const cases: Array<{ category: RegExp; respond: () => Response }> = [
+    { category: /HTTP 429/, respond: () => new Response(secret, { status: 429 }) },
+    { category: /JSON-RPC -32000/, respond: () => new Response(JSON.stringify({
+      jsonrpc: "2.0", id: 1, error: { code: -32000, message: secret, data: secret },
+    })) },
+    { category: /timeout/i, respond: () => { throw new DOMException(secret, "TimeoutError"); } },
+    { category: /invalid response/i, respond: () => new Response(`{${secret}`) },
+    { category: /invalid response/i, respond: () => new Response(JSON.stringify({ jsonrpc: "2.0", id: 99, result: secret })) },
+    { category: /network failure/i, respond: () => { throw new TypeError(secret); } },
+  ];
+  const original = globalThis.fetch;
+  try {
+    for (const sample of cases) {
+      let calls = 0;
+      globalThis.fetch = async (_url, init) => {
+        calls++;
+        assert.equal(JSON.parse(String(init?.body)).method, "eth_chainId");
+        return sample.respond();
+      };
+      // The initial preflight read also exercises preservation through the read() wrapper.
+      await assert.rejects(prepareSepoliaLinkTransfer("treasury", POLICY, createSepoliaReadRpc()), (error: unknown) => {
+        assert.ok(error instanceof SepoliaLinkError);
+        assert.equal(error.code, "RPC_FAILED");
+        assert.match(error.message, /eth_chainId/);
+        assert.match(error.message, sample.category);
+        assert.ok(!error.message.includes(secret));
+        assert.ok(!error.message.includes("operator-secret"));
+        assert.ok(!error.message.includes("https://"));
+        return true;
+      });
+      assert.equal(calls, 1, "A failed public read must not be retried automatically");
+    }
+  } finally { globalThis.fetch = original; }
+});

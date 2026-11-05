@@ -1,8 +1,8 @@
 # WealthPixels — NEAR Chain Signatures prototype
 
-WealthPixels is preparing a testnet demonstration of treasury-owned LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
+WealthPixels has demonstrated treasury-owned test LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
 
-**Current status, November 4, 2026:** one real Treasury NEAR MPC signing request succeeded, and its signature was verified and recovered into the exact signed Sepolia 1 LINK transaction. The transaction has not been broadcast; public transfer evidence remains pending. Offline tests include the recorded public MPC response and mocked recovery-broadcast safety tests. The eventual 100-USDC, 60/40 WETH/LINK purchase remains a later milestone.
+**Current status, November 5, 2026:** both live transfers are confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. Verified balances after the return are 24.1 LINK / 0.9 LINK. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes; the credential-free public verification command passed. Detailed records: [Treasury delivery](evidence/treasury-link-delivery.json) and [Investor return](evidence/investor-link-return.json). Offline tests use clearly labelled recorded public responses and mock transports. Portfolio purchase functionality remains a later milestone.
 
 The hackathon demonstrator may control both disposable testnet roles on one computer. Separate accounts and authorizations demonstrate protocol behavior, **not independent production custody**.
 
@@ -24,7 +24,7 @@ Dependency installation needs internet or a populated npm cache. The tests thems
 | --- | --- | --- |
 | Offline automated tests | npm test or npm run test:offline | None |
 | Public transaction verification | npm run verify:evidence | None; public RPC access |
-| Optional live reproduction | Future separately approved operator workflow | Two disposable NEAR testnet identities and test funds |
+| Optional live reproduction | Separately approved operator workflow | Two disposable NEAR testnet identities and test funds |
 
 ### 1. Offline tests
 
@@ -40,19 +40,19 @@ The original derivation/transfer tests remain available as npm run test:near. Pu
 ### 2. Read-only verification of published transactions
 
 ~~~text
-npm run verify:evidence
+npm run verify:evidence -- --manifest evidence/sepolia-link.json --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io
 ~~~
 
 The command reads evidence/sepolia-link.json. It never loads a credential file or .env, requests a signature, creates an account or broadcasts a transaction.
 
-**Until real transactions are completed and published, it reports PENDING, makes no RPC requests and exits 2.** No transaction hashes have been invented. Exit 0 is reserved for complete evidence that passes all checks; exit 1 means invalid evidence, failed verification or unavailable RPC data.
+The published manifest is complete and contains real transaction hashes. Exit 0 means both live proofs passed verification; exit 1 means invalid evidence, failed verification or unavailable RPC data. A manifest marked PENDING makes no RPC requests and exits 2.
 
-Once completed evidence exists, verification checks both the treasury-to-investor transfer and investor return using public NEAR/Sepolia RPCs. It binds the NEAR signer, direct MPC request digest and returned signature to the recorded EVM transaction, then checks the successful receipt, exact LINK transfer calldata/event and published amounts. It verifies the recorded role derivations; it does not assert that different humans control the two accounts.
+Verification checks both the treasury-to-investor transfer and investor return using public NEAR/Sepolia RPCs. It binds the NEAR signer, direct MPC request digest and returned signature to the recorded EVM transaction, then checks the successful receipt, exact LINK transfer calldata/event and published amounts. It verifies the recorded role derivations; it does not assert that different humans control the two accounts.
 
 Public endpoints can be overridden without private credentials:
 
 ~~~text
-npm run verify:evidence -- --manifest evidence/sepolia-link.json --near-rpc https://archival-rpc.testnet.near.org --evm-rpc https://ethereum-sepolia-rpc.publicnode.com
+npm run verify:evidence -- --manifest evidence/sepolia-link.json --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io
 ~~~
 
 Public archival services can be rate limited or unavailable. A network failure is reported as an inability to verify, not silently treated as success. Verification trusts the queried RPC providers; it is not a light-client proof or an exact historical balance audit.
@@ -61,7 +61,7 @@ See [evidence format and verification limits](evidence/README.md). Public MPC in
 
 ### 3. Optional live reproduction
 
-Judges do not need to run this mode. The operator CLI is implemented and tested with mocks; funding, live MPC signing and EVM broadcasting still require separate approval.
+Judges do not need to run this mode. The operator CLI completed both live transfers, and its offline execution tests use mocks. Any further funding, live MPC signing or EVM broadcasting requires separate approval.
 
 The recommended setup is **one laptop, one Windows user, two disposable NEAR accounts, two separate credential files, and a fresh explicitly selected process for each role**. Each signing invocation must select one `--role` and one explicit `--credential` path. It cannot load a directory or both role files. The current live adapter pins the reviewed WealthPixels public identities; using different identities requires a separately reviewed public configuration change.
 
@@ -71,7 +71,7 @@ npm run transfer -- --help
 
 Read the [Task 02B-2A implementation report and execution runbook](docs/Task02B2A_Live_Transfer_Implementation.md) for preparation, exact fee caps, funding destinations, separate signing/broadcast approvals and recovery. Help and offline tests never load credentials.
 
-For the existing recovered Treasury transaction, the [Phase 3F recovery report](docs/Task02B2B_Phase3F_Controlled_Broadcast_Recovery.md) documents a read-only `recovery-audit` command and a separate `broadcast-recovered` command. Recovery is pinned to that one recorded signature; it requires the exact signed hash, explicit acknowledgment of the original expired timestamp, and a newly preserved audit before any submission. Inspection audits cannot be reused to authorize broadcasting. The normal preparation-age rule remains enforced. No recovery broadcast is authorized until separately approved.
+The [Treasury recovery report](docs/Task02B2B_Phase3F_Controlled_Broadcast_Recovery.md) and [Investor recovery report](docs/Task02B2B_Phase3H_Investor_Recovery_Readiness.md) describe `recovery-audit` and `broadcast-recovered`. Recovery is restricted to those two exact recorded transactions and requires the signed hash, acknowledgment of the original expired timestamp and a new durable audit. Both transactions are now confirmed; their saved state and attempt markers block another broadcast. Inspection audits cannot authorize a later send, and the normal preparation-age rule remains enforced.
 
 Existing operator credential locations (plaintext private keys; keep the protected store outside the repository):
 

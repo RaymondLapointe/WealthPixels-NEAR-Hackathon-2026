@@ -1,6 +1,6 @@
 # Public testnet evidence
 
-sepolia-link.json is the judge-facing manifest. It currently has status "pending", verified public role addresses/root, and no transfer hashes. Account establishment and derivation are recorded in [Task02B1_Public_Identities.json](../docs/Task02B1_Public_Identities.json); live LINK execution remains pending. It contains no credentials or fabricated transactions.
+sepolia-link.json is the judge-facing manifest. As of November 5, 2026 its status is "complete": the real 1 LINK Treasury delivery and separately authorized 0.1 LINK Investor return are confirmed and public verification passed. It records both NEAR signing hashes, both Sepolia transaction hashes and the verified public role addresses/root. Detailed public observations are in [treasury-link-delivery.json](treasury-link-delivery.json) and [investor-link-return.json](investor-link-return.json). Account establishment and derivation are recorded in [Task02B1_Public_Identities.json](../docs/Task02B1_Public_Identities.json). These records contain no credentials or fabricated transactions.
 
 ## Commands and outcomes
 
@@ -23,7 +23,7 @@ The schema has schemaVersion 1, kind "live", status "complete" and operatorModel
 - roles.treasury / roles.investor: verified public NEAR account ID and complete derived EVM address. Never include access credentials.
 - transfers: exactly the approved treasury-to-investor and investor-to-treasury legs, each with a positive decimal-string amountBaseUnits, NEAR transaction hash and EVM transaction hash.
 
-For the planned 1 LINK delivery and 0.1 LINK return, the raw quantities are 1000000000000000000 and 100000000000000000 respectively. These are planned values, not executed transfers.
+The completed 1 LINK delivery and 0.1 LINK return have raw quantities 1000000000000000000 and 100000000000000000 respectively. Both are real testnet executions; the verified post-return balances are Treasury 24.1 LINK and Investor 0.9 LINK.
 
 ## Verification and limits
 

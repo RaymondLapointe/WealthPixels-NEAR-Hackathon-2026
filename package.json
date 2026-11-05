@@ -11,7 +11,7 @@
     "near:derive": "node --import tsx scripts/near-public.ts derive",
     "test:near": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts",
     "typecheck:near": "tsc --project tsconfig.near.json",
-    "test:offline": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts test/near/evidence.test.ts test/near/sepolia-link.test.ts test/near/signing.test.ts test/near/execution.test.ts test/near/recovery-broadcast.test.ts test/near/recovery-cli.test.ts",
+    "test:offline": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts test/near/evidence.test.ts test/near/sepolia-link.test.ts test/near/signing.test.ts test/near/execution.test.ts test/near/recovery-broadcast.test.ts test/near/investor-recovery-broadcast.test.ts test/near/recovery-cli.test.ts",
     "test:legacy": "hardhat test test/portfolioSwap.test.ts",
     "typecheck": "npm run typecheck:near",
     "verify:evidence": "node --import tsx scripts/verify-evidence.ts",

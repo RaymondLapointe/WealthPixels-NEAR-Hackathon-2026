@@ -27,7 +27,7 @@ inspect   (local state only; no credentials or network)
 sign      --credential <absolute selected-role.json path> --approve-sign <unsignedHash> (NEAR transaction)
 reconcile (read-only recovery of pending/near-failed/signed results; saves only validated signatures or receipts)
 broadcast --approve-broadcast <signed EVM hash> (Sepolia transaction)
-recovery-audit --audit <NEW ignored .json file> (read-only audit for the pinned recovered Treasury transaction)
+recovery-audit --audit <NEW ignored .json file> (read-only audit for the pinned recorded transaction of the selected role)
 broadcast-recovered --audit <NEW ignored .json file> --approve-broadcast <exact signed hash> --acknowledge-expired-preparation <original ISO timestamp> (one Sepolia submission; separate approval required)
 export    --treasury-state <file> --investor-state <file> (no credentials; verifies both legs publicly)
 Signing and broadcast flags represent separate human approvals. Do not run them until authorized.
@@ -82,7 +82,7 @@ async function main(): Promise<void> {
   }
   const role = requireRole(required("--role"));
   const recoveryCommand = command === "recovery-audit" || command === "broadcast-recovered";
-  if (recoveryCommand && role !== "treasury") throw new Error("The recovery path is restricted to the recorded Treasury transaction.");
+  // Recovery accepts only the exact recorded Treasury or Investor transaction; the module pins each role's hashes and intent.
   if (command === "broadcast-recovered") { required("--approve-broadcast"); required("--acknowledge-expired-preparation"); }
   const stateFile = await runtimeStatePath(required("--state"), process.cwd(), command === "prepare");
   if (command === "inspect") {

@@ -174,6 +174,11 @@ function checkedPrepared(prepared: PreparedErc20Transfer): PreparedErc20Transfer
   return rebuilt;
 }
 
+/** Controlled local validation messages, distinct from raw transport/provider errors. */
+export class TransferPreflightError extends Error {
+  override readonly name = "TransferPreflightError";
+}
+
 /** Validate an explicitly supplied snapshot. A successful result is not a live preflight. */
 export function validateTransferPreflight(
   prepared: PreparedErc20Transfer,
@@ -181,37 +186,37 @@ export function validateTransferPreflight(
 ): TransferPreflightResult {
   const transfer = checkedPrepared(prepared);
   if (snapshot.chainId !== SEPOLIA_CHAIN_ID) {
-    throw new Error("snapshot chainId must be Ethereum Sepolia");
+    throw new TransferPreflightError("snapshot chainId must be Ethereum Sepolia");
   }
   if (address(snapshot.senderAddress, "snapshot senderAddress") !== transfer.senderAddress) {
-    throw new Error("snapshot senderAddress does not match the prepared sender");
+    throw new TransferPreflightError("snapshot senderAddress does not match the prepared sender");
   }
   if (address(snapshot.tokenAddress, "snapshot tokenAddress") !== transfer.tokenAddress) {
-    throw new Error("snapshot tokenAddress does not match the prepared token");
+    throw new TransferPreflightError("snapshot tokenAddress does not match the prepared token");
   }
   if (
     typeof snapshot.tokenCode !== "string" ||
     !/^0x(?:[0-9a-fA-F]{2})+$/.test(snapshot.tokenCode)
   ) {
-    throw new Error("snapshot tokenCode must contain contract bytecode");
+    throw new TransferPreflightError("snapshot tokenCode must contain contract bytecode");
   }
   if (nonce(snapshot.pendingNonce, "snapshot pendingNonce") !== transfer.nonce) {
-    throw new Error("snapshot pendingNonce does not match the prepared nonce");
+    throw new TransferPreflightError("snapshot pendingNonce does not match the prepared nonce");
   }
   if (uint256(snapshot.estimatedGas, "snapshot estimatedGas", true) > transfer.gasLimit) {
-    throw new Error("gasLimit is below the snapshot gas estimate");
+    throw new TransferPreflightError("gasLimit is below the snapshot gas estimate");
   }
   const tokenBalance = uint256(snapshot.tokenBalance, "snapshot tokenBalance");
   const nativeBalance = uint256(snapshot.nativeBalance, "snapshot nativeBalance");
   const baseFeePerGas = uint256(snapshot.baseFeePerGas, "snapshot baseFeePerGas");
   if (tokenBalance < transfer.amount) {
-    throw new Error("snapshot token inventory is insufficient");
+    throw new TransferPreflightError("snapshot token inventory is insufficient");
   }
   if (nativeBalance < transfer.maximumFeeWei) {
-    throw new Error("snapshot native balance cannot cover the maximum fee");
+    throw new TransferPreflightError("snapshot native balance cannot cover the maximum fee");
   }
   if (baseFeePerGas + transfer.maxPriorityFeePerGas > transfer.maxFeePerGas) {
-    throw new Error("maxFeePerGas cannot cover the snapshot base fee plus priority fee");
+    throw new TransferPreflightError(`maxFeePerGas cannot cover the snapshot base fee plus priority fee (base=${baseFeePerGas}, priority=${transfer.maxPriorityFeePerGas}, max=${transfer.maxFeePerGas} wei)`);
   }
   return Object.freeze({
     checkedNonce: transfer.nonce,

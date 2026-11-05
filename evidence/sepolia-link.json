@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "live",
-  "status": "pending",
+  "status": "complete",
   "operatorModel": "single-operator-demo",
   "near": {
     "networkId": "testnet",
@@ -26,5 +26,18 @@
       "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
     }
   },
-  "transfers": []
+  "transfers": [
+    {
+      "direction": "treasury-to-investor",
+      "amountBaseUnits": "1000000000000000000",
+      "nearTransactionHash": "8Lf5NwoqSgoJjmHpM1AbjxUwAKww4HXeSJ6n9N3acoXs",
+      "evmTransactionHash": "0xff3272b7b92f32c9f498bc37994b6502f29f12050a9a9cd63532723f62c8c719"
+    },
+    {
+      "direction": "investor-to-treasury",
+      "amountBaseUnits": "100000000000000000",
+      "nearTransactionHash": "4uD2MLZVKW8qNKcRQPzweVVwvb3yDTNw5DzHm2MPky9z",
+      "evmTransactionHash": "0x3be24eeae394ac79ac65df6a2ea2e58aa086cd7500ac78d7d1af99a848b59c86"
+    }
+  ]
 }

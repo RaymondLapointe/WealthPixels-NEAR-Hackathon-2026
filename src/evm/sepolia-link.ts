@@ -75,7 +75,10 @@ function roles(roleValue: AuthorityRole) {
 }
 async function read(rpc: SepoliaReadRpc, method: SepoliaReadMethod, params: readonly unknown[]): Promise<unknown> {
   try { return await rpc.request(method, params); }
-  catch { throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}); check the public RPC and retry the read only.`); }
+  catch (error) {
+    if (error instanceof SepoliaLinkError) throw error;
+    throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}): unclassified provider failure; raw details suppressed.`);
+  }
 }
 function decode(method: "decimals" | "balanceOf" | "transfer", value: unknown): unknown {
   check(typeof value === "string" && /^0x(?:[0-9a-fA-F]{2})+$/.test(value), `Invalid LINK ${method} return data.`);
@@ -268,10 +271,26 @@ export function createSepoliaReadRpc(publicHttpsUrl = "https://ethereum-sepolia-
     check((SEPOLIA_READ_METHODS as readonly string[]).includes(method), "RPC method is outside the Sepolia read-only allowlist.", "INVALID_STATE");
     try {
       const response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, redirect: "error", body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(20000) });
-      if (!response.ok) throw new Error();
-      const result = record(await response.json());
-      if (result.jsonrpc !== "2.0" || result.id !== 1 || result.error || !("result" in result)) throw new Error();
+      if (!response.ok) throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}): HTTP ${response.status}.`);
+      let result: unknown;
+      try { result = await response.json(); }
+      catch (error) {
+        const category = error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name) ? "timeout reading response" : "invalid response JSON";
+        throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}): ${category}.`);
+      }
+      if (!result || typeof result !== "object" || Array.isArray(result) || !("jsonrpc" in result) || result.jsonrpc !== "2.0" || !("id" in result) || result.id !== 1) {
+        throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}): invalid response envelope.`);
+      }
+      if ("error" in result && result.error) {
+        const code = typeof result.error === "object" && "code" in result.error && Number.isSafeInteger(result.error.code) ? ` ${result.error.code}` : "";
+        throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}): JSON-RPC${code}; remote message suppressed.`);
+      }
+      if (!("result" in result)) throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}): invalid response missing result.`);
       return result.result;
-    } catch { throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}); check public endpoint availability.`); }
+    } catch (error) {
+      if (error instanceof SepoliaLinkError) throw error;
+      const category = error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name) ? "timeout" : "network failure";
+      throw new SepoliaLinkError("RPC_FAILED", `Sepolia read failed (${method}): ${category}; raw details suppressed.`);
+    }
   } });
 }

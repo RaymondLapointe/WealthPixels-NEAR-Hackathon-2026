@@ -43,3 +43,25 @@ test("read-only recovery audit rejects credential and generic force flags before
     }
   } finally { await rm(directory, { recursive: true }); }
 });
+
+test("Investor recovery CLI retains separate approval and credential/force rejection boundaries", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "wealthpixels-investor-recovery-cli-"));
+  try {
+    const base = ["broadcast-recovered", "--role", "investor", "--state", ".local/transfers/investor.json", "--audit", ".local/transfers/evidence/new-investor.json"];
+    const signedHash = "0x3be24eeae394ac79ac65df6a2ea2e58aa086cd7500ac78d7d1af99a848b59c86";
+    for (const approvals of [[], ["--approve-broadcast", signedHash], ["--acknowledge-expired-preparation", "2026-11-05T16:17:00.756Z"]]) {
+      const result = run(directory, [...base, ...approvals]);
+      assert.equal(result.status, 1, result.stderr);
+      assert.doesNotMatch(result.stderr, /UNEXPECTED_RECOVERY_NETWORK/);
+      assert.deepEqual(await readdir(directory), []);
+    }
+    for (const command of ["recovery-audit", "broadcast-recovered"]) {
+      for (const flag of ["--credential", "--force"]) {
+        const result = run(directory, [command, "--role", "investor", flag, "never-opened"]);
+        assert.equal(result.status, 1, result.stderr);
+        assert.doesNotMatch(result.stderr, /UNEXPECTED_RECOVERY_NETWORK/);
+        assert.deepEqual(await readdir(directory), []);
+      }
+    }
+  } finally { await rm(directory, { recursive: true }); }
+});

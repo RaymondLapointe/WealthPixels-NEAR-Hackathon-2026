@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "kind": "task03a-planning-read-only-snapshot",
+  "date": "2026-11-05",
+  "scope": {
+    "privateCredentialsAccessed": false,
+    "liveTransactionsPrepared": false,
+    "signaturesRequested": false,
+    "transactionsBroadcast": false,
+    "faucetRequests": false,
+    "applicationSourceChanged": false
+  },
+  "evm": {
+    "file": ".local/transfers/evidence/task03a-read-only-readiness-20261105T190130336Z.json",
+    "checkedAt": "2026-11-05T19:01:30.330Z",
+    "blockNumber": "12071420",
+    "blockHash": "0x4f502783315f2f412a24cca0b3f8712c1e5460e93047f060c9fcb7479ec1c084",
+    "canonical": true,
+    "token": {
+      "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "codeBytes": 1798,
+      "codeHash": "0xcd3f29e2ea9c61dadd48bfeaf8b2884b6de9dfee7bf45329452c4c33d0868ceb",
+      "decimals": 6,
+      "symbol": "USDC",
+      "name": "USDC",
+      "paused": false
+    },
+    "balances": {
+      "treasury": {
+        "address": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+        "ethWei": "49999999856304440",
+        "eth": "0.04999999985630444",
+        "usdcBaseUnits": "0",
+        "usdc": "0.0",
+        "linkBaseUnits": "24100000000000000000",
+        "link": "24.1",
+        "confirmedNonce": "1",
+        "pendingNonce": "1",
+        "usdcBlacklisted": false
+      },
+      "investor": {
+        "address": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+        "ethWei": "49999999956182840",
+        "eth": "0.04999999995618284",
+        "usdcBaseUnits": "0",
+        "usdc": "0.0",
+        "linkBaseUnits": "900000000000000000",
+        "link": "0.9",
+        "confirmedNonce": "1",
+        "pendingNonce": "1",
+        "usdcBlacklisted": false
+      }
+    },
+    "prices": {
+      "ethUsd": {
+        "candidateAddress": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+        "decimals": 8,
+        "description": "ETH / USD",
+        "roundId": "18446744073709588972",
+        "answer": "224853026749",
+        "formattedPrice": "2248.53026749",
+        "startedAt": "1793901732",
+        "updatedAt": "1793901732",
+        "updatedAtIso": "2026-11-05T18:02:12.000Z",
+        "ageAtBlockSeconds": "3540",
+        "answeredInRound": "18446744073709588972"
+      },
+      "linkUsd": {
+        "candidateAddress": "0xc59E3633BAAC79493d908e63626716e204A45EdF",
+        "decimals": 8,
+        "description": "LINK / USD",
+        "roundId": "18446744073709594386",
+        "answer": "1064538160",
+        "formattedPrice": "10.6453816",
+        "startedAt": "1793901732",
+        "updatedAt": "1793901732",
+        "updatedAtIso": "2026-11-05T18:02:12.000Z",
+        "ageAtBlockSeconds": "3540",
+        "answeredInRound": "18446744073709594386"
+      }
+    },
+    "errors": []
+  },
+  "near": {
+    "file": ".local/transfers/evidence/task03a-near-funding-20261105T190644079Z.json",
+    "kind": "task03a-public-near-funding",
+    "checkedAt": "2026-11-05T19:06:44.077Z",
+    "blockHeight": 276382036,
+    "blockHash": "6NUe3erZ2a5b3KdFgyqnVkYnNgYwtTTRuYAAjezqrsRp",
+    "gasPriceYoctoPerGas": "100000000",
+    "maximumFeeYoctoPer100Tgas": "10000000000000000000000",
+    "balances": {
+      "treasury": {
+        "accountId": "wealthpixels-treasury.testnet",
+        "amountYocto": "9999195179042797999999999",
+        "storageUsageBytes": 182,
+        "storageReserveYocto": "1820000000000000000000",
+        "spendableYocto": "9997375179042797999999999"
+      },
+      "investor": {
+        "accountId": "wealthpixels-investor.testnet",
+        "amountYocto": "9999195988080103099999999",
+        "storageUsageBytes": 182,
+        "storageReserveYocto": "1820000000000000000000",
+        "spendableYocto": "9997375988080103099999999"
+      }
+    },
+    "credentialsAccessed": false,
+    "signingRequests": false,
+    "transactionsPrepared": false
+  },
+  "finality": {
+    "file": ".local/transfers/evidence/task03a-finalized-tag-readiness.json",
+    "kind": "task03a-read-only-finality-capability",
+    "checkedAt": "2026-11-05T19:19:11.578Z",
+    "provider": "https://rpc.sepolia.ethpandaops.io",
+    "finalizedTagSupported": true,
+    "blockNumber": "12071417",
+    "blockHash": "0xe2705a6b085a138124b06cf3ed0259573050d582d3936e4534ae3129f8e3482e",
+    "blockTime": "2026-11-05T19:00:36.000Z"
+  },
+  "pricingProvenance": {
+    "ethUsdAddressConfirmedInOfficialApiReference": true,
+    "linkUsdCandidateOfficialAddressAndHeartbeatConfirmed": false,
+    "heartbeatThresholdsApproved": false,
+    "amountsAreIllustrativeOnly": true,
+    "testUsdcQuoteConvention": "1 test USDC equals 1 illustrative quote-dollar; no monetary backing or execution guarantee"
+  },
+  "illustrativeSizing": {
+    "ethWei": "22236747587042373",
+    "eth": "0.022236747587042373",
+    "linkBaseUnits": "4696872491635245842",
+    "link": "4.696872491635245842",
+    "treasuryEthRequiredWei": "30436747587042373",
+    "treasuryEthRequired": "0.030436747587042373",
+    "maxDeliveryFeeReserveEth": "0.0072",
+    "additionalOperatingReserveEth": "0.001"
+  },
+  "purchaseReady": false,
+  "remainingGates": [
+    "Design approval and implementation",
+    "Investor funding of 100 canonical Sepolia test USDC",
+    "Official price-feed provenance and freshness policy, or an explicitly approved fixed demonstration quote",
+    "New USDC/native-ETH and order-bound recovery validation"
+  ],
+  "sources": {
+    "usdcContracts": "https://developers.circle.com/stablecoins/usdc-contract-addresses",
+    "circleFaucet": "https://faucet.circle.com/",
+    "feedApi": "https://docs.chain.link/data-feeds/api-reference",
+    "feedDirectory": "https://docs.chain.link/data-feeds/price-feeds/addresses"
+  }
+}
