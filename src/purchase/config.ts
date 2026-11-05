@@ -21,16 +21,33 @@ export const DEFAULT_EXECUTION_LIMITS = Object.freeze({
   maxTotalFeeWei: 3_600_000_000_000_000n, gasBufferBps: DEFAULT_GAS_BUFFER_BPS,
 });
 
-/** Discovery configuration only; no live conversion rate defaults are supplied. */
+/** Verified source discovery only. Freshness limits are proposals for 03D; no collector or live price defaults. */
 export const PRICING_CONFIGURATION = Object.freeze({
   quoteConvention: "1 test USDC = 1 nominal quote-dollar; no monetary backing or production viability claim",
+  liveCollectorImplemented: false,
   ethUsd: Object.freeze({
     address: "0x694AA1769357215DE4FAC081bf1f309aDC325306",
-    source: "https://docs.chain.link/data-feeds/api-reference", officialAddressVerified: true, heartbeatVerified: false,
+    source: "https://docs.chain.link/data-feeds/price-feeds/addresses",
+    referenceDataSource: "https://reference-data-directory.vercel.app/feeds-ethereum-testnet-sepolia.json",
+    apiReference: "https://docs.chain.link/data-feeds/api-reference",
+    officialAddressVerified: true, heartbeatVerified: true, decimals: 8,
+    documentedHeartbeatSeconds: 3600, documentedDeviationBps: 100, proposedMaxAgeSeconds: 3600,
   }),
   linkUsd: Object.freeze({
-    candidateAddress: "0xc59E3633BAAC79493d908e63626716e204A45EdF",
-    source: "https://docs.chain.link/data-feeds/price-feeds/addresses", officialAddressVerified: false, heartbeatVerified: false,
+    address: "0xc59E3633BAAC79493d908e63626716e204A45EdF",
+    source: "https://docs.chain.link/data-feeds/price-feeds/addresses",
+    referenceDataSource: "https://reference-data-directory.vercel.app/feeds-ethereum-testnet-sepolia.json",
+    officialAddressVerified: true, heartbeatVerified: true, decimals: 8,
+    documentedHeartbeatSeconds: 3600, documentedDeviationBps: 100, proposedMaxAgeSeconds: 3600,
   }),
-  nearUsd: Object.freeze({ configured: false, source: "Required verified or explicitly approved reference before live fee eligibility" }),
+  nearUsd: Object.freeze({
+    configured: false, liveCollectorImplemented: false, candidate: "coingecko-keyless-https",
+    endpoint: "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd&include_last_updated_at=true",
+    coinId: "near", quoteCurrency: "usd", requiredTimestampField: "last_updated_at", proposedMaxAgeSeconds: 120,
+    source: "https://docs.coingecko.com/demo/reference/simple-price",
+    accessPolicySource: "https://docs.coingecko.com/docs/errors-and-rate-limits",
+    documentedKeylessAccess: true, endpointDocumentationShowsDemoApiKey: true,
+    availability: "Candidate only: observed keyless access has no uptime guarantee; reject missing, stale or unavailable rates",
+    fallback: "Only an explicitly approved, time-bounded demonstration rate; no automatic substitution",
+  }),
 });

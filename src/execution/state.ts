@@ -78,7 +78,8 @@ export function publicExecutionSummary(state: ExecutionState): unknown {
     receipt: state.receipt, recovery: state.recovery,
   };
 }
-export function decodeState(text: string): ExecutionState {
+/** Shared bounded bigint codec; asset-specific validators must validate the returned object. */
+export function decodeEncodedState(text: string): unknown {
   if (text.length > 2_000_000) throw new Error("Transfer state is too large.");
   const value = JSON.parse(text, (_key, item: unknown) => {
     if (item && typeof item === "object" && "$bigint" in item) {
@@ -87,7 +88,11 @@ export function decodeState(text: string): ExecutionState {
       return BigInt(digits);
     }
     return item;
-  }) as ExecutionState;
+  });
+  return value;
+}
+export function decodeState(text: string): ExecutionState {
+  const value = decodeEncodedState(text) as ExecutionState;
   if (!value || value.schemaVersion !== 1 || !statuses.has(value.status) || !Number.isFinite(Date.parse(value.createdAt))) throw new Error("Unsupported transfer state.");
   requireRole(value.role);
   assertLinkPreflight(value.preflight);
@@ -102,6 +107,10 @@ export async function readState(file: string, role: AuthorityRole): Promise<Exec
   return state;
 }
 export async function saveState(file: string, state: ExecutionState): Promise<void> {
+  await saveEncodedState(file, state);
+}
+/** Shared durable writer; callers retain the runtime-path checks, lock and asset-specific validation. */
+export async function saveEncodedState(file: string, state: unknown): Promise<void> {
   const temporary = file + ".tmp";
   const handle = await open(temporary, "wx", 0o600);
   try { await handle.writeFile(encodeState(state), "utf8"); await handle.sync(); }

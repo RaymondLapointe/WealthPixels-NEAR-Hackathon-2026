@@ -18,7 +18,15 @@ Task 03D must collect fresh verified estimates/prices, bind the assessment into 
 
 Official Sepolia USDC is [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://developers.circle.com/stablecoins/usdc-contract-addresses), with six decimals. The read-only November 5 check found 0 USDC at both roles. One approved [Circle faucet](https://faucet.circle.com/) allocation of 20 test USDC to Investor would cover the 10-USDC target. Funding has not been requested. Fresh balances are required before any future live preparation.
 
-See the [Task 03B implementation report](docs/Task03B_ERC20_Intents_and_Fee_Eligibility.md) for pricing gaps, module interfaces and the Task 03C–03F sequence. Native ETH execution, complete quoting and three-leg orchestration remain to be implemented and reviewed.
+See the [Task 03B implementation report](docs/Task03B_ERC20_Intents_and_Fee_Eligibility.md) for the accepted baseline. Task 03C adds native ETH components and advances pricing readiness as described below; complete quoting and three-leg orchestration remain future work.
+
+## Native ETH support: Task 03C
+
+Native ETH modules now construct exact EIP-1559 value transfers with empty calldata, bind the quantity to allocation terms, check confirmed/pending nonce and Treasury value-plus-maximum-fee funds, and retain a positive operating reserve (default 0.001 ETH). Fresh estimates must retain at least the 20% gas buffer within protective limits. Signature verification recovers the full trusted MPC-derived Treasury public key. Separate unsigned-digest signing approval and signed-hash broadcast approval, durable attempt markers, exclusive state locks, the unchanged 15-minute preparation window and public reconciliation preserve the execution boundaries.
+
+Offline receipt tests reconstruct exact signed bytes, check canonical receipt/parent blocks and at least two confirmations, account for actual gas and verify delivered ETH as an increase over the Investor's existing balance. Unexpected balance activity requires reconciliation. Native signature/receipt positives use a labelled synthetic public algebraic fixture; they are not live NEAR signing or proof of ETH delivery. Mocked workflow tests use no credentials or transaction submission. There is no native live CLI command or completed portfolio purchase yet.
+
+ETH/USD and LINK/USD Sepolia feed addresses, eight decimals and one-hour heartbeats are now verified against Chainlink's official directory. A timestamped CoinGecko NEAR/USD HTTPS source is a candidate with access/rate-limit caveats; the live collector remains disabled. Task 03D must integrate approved freshness policies and all six expected execution costs before accepting payment. The 10% threshold is unchanged. See [Task 03C results, pricing sources and remaining gates](docs/Task03C_Native_ETH_and_Pricing_Readiness.md).
 
 ## Quick start for judges
 

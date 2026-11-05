@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "kind": "read-only-public-price-source-research-not-a-quote",
+  "compiledAt": "2026-11-05T22:07:26Z",
+  "scope": "Timestamped public source and price observations only. No live transaction preparation, gas estimation, signing, broadcasting, credentials or price-collector implementation.",
+  "useRestriction": "Historical observations, not approved rates, a purchase quote, current defaults or a live fee-eligibility decision. Obtain fresh source observations before any separately approved purchase.",
+  "quoteConvention": "One test USDC is one nominal quote-dollar; test tokens have no monetary backing and testnet economics do not establish production viability.",
+  "chainlink": {
+    "authoritativeDirectory": "https://docs.chain.link/data-feeds/price-feeds/addresses",
+    "referenceDataSource": "https://reference-data-directory.vercel.app/feeds-ethereum-testnet-sepolia.json",
+    "provenanceVerification": "The official directory HTML embeds the Sepolia reference-data URL and the exact proxy/heartbeat/decimals entries. Those rows were independently retrieved from the referenced JSON. Only the relevant bounded fields are retained here.",
+    "apiReference": "https://docs.chain.link/data-feeds/api-reference",
+    "freshnessGuidance": "https://docs.chain.link/data-feeds/overview#check-the-timestamp-of-the-latest-answer",
+    "retrievedOn": "2026-11-05",
+    "observation": {
+      "observedAt": "2026-11-05T22:03:03.248Z",
+      "rpc": "https://rpc.sepolia.ethpandaops.io",
+      "chainId": "11155111",
+      "blockNumberHex": "0xb83576",
+      "blockHash": "0x49a43a0e41bc563a49be58ebe9d7a99fcb2d31748d9ae2f09f46bffd8185c801",
+      "blockTimestampHex": "0x6aecfd14",
+      "feeds": [
+        {
+          "pair": "ETH / USD",
+          "proxyAddress": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+          "officialAddressVerified": true,
+          "documentedHeartbeatSeconds": 3600,
+          "documentedDeviationBps": 100,
+          "documentedDecimals": 8,
+          "observedDecimals": "8",
+          "observedDescription": "ETH / USD",
+          "documentedAndObservedAggregator": "0x719E22E3D4b690E5d96cCb40619180B5427F14AE",
+          "roundId": "18446744073709588975",
+          "rawAnswer": "224173646055",
+          "startedAtUnixSeconds": "1793912628",
+          "updatedAtUnixSeconds": "1793912628",
+          "answeredInRound": "18446744073709588975",
+          "updatedAtUtc": "2026-11-05T21:03:48.000Z",
+          "ageAtObservedBlockSeconds": "3552"
+        },
+        {
+          "pair": "LINK / USD",
+          "proxyAddress": "0xc59E3633BAAC79493d908e63626716e204A45EdF",
+          "officialAddressVerified": true,
+          "documentedHeartbeatSeconds": 3600,
+          "documentedDeviationBps": 100,
+          "documentedDecimals": 8,
+          "observedDecimals": "8",
+          "observedDescription": "LINK / USD",
+          "documentedAndObservedAggregator": "0x5A2734CC0341ea6564dF3D00171cc99C63B1A7d3",
+          "roundId": "18446744073709594391",
+          "rawAnswer": "1067229000",
+          "startedAtUnixSeconds": "1793916168",
+          "updatedAtUnixSeconds": "1793916168",
+          "answeredInRound": "18446744073709594391",
+          "updatedAtUtc": "2026-11-05T22:02:48.000Z",
+          "ageAtObservedBlockSeconds": "12"
+        }
+      ]
+    },
+    "proposedPolicy": {
+      "status": "Proposal for Task 03D, not a live collector or an approved quote",
+      "maximumAgeSeconds": 3600,
+      "expiryRule": "Rate expiration must be no later than updatedAt plus 3600 seconds; quote/payment authorization must not outlive any required rate.",
+      "validation": "Require exact approved proxy, expected description/decimals, positive bounded answer, nonzero valid round/update timestamps and a canonical observation block. Reject future or stale updates.",
+      "missedHeartbeatBehavior": "Stop new payment authorization; no silent grace period or alternate-price substitution.",
+      "limitation": "A heartbeat is an update trigger, not an uptime guarantee. ETH was near its documented heartbeat in this historical sample. Task 03D still needs fresh reads, a trusted clock and explicit policy integration."
+    }
+  },
+  "nearUsd": {
+    "candidate": "CoinGecko HTTPS Simple Price",
+    "status": "Disabled discovery candidate pending approved Task 03D source/freshness policy and collector",
+    "endpoint": "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd&include_last_updated_at=true",
+    "documentation": "https://docs.coingecko.com/demo/reference/simple-price",
+    "accessPolicyDocumentation": "https://docs.coingecko.com/docs/errors-and-rate-limits",
+    "coinIdentityDocumentation": "https://docs.coingecko.com/demo/reference/coins-id",
+    "verifiedCoinMetadata": {
+      "endpoint": "https://api.coingecko.com/api/v3/coins/near?localization=false&tickers=false&market_data=false",
+      "id": "near",
+      "symbol": "near",
+      "name": "NEAR Protocol",
+      "homepage": "https://near.org/"
+    },
+    "observation": {
+      "observedAt": "2026-11-05T22:02:36.0702475Z",
+      "httpStatus": 200,
+      "credentialsUsed": false,
+      "rawResponse": "{\"near\":{\"usd\":3.69,\"last_updated_at\":1793916114}}",
+      "priceDecimalLexeme": "3.69",
+      "exactUsdNumerator": "369",
+      "exactUsdDenominator": "100",
+      "updatedAtUnixSeconds": "1793916114",
+      "updatedAtUtc": "2026-11-05T22:01:54.000Z",
+      "ageAtObservationWholeSeconds": 42
+    },
+    "accessCaveat": "General official rate-limit documentation describes keyless IP-based access, and the observed request succeeded without credentials. The endpoint's Demo reference nevertheless marks its API-key header required. Neither documentation nor one successful response establishes future endpoint availability or an uptime guarantee. No API account or key was created, requested or read.",
+    "proposedMaximumAgeSeconds": 120,
+    "proposedValidation": "Bind the exact coin ID and USD quote. Preserve and parse the raw decimal lexeme into integer numerator/denominator; never calculate from binary floating point. Require last_updated_at, reject future/stale timestamps and unavailable, malformed or unauthorized responses. Do not retry into a silent pass.",
+    "extraBlockchainIntegrationRequired": false
+  },
+  "demonstrationRateAlternative": {
+    "automaticFallbackAllowed": false,
+    "humanApprovalRequired": true,
+    "requiredFields": ["asset", "positive rational USD numerator and denominator", "public source URL and original observation reference", "observedAt", "absolute expiresAt", "approvalReference", "explicit approved-demonstration label"],
+    "proposedMaximumValiditySeconds": 300,
+    "restrictions": "No unstated rates, price substitutions or reuse of expired observations. Preserve the separate 60-second fee-estimate freshness gate and the configured 1000-bps total expected system execution fee threshold. A verified price source alone does not establish fee eligibility."
+  },
+  "remainingTask03DWork": "Approve source/freshness policy; implement and verify public collectors; acquire fresh prices and all three EVM plus three NEAR cost estimates; bind immutable quote and fee assessment; revalidate before accepting payment. Paid settlement obligations remain outstanding after later fee increases."
+}
