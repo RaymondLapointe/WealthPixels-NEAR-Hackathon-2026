@@ -2,7 +2,7 @@
 
 WealthPixels has demonstrated treasury-owned test LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
 
-**Current status, November 5, 2026:** both live transfers are confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. Verified balances after the return are 24.1 LINK / 0.9 LINK. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes; the credential-free public verification command passed. Detailed records: [Treasury delivery](evidence/treasury-link-delivery.json) and [Investor return](evidence/investor-link-return.json). Offline tests use clearly labelled recorded public responses and mock transports. Portfolio purchase functionality remains a later milestone.
+**Current status, November 6, 2026:** both live LINK transfers remain confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. Verified balances after the return are 24.1 LINK / 0.9 LINK. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes; the credential-free public verification command passed. Detailed records: [Treasury delivery](evidence/treasury-link-delivery.json) and [Investor return](evidence/investor-link-return.json). The portfolio purchase coordinator is implemented and tested offline; a live portfolio purchase remains a separately approved milestone.
 
 The hackathon demonstrator may control both disposable testnet roles on one computer. Separate accounts and authorizations demonstrate protocol behavior, **not independent production custody**.
 
@@ -10,21 +10,21 @@ The hackathon demonstrator may control both disposable testnet roles on one comp
 
 The next live demonstration targets **10 test USDC**, with an illustrative 50% native ETH / 50% LINK allocation from Treasury principal inventory. The amount is configurable; 10 USDC is a demonstration target, with no production minimum implied. The earlier 100-USDC planning example is superseded. The completed live evidence above proves the two LINK transfers; a portfolio purchase has not yet executed.
 
-Task 03B adds pure TypeScript modules for exact six-decimal USDC parsing, immutable allocation terms, Investor-to-Treasury USDC intents, quote-sized Treasury-to-Investor LINK intents, and fee accounting. `npm test` includes 1, 5, 10, 20 and 100 USDC cases, precision/rounding, role/token/recipient checks and duplicate payment-claim guards. These are offline tests with labelled fixtures. Purchase intents are not yet exposed through the live CLI, and the payment-claim guard is not yet a durable payment registry.
+Task 03B introduced exact six-decimal USDC parsing, immutable allocation terms, Investor-to-Treasury USDC intents, quote-sized Treasury-to-Investor LINK intents, and fee accounting. Task 03D-2 now connects these to the purchase operator CLI, durable atomic payment claims and sequential settlement. `npm test` includes 1, 5, 10, 20 and 100 USDC cases. The purchase lifecycle has been demonstrated with labelled offline fixtures; no live portfolio purchase has executed.
 
 Before payment authorization, total expected system execution costs must be at most `MAX_EXPECTED_FEE_BPS = 1000` (10%) of the investment. This includes all three EVM transactions and all three NEAR MPC signing operations, regardless of payer. Calculations use exact rational USDC equivalents, at least 20% gas buffers, documented conversion inputs and separate expected-fee assumptions and maximum reserves. Missing, expired or unverified inputs fail closed; offline price fixtures cannot authorize payment. Fee-estimation work is a WealthPixels operating expense. The 10% testnet policy makes no claim about production economic viability.
 
-Task 03D-1 now binds approved demonstration prices and all six expected costs into an immutable quote and durable prepayment state. Task 03D-2 must connect fresh public cost/funding observations, transaction execution, finality, atomic payment claiming and settlement. After accepted payment, a fee increase must leave the delivery obligation outstanding. Actual costs and the realized fee ratio remain part of the completion-evidence work.
+Task 03D-1 binds approved demonstration prices and all six expected costs into an immutable quote. Task 03D-2 adds public cost/funding collectors, role-specific execution, finalized payment claiming, durable settlement obligations, bounded recovery and actual fee accounting. After accepted payment, fee increases and quote expiration leave delivery obligations outstanding. Task 03E will implement the public purchase evidence manifest and verifier.
 
 Official Sepolia USDC is [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://developers.circle.com/stablecoins/usdc-contract-addresses), with six decimals. The read-only November 5 check found 0 USDC at both roles. One approved [Circle faucet](https://faucet.circle.com/) allocation of 20 test USDC to Investor would cover the 10-USDC target. Funding has not been requested. Fresh balances are required before any future live preparation.
 
-See the [Task 03B implementation report](docs/Task03B_ERC20_Intents_and_Fee_Eligibility.md) for the accepted baseline. Task 03C adds native ETH components and advances pricing readiness as described below; complete quoting and three-leg orchestration remain future work.
+See the [Task 03B implementation report](docs/Task03B_ERC20_Intents_and_Fee_Eligibility.md) for its accepted baseline, and the Task 03D-2 section below for the implemented purchase workflow and remaining live approvals.
 
 ## Native ETH support: Task 03C
 
 Native ETH modules now construct exact EIP-1559 value transfers with empty calldata, bind the quantity to allocation terms, check confirmed/pending nonce and Treasury value-plus-maximum-fee funds, and retain a positive operating reserve (default 0.001 ETH). Fresh estimates must retain at least the 20% gas buffer within protective limits. Signature verification recovers the full trusted MPC-derived Treasury public key. Separate unsigned-digest signing approval and signed-hash broadcast approval, durable attempt markers, exclusive state locks, the unchanged 15-minute preparation window and public reconciliation preserve the execution boundaries.
 
-Offline receipt tests reconstruct exact signed bytes, check canonical receipt/parent blocks and at least two confirmations, account for actual gas and verify delivered ETH as an increase over the Investor's existing balance. Unexpected balance activity requires reconciliation. Native signature/receipt positives use a labelled synthetic public algebraic fixture; they are not live NEAR signing or proof of ETH delivery. Mocked workflow tests use no credentials or transaction submission. There is no native live CLI command or completed portfolio purchase yet.
+Offline receipt tests reconstruct exact signed bytes, check canonical receipt/parent blocks and at least two confirmations, account for actual gas and verify delivered ETH as an increase over the Investor's existing balance. Unexpected balance activity requires reconciliation. Native signature/receipt positives use a labelled synthetic public algebraic fixture; they are not live NEAR signing or proof of ETH delivery. The Task 03D-2 purchase CLI now exposes native delivery within the paid-purchase sequence. It has not executed a live native transfer or portfolio purchase.
 
 Task 03C verified ETH/USD and LINK/USD Sepolia feed addresses, eight decimals and one-hour heartbeats against Chainlink's official directory. A timestamped CoinGecko NEAR/USD HTTPS source remains a candidate with access/rate-limit caveats. This research is preserved in [Task 03C results](docs/Task03C_Native_ETH_and_Pricing_Readiness.md). The Task 03D-1 amendment makes approved demonstration prices the hackathon baseline; live price collectors remain future integrations.
 
@@ -43,6 +43,35 @@ npm run quote:example
 ~~~
 
 It prints a synthetic 10-USDC quote and all six fee components. It performs no RPC calls or journal writes, contains no real price/Investor approval, and proves no live purchase. Tests also exercise prepayment branches with labelled injected observations and simulated approval references. The journal and calculations are implemented; live purchase preparation, signing, broadcasting, payment finality and settlement remain outside this increment. See the [Task 03D-1 report](docs/Task03D1_Quotation_and_Prepayment.md).
+
+## Purchase execution and recovery: Task 03D-2
+
+The implemented sequence is Investor USDC payment, canonical **finalized** payment verification and atomic claim, Treasury LINK delivery, then Treasury native ETH delivery with a fresh nonce. Each leg requires separate exact-digest MPC signing approval and exact-signed-hash broadcast approval. The production driver reuses the existing signers, trusted full derived public keys, EIP-1559 builders and one-attempt transports. No completed live purchase is claimed.
+
+One ignored journal holds one active purchase, its immutable quote and inventory reservation, per-leg attempts, original bytes/timestamps, public NEAR outcomes, receipt observations, actual fees and outstanding obligations. Payment identity is `chainId:transactionHash:TransferLogIndex`; its unique claim and finalized paid state commit together under the workspace lock. This local quote/payment association is not trustless onchain enforcement.
+
+New payment preparation and the first MPC authorization require an unexpired quote and fresh complete economic eligibility. At that authorization, the exact payment digest and original approved price assumptions are durably bound. The three transactions do **not** have to finish within 60 seconds: an already-authorized payment is screened again against fresh six-cost observations before broadcasting, using the unchanged accepted demonstration rates. These become historical order assumptions, not refreshed market observations. Unresolved signed/submitted payments keep reservations held. After finalized payment, expiry or higher fees cannot cancel delivery obligations.
+
+Normal transaction preparations retain the 15-minute limit. Only an existing signed purchase leg can use recovery, with its exact signed hash, original payment-authorization hash and explicit original-expired-timestamp acknowledgment. Broadcasting creates its own preserved audit within **30 seconds**, additionally bounded by any earlier observation expiry, and persists the attempt before its sole send. Timeout or expiry after the marker leaves an uncertain attempt requiring read-only reconciliation; it does not permit another send. No force flag, automatic resend, replacement or refund exists. Confirmed LINK is freshly checked before ETH delivery/completion; partial settlement resumes only the missing obligation.
+
+Credential-free evaluation:
+
+~~~text
+npm run purchase:dry-run
+npm run purchase -- --help
+~~~
+
+The dry-run creates an isolated temporary journal and uses labelled mock network/signing/broadcast ports. It prints the three intended legs and `settling`, `partially-delivered`, `completed` ledger states. Its mock payloads are not executable Ethereum transactions; it provides no live purchase evidence.
+
+Public account/contract inspection, with no transfer simulation or transaction preparation:
+
+~~~text
+npm run purchase -- inspect-networks --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io
+~~~
+
+The November 6 public snapshot found Investor **20 USDC**, Treasury **24.1 LINK**, Investor **0.9 LINK**, about **0.05 ETH** at each role, and confirmed/pending nonce **1** for both. These are timestamped observations, not continuing readiness approval. The live collector additionally supports all three gas simulations, fee assumptions and storage-reserved NEAR funding; those are required afresh for a separately approved live quote. USDC proxy implementation approval is explicit rather than silently inferred from the RPC that observes it.
+
+Read the [Task 03D-2 report and operator sequence](docs/Task03D2_Purchase_Execution_and_Recovery.md). Task 03E public purchase evidence export/verification and all live purchase operations remain separate checkpoints. Existing published LINK evidence is unchanged.
 
 ## External Pricing Integration and Future Production Readiness
 

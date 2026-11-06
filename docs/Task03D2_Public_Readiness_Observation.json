@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "kind": "historical-live-public-readiness-observation",
+  "observationOnly": true,
+  "purchaseExecutionProof": "none; no transaction preparation, gas simulation, credential access, signing, funding or broadcasting",
+  "sampledAt": "2026-11-06T05:16:09.457Z",
+  "expiresAt": "2026-11-06T05:17:00.000Z",
+  "command": ".\\scripts\\with-node22.ps1 -Tool npm -ToolArguments @('run','purchase','--','inspect-networks','--near-rpc','https://archival-rpc.testnet.fastnear.com','--evm-rpc','https://rpc.sepolia.ethpandaops.io')",
+  "commandResult": "passed; exactly one invocation, no retry",
+  "sources": {
+    "evmRpc": "https://rpc.sepolia.ethpandaops.io",
+    "nearRpc": "https://archival-rpc.testnet.fastnear.com",
+    "officialUsdcAddress": "https://developers.circle.com/stablecoins/usdc-contract-addresses",
+    "officialUsdcContractControls": "https://github.com/circlefin/stablecoin-evm",
+    "officialFaucet": "https://faucet.circle.com/"
+  },
+  "evm": {
+    "chainId": "11155111",
+    "blockNumber": "12074439",
+    "blockHash": "0x058d7850bd87ae51333126430347d8ee92193989b227321d3c1541e6f504fcdd",
+    "blockTimestamp": "2026-11-06T05:16:00.000Z",
+    "baseFeePerGasWei": "16",
+    "accountsRemainCodeFree": true,
+    "canonicalBlockRechecked": true,
+    "usdc": {
+      "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "decimals": 6,
+      "proxyCodeHash": "0xcd3f29e2ea9c61dadd48bfeaf8b2884b6de9dfee7bf45329452c4c33d0868ceb",
+      "implementationAddress": "0xDa317C1d3E835dD5F1BE459006471aCAA1289068",
+      "implementationCodeHash": "0xf4898b096a273d86cda13cce6503404da4005565fae6026a94919b231229d85b",
+      "implementationTrust": "observed at the pinned canonical block; explicitly review and bind this identity in a separately authorized quote before live payment preparation",
+      "paused": false,
+      "treasuryBlacklisted": false,
+      "investorBlacklisted": false
+    },
+    "link": {
+      "address": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+      "decimals": 18,
+      "codeHash": "0xcafbd9135200b24454a9ffcac5a8db40947a17f8a8a542062d0f1fb48bd8b269"
+    },
+    "treasury": {
+      "address": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+      "ethWei": "49999999856304440",
+      "usdcBaseUnits": "0",
+      "linkBaseUnits": "24100000000000000000",
+      "confirmedNonce": 1,
+      "pendingNonce": 1
+    },
+    "investor": {
+      "address": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+      "ethWei": "49999999956182840",
+      "usdcBaseUnits": "20000000",
+      "linkBaseUnits": "900000000000000000",
+      "confirmedNonce": 1,
+      "pendingNonce": 1
+    }
+  },
+  "near": {
+    "networkId": "testnet",
+    "blockHeight": "276444567",
+    "blockHash": "CQEW9vYBJU59V5Df1TTMWHjqAG5mMHs44fyFVv8qbdbd",
+    "gasPriceYoctoNear": "100000000",
+    "storageAmountPerByteYocto": "10000000000000000000",
+    "canonicalFinalBlockRechecked": true,
+    "treasury": {
+      "accountId": "wealthpixels-treasury.testnet",
+      "amountYocto": "9999195179042797999999999",
+      "spendableYocto": "9997375179042797999999999",
+      "accessPublicKey": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1",
+      "permission": "sole FullAccess",
+      "accessKeyNonce": "275945855000001",
+      "derivedEvmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87"
+    },
+    "investor": {
+      "accountId": "wealthpixels-investor.testnet",
+      "amountYocto": "9999195988080103099999999",
+      "spendableYocto": "9997375988080103099999999",
+      "accessPublicKey": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc",
+      "permission": "sole FullAccess",
+      "accessKeyNonce": "275946428000001",
+      "derivedEvmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
+    },
+    "mpc": {
+      "contractId": "v1.signer-prod.testnet",
+      "version": "3.18.0",
+      "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+      "domainId": 0,
+      "protocol": "CaitSith",
+      "purpose": "Sign",
+      "reconstructionThreshold": 11,
+      "keyEpoch": 27,
+      "keyAttempt": 1,
+      "minimumGasTgas": 15,
+      "configuredSigningAttachmentTgas": 100,
+      "configuredSigningDepositYoctoNear": "1",
+      "derivationPath": "wealthpixels/sepolia/v1",
+      "localAndContractDerivationMatchedForBothRoles": true
+    }
+  },
+  "conclusions": {
+    "investorUsdcFundingSatisfies10UsdcTarget": true,
+    "additionalUsdcFaucetActionNeededFor10UsdcTarget": false,
+    "gasBalancesPresent": true,
+    "noPendingRoleEvmTransactionsObserved": true,
+    "basicIdentityAndContractChecksPassed": true,
+    "remainingLivePrerequisites": [
+      "Separate approval of demonstration prices, exact immutable quote and all transaction-specific operations",
+      "Fresh six-cost simulations and fee eligibility within their original deadlines during a separately authorized live purchase preparation",
+      "Review and quote-binding of the observed USDC implementation identity",
+      "Gas and inventory sufficiency for actual approved quantities must be verified freshly; this basic inspection prepares no purchase"
+    ],
+    "faucetDocumentation": "Circle public faucet currently advertises 20 test USDC per address/blockchain every two hours; no faucet request was made"
+  }
+}

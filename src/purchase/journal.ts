@@ -10,6 +10,8 @@ import type { CompletePurchaseCosts } from "./costs.js";
 import { approvePurchaseQuote, assertPaymentAuthorizationEligible, assertPurchaseQuote, assertQuoteApproval,
   DEFAULT_PURCHASE_QUOTE_POLICY, type PurchaseQuote, type PurchaseQuotePolicy, type QuoteApproval, type PaymentEligibility } from "./quote.js";
 import { check, fingerprint, frozen, hexHash, label, publicSource, utc } from "./integrity.js";
+import { assertPurchaseExecution, executionPhase, PURCHASE_LEGS, type PurchaseExecution } from "./settlement.js";
+import { paymentClaimId } from "./claims.js";
 
 export interface FundingInventorySnapshot {
   readonly mode: "offline" | "live"; readonly observedAt: string; readonly chainId: bigint;
@@ -27,16 +29,17 @@ export interface InventoryReservation {
   readonly expiresAt: string; readonly afterPaymentAuthorization: "retain-until-reconciled"; readonly reservationHash: string;
 }
 export interface PrepaymentRecord {
-  readonly status: "quoted" | "approved" | "payment-authorized" | "expired-unpaid";
+  readonly status: "quoted" | "approved" | "payment-authorized" | "expired-unpaid" | "executing" | "settling" | "partially-delivered" | "completed" | "attention-required";
   readonly quote: PurchaseQuote; readonly inventory: FundingInventorySnapshot; readonly reservation: InventoryReservation;
   readonly approval: QuoteApproval | null; readonly eligibility: PaymentEligibility | null;
   readonly authorizationInventory: FundingInventorySnapshot | null; readonly updatedAt: string; readonly releasedAt: string | null;
+  readonly execution?: PurchaseExecution;
 }
 export interface PurchaseJournal {
   readonly schemaVersion: 1; readonly kind: "purchase-prepayment-journal"; readonly revision: number;
   readonly active: PrepaymentRecord | null; readonly archive: readonly PrepaymentRecord[];
   /** No payment acceptance or settlement mutation exists in Task 03D-1. */
-  readonly paymentClaims: readonly [];
+  readonly paymentClaims: readonly string[];
 }
 function exactKeys(value: unknown, fields: string[]): void {
   check(value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join() === fields.sort().join(), "Unexpected or missing prepayment journal fields.");
@@ -74,7 +77,7 @@ function funding(value: FundingInventorySnapshot, asOf: string, quote: PurchaseQ
     requireUint256(value[field], field);
   }
 }
-function reservation(quote: PurchaseQuote, assessment = quote.feeAssessment): InventoryReservation {
+function reservation(quote: PurchaseQuote, assessment: Pick<PaymentEligibility["feeAssessment"], "expectedCosts"> = quote.feeAssessment): InventoryReservation {
   const reserve = (asset: "ETH" | "NEAR", payer: "treasury" | "investor") => assessment.expectedCosts
     .filter(item => item.asset === asset && item.payer === payer).reduce((total, item) => total + item.maximumNativeReserveBaseUnits, 0n);
   const body = { linkBaseUnits: quote.terms.quantities.linkBaseUnits,
@@ -93,9 +96,21 @@ function sufficientPaymentFunding(inventory: FundingInventorySnapshot, quote: Pu
     inventory.investorSpendableNearYocto >= r.investorMaxNearYocto && inventory.treasurySpendableNearYocto >= r.treasuryMaxNearYocto,
     "Investor payment or role-specific EVM/NEAR fee funding is insufficient.");
 }
+export function assertPublicFundingInventory(inventory: FundingInventorySnapshot, asOf: string, quote: PurchaseQuote, costs = quote.costs): void {
+  funding(inventory, asOf, quote, costs);
+}
+export function assertPrepaymentFunding(inventory: FundingInventorySnapshot, asOf: string, quote: PurchaseQuote,
+  originalReservation: InventoryReservation, assessment: Pick<PaymentEligibility["feeAssessment"], "expectedCosts">, costs: CompletePurchaseCosts): void {
+  funding(inventory, asOf, quote, costs);
+  const fresh = reservation(quote, assessment);
+  for (const field of ["treasuryEthWei", "investorMaxEvmFeeWei", "treasuryMaxNearYocto", "investorMaxNearYocto"] as const) {
+    check(fresh[field] <= originalReservation[field], "Fresh maximum fees exceed the immutable reservation; approve a new quote.");
+  }
+  sufficientPaymentFunding(inventory, quote, fresh);
+}
 function assertRecord(record: PrepaymentRecord, policy: PurchaseQuotePolicy): void {
-  exactKeys(record, ["status", "quote", "inventory", "reservation", "approval", "eligibility", "authorizationInventory", "updatedAt", "releasedAt"]);
-  check(["quoted", "approved", "payment-authorized", "expired-unpaid"].includes(record.status), "Unsupported prepayment status; settlement belongs to Task 03D-2.");
+  exactKeys(record, ["status", "quote", "inventory", "reservation", "approval", "eligibility", "authorizationInventory", "updatedAt", "releasedAt", ...("execution" in record ? ["execution"] : [])]);
+  check(["quoted", "approved", "payment-authorized", "expired-unpaid", "executing", "settling", "partially-delivered", "completed", "attention-required"].includes(record.status), "Unsupported purchase journal status.");
   const quote = record.quote;
   assertPurchaseQuote(quote, quote.quoteHash, policy);
   funding(record.inventory, quote.createdAt, quote);
@@ -108,11 +123,11 @@ function assertRecord(record: PrepaymentRecord, policy: PurchaseQuotePolicy): vo
   }
   if (record.status === "quoted") check(record.approval === null && record.eligibility === null, "Unapproved quote cannot contain authorization evidence.");
   if (record.status === "approved") check(record.approval !== null && record.eligibility === null, "Approved journal state is incomplete.");
-  if (record.status === "payment-authorized") {
+  if (record.status === "payment-authorized" || record.execution) {
     check(record.approval && record.eligibility && record.authorizationInventory, "Payment eligibility record is incomplete.");
     const eligibility = assertPaymentAuthorizationEligible(quote, record.approval, { role: "investor", approval: quote.quoteHash,
       asOf: record.eligibility.checkedAt, freshCosts: record.eligibility.freshCosts }, policy);
-    check(isDeepStrictEqual(eligibility, record.eligibility) && record.updatedAt === eligibility.checkedAt, "Saved payment eligibility was altered.");
+    check(isDeepStrictEqual(eligibility, record.eligibility) && (record.execution || record.updatedAt === eligibility.checkedAt), "Saved payment eligibility was altered.");
     funding(record.authorizationInventory, eligibility.checkedAt, quote, eligibility.freshCosts);
     const current = reservation(quote, eligibility.feeAssessment);
     for (const field of ["treasuryEthWei", "investorMaxEvmFeeWei", "treasuryMaxNearYocto", "investorMaxNearYocto"] as const) {
@@ -120,21 +135,33 @@ function assertRecord(record: PrepaymentRecord, policy: PurchaseQuotePolicy): vo
     }
     sufficientPaymentFunding(record.authorizationInventory, quote, current);
   } else check(record.eligibility === null && record.authorizationInventory === null, "Unsigned/unpaid state cannot contain payment authorization evidence.");
+  if (record.execution) {
+    assertPurchaseExecution(quote, record.approval, record.execution);
+    check(record.updatedAt === record.execution.updatedAt && (record.status === executionPhase(record.execution) || record.status === "expired-unpaid"), "Purchase phase differs from durable leg substates.");
+    if (record.status === "expired-unpaid") check(!record.execution.paymentAuthorization && !record.execution.paidAt &&
+      PURCHASE_LEGS.every(leg => !record.execution!.legs[leg]?.nearTransactionHash && !record.execution!.legs[leg]?.signed && !record.execution!.legs[leg]?.evmAttempt), "Unresolved signing or payment cannot release inventory.");
+  } else check(["quoted", "approved", "payment-authorized", "expired-unpaid"].includes(record.status), "Settlement state requires durable execution evidence.");
   if (record.status === "expired-unpaid") check(record.releasedAt === record.updatedAt && utc(record.updatedAt) >= utc(quote.expiresAt), "Unpaid expiry or reservation release is invalid.");
+  else if (record.status === "completed") check(record.releasedAt === record.updatedAt && record.execution?.realizedCosts, "Completion requires actual-cost accounting and reservation release.");
   else check(record.releasedAt === null, "Active inventory reservation cannot be released.");
 }
 function empty(): PurchaseJournal { return { schemaVersion: 1, kind: "purchase-prepayment-journal", revision: 0, active: null, archive: [], paymentClaims: [] }; }
 function assertJournal(value: PurchaseJournal, policy: PurchaseQuotePolicy): void {
   exactKeys(value, ["schemaVersion", "kind", "revision", "active", "archive", "paymentClaims"]);
   check(value.schemaVersion === 1 && value.kind === "purchase-prepayment-journal" && Number.isSafeInteger(value.revision) && value.revision >= 0 &&
-    Array.isArray(value.archive) && Array.isArray(value.paymentClaims) && value.paymentClaims.length === 0, "Unsupported prepayment journal or settlement claims.");
+    Array.isArray(value.archive) && Array.isArray(value.paymentClaims), "Unsupported purchase journal.");
   check(value.active === null || (!!value.active && typeof value.active === "object" && !Array.isArray(value.active)), "Active prepayment record must be an object or null.");
   const ids = new Set<string>();
   for (const record of [...value.archive, ...(value.active ? [value.active] : [])]) {
     assertRecord(record, policy);
     check(!ids.has(record.quote.purchaseId), "Purchase ID was already used."); ids.add(record.quote.purchaseId);
   }
-  check(value.archive.every(record => record.status === "expired-unpaid") && (!value.active || value.active.status !== "expired-unpaid"), "One active prepayment record and expired-unpaid history are required.");
+  check(value.archive.every(record => record.status === "expired-unpaid" || record.status === "completed") &&
+    (!value.active || !["expired-unpaid", "completed"].includes(value.active.status)), "One active purchase and terminal history are required.");
+  const claimed = [...value.archive, ...(value.active ? [value.active] : [])].flatMap(record => record.execution?.paymentClaim ? [record.execution.paymentClaim] : []);
+  check(new Set(claimed).size === claimed.length && new Set(value.paymentClaims).size === value.paymentClaims.length &&
+    isDeepStrictEqual([...claimed].sort(), [...value.paymentClaims].sort()) &&
+    value.paymentClaims.every(id => /^11155111:0x[0-9a-f]{64}:(?:0|[1-9][0-9]*)$/.test(id)), "Payment claims must be unique and atomically associated with finalized paid purchases.");
 }
 async function journalPath(root: string): Promise<string> {
   return runtimeStatePath(resolve(root, ".local", "transfers", "purchase-journal.json"), root, true);
@@ -210,11 +237,57 @@ export async function expireUnpaidPurchase(input: { readonly expectedQuoteHash: 
   return locked(root, policy, async journal => {
     const active = journal.active;
     check(active && active.quote.quoteHash === hexHash(input.expectedQuoteHash), "No matching active purchase.");
-    check(active.status !== "payment-authorized", "Payment authorization may be signed/submitted later; retain reservation until Task 03D-2 reconciles it.");
+    check(active.status !== "payment-authorized" && !active.execution, "Payment authorization may be signed/submitted later; retain reservation until Task 03D-2 reconciles it.");
     currentAction(input.asOf, active.quote, true);
     check(utc(input.asOf) >= utc(active.updatedAt) && utc(input.asOf) >= utc(active.quote.expiresAt), "Unpaid quote is not expired or action time moved backwards.");
     const record: PrepaymentRecord = { ...active, status: "expired-unpaid", updatedAt: input.asOf, releasedAt: input.asOf };
     const next: PurchaseJournal = { ...journal, revision: journal.revision + 1, active: null, archive: [...journal.archive, record] };
     return { value: next, next };
+  });
+}
+
+/** Internal coordinator storage boundary: one lock spans reads, validations, durable markers and one-use transports. */
+export async function withPurchaseExecutionJournal<T>(root: string, policy: PurchaseQuotePolicy,
+  action: (store: { current(): PurchaseJournal; commit(next: PurchaseJournal): Promise<void> }) => Promise<T>): Promise<T> {
+  const path = await journalPath(root);
+  return withStateLock(path, async () => {
+    let current: PurchaseJournal;
+    try { current = decodeEncodedState(await readFile(path, "utf8")) as PurchaseJournal; }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; current = empty(); }
+    assertJournal(current, policy);
+    return action({ current: () => frozen(current), async commit(next) {
+      assertJournal(next, policy);
+      check(next.revision === current.revision + 1 && next.archive.length >= current.archive.length &&
+        isDeepStrictEqual(next.archive.slice(0, current.archive.length), current.archive) &&
+        isDeepStrictEqual(next.paymentClaims.slice(0, current.paymentClaims.length), current.paymentClaims), "Journal history or claims cannot be reset.");
+      const prior = current.active;
+      const candidate = next.active ?? next.archive.at(-1);
+      if (prior && candidate) {
+        check(isDeepStrictEqual(prior.quote, candidate.quote) && isDeepStrictEqual(prior.reservation, candidate.reservation) &&
+          isDeepStrictEqual(prior.approval, candidate.approval) && (isDeepStrictEqual(prior.eligibility, candidate.eligibility) ||
+            !prior.execution && prior.eligibility === null && !!candidate.execution && !!candidate.eligibility) &&
+          (prior.authorizationInventory === null || isDeepStrictEqual(prior.authorizationInventory, candidate.authorizationInventory)) &&
+          utc(candidate.updatedAt) >= utc(prior.updatedAt), "Accepted quote, reservation, approval or chronology changed.");
+        const old = prior.execution, fresh = candidate.execution;
+        if (old) {
+          check(fresh && old.mode === fresh.mode && old.startedAt === fresh.startedAt &&
+            isDeepStrictEqual(fresh.events.slice(0, old.events.length), old.events) &&
+            isDeepStrictEqual(fresh.retiredUnsigned.slice(0, old.retiredUnsigned.length), old.retiredUnsigned) &&
+            (!old.paymentAuthorization || isDeepStrictEqual(old.paymentAuthorization, fresh.paymentAuthorization)) &&
+            (!old.paidAt || old.paidAt === fresh.paidAt) && (!old.paymentClaim || old.paymentClaim === fresh.paymentClaim), "Execution history, authorization or obligation cannot be reset.");
+          for (const leg of PURCHASE_LEGS) {
+            const previous = old.legs[leg], entry = fresh.legs[leg]; if (!previous) continue;
+            if (!entry) check(previous.status === "prepared" && !previous.nearTransactionHash && !previous.signed && !previous.evmAttempt &&
+              fresh.retiredUnsigned.some(item => item.leg === leg && item.preparedAt === previous.preparedAt && isDeepStrictEqual(item.prepared, previous.prepared)), "A transaction attempt cannot be discarded.");
+            else check(isDeepStrictEqual(previous.prepared, entry.prepared) && previous.preparedAt === entry.preparedAt &&
+              (!previous.nearTransactionHash || previous.nearTransactionHash === entry.nearTransactionHash) &&
+              (!previous.signed || isDeepStrictEqual(previous.signed, entry.signed)) && (!previous.evmAttempt || isDeepStrictEqual(previous.evmAttempt, entry.evmAttempt)) &&
+              (!previous.externalObservation || isDeepStrictEqual(previous.externalObservation, entry.externalObservation)) &&
+              (previous.status !== "confirmed" || entry.status === "confirmed"), "Original transaction bytes, hashes, timestamps or completed delivery cannot change.");
+          }
+        }
+      }
+      await saveEncodedState(path, next); current = frozen(next);
+    } });
   });
 }

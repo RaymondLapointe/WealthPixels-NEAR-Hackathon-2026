@@ -16,7 +16,9 @@
     "scripts/verify-evidence.ts",
     "scripts/provision-role-key.ts",
     "scripts/transfer.ts",
-    "scripts/quote-example.ts"
+    "scripts/quote-example.ts",
+    "scripts/purchase.ts",
+    "scripts/purchase-dry-run.ts"
   ],
   "exclude": [
     "node_modules"

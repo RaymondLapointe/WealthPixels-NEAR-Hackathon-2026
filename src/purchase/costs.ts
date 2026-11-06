@@ -1,4 +1,5 @@
 import { baseDecode } from "near-api-js";
+import { getAddress } from "ethers";
 import { VERIFIED_IDENTITIES } from "../near/identities.js";
 import { DERIVATION_PATH, ECDSA_DOMAIN_ID, MPC_CONTRACT_ID } from "../near/config.js";
 import { DEFAULT_NATIVE_DELIVERY_POLICY, estimateNativeDeliveryFees, type NativeDeliveryPolicy } from "../evm/sepolia-native.js";
@@ -7,7 +8,7 @@ import { requireUint256 } from "./amounts.js";
 import { assertPurchaseTerms, type PurchaseTerms } from "./terms.js";
 import { createFeeEstimate, PURCHASE_FEE_LEGS, type EvmFeeEstimate, type FeeAssessment, type NearFeeEstimate, type PurchaseFeeLeg } from "./fee-eligibility.js";
 import { toFeePriceRates, type PriceSet, type PricingPurpose } from "./prices.js";
-import { check, hexHash, label, publicSource, purchaseId, utc } from "./integrity.js";
+import { check, frozen, hexHash, label, publicSource, purchaseId, utc } from "./integrity.js";
 
 export interface EvmLegCostObservation {
   readonly leg: PurchaseFeeLeg; readonly payer: "investor" | "treasury";
@@ -30,10 +31,14 @@ export interface CompletePurchaseCosts {
   readonly nearObservation: { readonly networkId: "testnet"; readonly blockHeight: bigint; readonly blockHash: string;
     readonly sourceUrl: string; readonly reference: string; readonly gasPriceYoctoNear: bigint };
   readonly evm: readonly EvmLegCostObservation[]; readonly near: readonly NearLegCostObservation[];
+  readonly assetIdentity?: { readonly usdcImplementation: { readonly address: string; readonly codeHash: string } };
 }
 export interface CostAssessmentOptions {
   readonly asOf: string; readonly purpose: PricingPurpose; readonly maxExpectedFeeBps: bigint;
   readonly maxEstimateAgeMs: number; readonly expiresAt?: string; readonly executionPolicy?: NativeDeliveryPolicy;
+}
+export interface CostNormalizationOptions extends Omit<CostAssessmentOptions, "maxExpectedFeeBps" | "expiresAt"> {
+  readonly purchaseId: string;
 }
 function keys(value: unknown, names: string[]): void {
   check(value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join() === names.sort().join(), "Missing or unexpected cost-observation fields.");
@@ -42,13 +47,23 @@ export function costObservationDeadline(costs: CompletePurchaseCosts, maximumAge
   check(Number.isSafeInteger(maximumAgeMs) && maximumAgeMs > 0 && maximumAgeMs <= 60_000, "Fee observation maximum age cannot exceed 60 seconds.");
   return new Date(Math.min(utc(costs.expiresAt), utc(costs.sampledAt) + maximumAgeMs)).toISOString();
 }
-export function createPurchaseFeeEstimate(terms: PurchaseTerms, prices: PriceSet, costs: CompletePurchaseCosts,
-  options: CostAssessmentOptions): FeeAssessment {
+/** Validates fresh six-cost observations without evaluating or refreshing any price observation. */
+export function normalizePurchaseCostObservations(terms: PurchaseTerms, costs: CompletePurchaseCosts,
+  options: CostNormalizationOptions) {
   assertPurchaseTerms(terms);
-  const rates = toFeePriceRates(prices, { purchaseId: prices.purchaseId, asOf: options.asOf, purpose: options.purpose });
-  keys(costs, ["schemaVersion", "kind", "purchaseId", "termsHash", "mode", "sampledAt", "expiresAt", "reference", "evmObservation", "nearObservation", "evm", "near"]);
-  check(costs.schemaVersion === 1 && costs.kind === "six-cost-observations" && purchaseId(costs.purchaseId) === prices.purchaseId &&
+  keys(costs, ["schemaVersion", "kind", "purchaseId", "termsHash", "mode", "sampledAt", "expiresAt", "reference", "evmObservation", "nearObservation", "evm", "near",
+    ...(Object.prototype.hasOwnProperty.call(costs, "assetIdentity") ? ["assetIdentity"] : [])]);
+  check(costs.schemaVersion === 1 && costs.kind === "six-cost-observations" && purchaseId(costs.purchaseId) === purchaseId(options.purchaseId) &&
     hexHash(costs.termsHash) === terms.termsHash, "Cost observations belong to another purchase or allocation.");
+  if (Object.prototype.hasOwnProperty.call(costs, "assetIdentity")) {
+    keys(costs.assetIdentity, ["usdcImplementation"]);
+    keys(costs.assetIdentity!.usdcImplementation, ["address", "codeHash"]);
+    const implementation = costs.assetIdentity!.usdcImplementation;
+    check(getAddress(implementation.address) === implementation.address && implementation.address !== getAddress("0x0000000000000000000000000000000000000000"),
+      "USDC implementation identity requires a canonical nonzero address.");
+    check(hexHash(implementation.codeHash) === implementation.codeHash && implementation.codeHash !== `0x${"00".repeat(32)}`,
+      "USDC implementation identity requires a nonzero code hash.");
+  }
   check(costs.mode === "offline" || costs.mode === "live", "Explicit cost observation mode is required.");
   if (options.purpose === "prepayment") check(costs.mode === "live", "Offline cost fixtures cannot authorize prepayment eligibility.");
   const asOf = utc(options.asOf), sampled = utc(costs.sampledAt), deadline = utc(costObservationDeadline(costs, options.maxEstimateAgeMs));
@@ -99,6 +114,14 @@ export function createPurchaseFeeEstimate(terms: PurchaseTerms, prices: PriceSet
     near.push({ leg, payer, estimatedExecutionGas: signing.estimatedExecutionGas, transactionOverheadGas: signing.transactionOverheadGas,
       gasBufferBps: limits.gasBufferBps, assumedGasPriceYoctoNear: nearGasPrice, attachedGas: signing.attachedGas, attachedDepositYoctoNear: signing.attachedDepositYoctoNear });
   }
+  return frozen({ evm, near, expiresAt: new Date(deadline).toISOString() });
+}
+export function createPurchaseFeeEstimate(terms: PurchaseTerms, prices: PriceSet, costs: CompletePurchaseCosts,
+  options: CostAssessmentOptions): FeeAssessment {
+  assertPurchaseTerms(terms);
+  const rates = toFeePriceRates(prices, { purchaseId: prices.purchaseId, asOf: options.asOf, purpose: options.purpose });
+  const { evm, near, expiresAt: costExpiresAt } = normalizePurchaseCostObservations(terms, costs, { ...options, purchaseId: prices.purchaseId });
+  const deadline = utc(costExpiresAt);
   const expiresAt = new Date(Math.min(deadline, utc(prices.expiresAt), options.expiresAt === undefined ? deadline : utc(options.expiresAt))).toISOString();
   return createFeeEstimate({ chainId: 11155111n, quoteTermsHash: terms.termsHash, investmentUsdcBaseUnits: terms.investmentUsdcBaseUnits,
     mode: costs.mode, sampledAt: costs.sampledAt, asOf: options.asOf, expiresAt, estimateReference: costs.reference,

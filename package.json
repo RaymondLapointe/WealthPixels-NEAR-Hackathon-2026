@@ -11,12 +11,14 @@
     "near:derive": "node --import tsx scripts/near-public.ts derive",
     "test:near": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts",
     "typecheck:near": "tsc --project tsconfig.near.json",
-    "test:offline": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts test/near/evidence.test.ts test/near/sepolia-link.test.ts test/near/signing.test.ts test/near/execution.test.ts test/near/recovery-broadcast.test.ts test/near/investor-recovery-broadcast.test.ts test/near/recovery-cli.test.ts test/near/purchase-intent.test.ts test/near/fee-eligibility.test.ts test/near/native-transfer.test.ts test/near/native-delivery.test.ts test/near/native-workflow.test.ts test/near/prices.test.ts test/near/quote.test.ts test/near/prepayment-journal.test.ts",
+    "test:offline": "node --import tsx --test test/near/config.test.ts test/near/erc20-transfer.test.ts test/near/mpc.test.ts test/near/evidence.test.ts test/near/sepolia-link.test.ts test/near/signing.test.ts test/near/execution.test.ts test/near/recovery-broadcast.test.ts test/near/investor-recovery-broadcast.test.ts test/near/recovery-cli.test.ts test/near/purchase-intent.test.ts test/near/fee-eligibility.test.ts test/near/native-transfer.test.ts test/near/native-delivery.test.ts test/near/native-workflow.test.ts test/near/prices.test.ts test/near/quote.test.ts test/near/prepayment-journal.test.ts test/near/authorized-costs.test.ts test/near/purchase-readiness.test.ts test/near/purchase-legs.test.ts test/near/purchase-services.test.ts test/near/purchase-coordinator.test.ts test/near/purchase-cli.test.ts",
     "test:legacy": "hardhat test test/portfolioSwap.test.ts",
     "typecheck": "npm run typecheck:near",
     "verify:evidence": "node --import tsx scripts/verify-evidence.ts",
     "transfer": "node --import tsx scripts/transfer.ts",
-    "quote:example": "node --import tsx scripts/quote-example.ts"
+    "quote:example": "node --import tsx scripts/quote-example.ts",
+    "purchase": "node --import tsx scripts/purchase.ts",
+    "purchase:dry-run": "node --import tsx scripts/purchase-dry-run.ts"
   },
   "keywords": [],
   "author": "",

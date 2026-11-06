@@ -126,7 +126,7 @@ function sum(values: readonly ExactFraction[]): ExactFraction {
 }
 function ceil(value: ExactFraction): bigint { return (value.numerator + value.denominator - 1n) / value.denominator; }
 function buffered(value: bigint, bufferBps: bigint): bigint { return (value * (BPS_DENOMINATOR + bufferBps) + BPS_DENOMINATOR - 1n) / BPS_DENOMINATOR; }
-function nativeToUsdc(value: bigint, asset: FeeAsset, rate: FeePriceRate): ExactFraction {
+function nativeToUsdc(value: bigint, asset: FeeAsset, rate: Pick<FeePriceRate, "usdNumerator" | "usdDenominator">): ExactFraction {
   return fraction(value * rate.usdNumerator * 1_000_000n, 10n ** (asset === "ETH" ? 18n : 24n) * rate.usdDenominator);
 }
 function expectedPayer(leg: PurchaseFeeLeg): FeePayer { return leg === "investor-usdc-payment" ? "investor" : "treasury"; }
@@ -177,18 +177,23 @@ function core(input: Pick<FeeEstimateInput, "chainId" | "quoteTermsHash" | "inve
   return { asOf, rates };
 }
 
-/** Pure estimate; a mathematically eligible offline fixture is never a live authorization. */
-export function createFeeEstimate(input: FeeEstimateInput): FeeAssessment {
-  const { asOf, rates } = core(input);
-  const maxExpectedFeeBps = bps(input.maxExpectedFeeBps ?? MAX_EXPECTED_FEE_BPS, "Maximum expected fee BPS");
-  const maxAge = input.maxEstimateAgeMs ?? 60_000;
-  if (!Number.isSafeInteger(maxAge) || maxAge <= 0) throw new Error("Maximum fee estimate age must be positive milliseconds");
-  const sampledAt = timestamp(input.sampledAt, "Fee observation time");
-  if (sampledAt > asOf || asOf - sampledAt > maxAge || timestamp(input.expiresAt, "Fee estimate expiration") <= asOf) throw new Error("Fee estimate is stale, expired or from the future");
-  text(input.estimateReference, "Fee estimate reference");
-  requireAllLegs(input.evm, "EVM estimates", true); requireAllLegs(input.near, "NEAR estimates", true);
-  const evm = PURCHASE_FEE_LEGS.map(leg => Object.freeze({ ...input.evm.find(value => value.leg === leg)!, gasBufferBps: gasBufferBps(input.evm.find(value => value.leg === leg)!.gasBufferBps ?? DEFAULT_GAS_BUFFER_BPS, "EVM gas buffer BPS") }));
-  const near = PURCHASE_FEE_LEGS.map(leg => Object.freeze({ ...input.near.find(value => value.leg === leg)!, gasBufferBps: gasBufferBps(input.near.find(value => value.leg === leg)!.gasBufferBps ?? DEFAULT_GAS_BUFFER_BPS, "NEAR gas buffer BPS") }));
+export type RationalFeeRates = Readonly<Record<FeeAsset, ExactFraction>>;
+function rationalRates(values: RationalFeeRates) {
+  return Object.freeze(Object.fromEntries((["ETH", "NEAR"] as const).map(asset => {
+    const value = values?.[asset];
+    if (!value) throw new Error(`${asset} conversion rate is required`);
+    return [asset, Object.freeze({ usdNumerator: integer(value.numerator, `${asset} price numerator`, true),
+      usdDenominator: integer(value.denominator, `${asset} price denominator`, true) })];
+  })) as Record<FeeAsset, Pick<FeePriceRate, "usdNumerator" | "usdDenominator">>);
+}
+/** Exact cost mathematics only. It grants no observation freshness or execution permission. */
+export function valueExecutionCosts(evmInput: readonly EvmFeeEstimate[], nearInput: readonly NearFeeEstimate[],
+  conversion: RationalFeeRates, investmentUsdcBaseUnits: bigint, maximumExpectedFeeBps = MAX_EXPECTED_FEE_BPS) {
+  integer(investmentUsdcBaseUnits, "USDC investment", true);
+  const rates = rationalRates(conversion), maxExpectedFeeBps = bps(maximumExpectedFeeBps, "Maximum expected fee BPS");
+  requireAllLegs(evmInput, "EVM estimates", true); requireAllLegs(nearInput, "NEAR estimates", true);
+  const evm = PURCHASE_FEE_LEGS.map(leg => Object.freeze({ ...evmInput.find(value => value.leg === leg)!, gasBufferBps: gasBufferBps(evmInput.find(value => value.leg === leg)!.gasBufferBps ?? DEFAULT_GAS_BUFFER_BPS, "EVM gas buffer BPS") }));
+  const near = PURCHASE_FEE_LEGS.map(leg => Object.freeze({ ...nearInput.find(value => value.leg === leg)!, gasBufferBps: gasBufferBps(nearInput.find(value => value.leg === leg)!.gasBufferBps ?? DEFAULT_GAS_BUFFER_BPS, "NEAR gas buffer BPS") }));
   const expectedCosts: EstimatedCost[] = [];
   for (const item of evm) {
     const gas = buffered(integer(item.estimatedGas, "Estimated EVM gas", true), item.gasBufferBps);
@@ -213,9 +218,29 @@ export function createFeeEstimate(input: FeeEstimateInput): FeeAssessment {
   }
   const total = sum(expectedCosts.map(value => value.expectedUsdcExact));
   const maximum = sum(expectedCosts.map(value => value.maximumReserveUsdcExact));
+  return Object.freeze({ normalizedEvm: Object.freeze(evm), normalizedNear: Object.freeze(near), maxExpectedFeeBps,
+    expectedCosts: Object.freeze(expectedCosts), totalExpectedUsdcExact: total, totalExpectedUsdcBaseUnitsCeil: ceil(total),
+    expectedFeeBpsCeil: ceil(fraction(total.numerator * BPS_DENOMINATOR, total.denominator * investmentUsdcBaseUnits)),
+    totalMaximumReserveUsdcBaseUnitsCeil: ceil(maximum),
+    eligible: total.numerator * BPS_DENOMINATOR <= investmentUsdcBaseUnits * maxExpectedFeeBps * total.denominator });
+}
+
+/** Pure estimate; a mathematically eligible offline fixture is never a live authorization. */
+export function createFeeEstimate(input: FeeEstimateInput): FeeAssessment {
+  const { asOf, rates } = core(input);
+  const maxExpectedFeeBps = bps(input.maxExpectedFeeBps ?? MAX_EXPECTED_FEE_BPS, "Maximum expected fee BPS");
+  const maxAge = input.maxEstimateAgeMs ?? 60_000;
+  if (!Number.isSafeInteger(maxAge) || maxAge <= 0) throw new Error("Maximum fee estimate age must be positive milliseconds");
+  const sampledAt = timestamp(input.sampledAt, "Fee observation time");
+  if (sampledAt > asOf || asOf - sampledAt > maxAge || timestamp(input.expiresAt, "Fee estimate expiration") <= asOf) throw new Error("Fee estimate is stale, expired or from the future");
+  text(input.estimateReference, "Fee estimate reference");
+  const valued = valueExecutionCosts(input.evm, input.near,
+    { ETH: { numerator: rates.ETH.usdNumerator, denominator: rates.ETH.usdDenominator },
+      NEAR: { numerator: rates.NEAR.usdNumerator, denominator: rates.NEAR.usdDenominator } }, input.investmentUsdcBaseUnits, maxExpectedFeeBps);
+  const { normalizedEvm: evm, normalizedNear: near, ...values } = valued;
   const snapshot: FeeEstimateInput = Object.freeze({ chainId: input.chainId, quoteTermsHash: input.quoteTermsHash.toLowerCase(), investmentUsdcBaseUnits: input.investmentUsdcBaseUnits, mode: input.mode, sampledAt: input.sampledAt, asOf: input.asOf, expiresAt: input.expiresAt, estimateReference: input.estimateReference, maxExpectedFeeBps, maxEstimateAgeMs: maxAge, rates, evm: Object.freeze(evm), near: Object.freeze(near) });
   const expiresAt = new Date(Math.min(Date.parse(input.expiresAt), Date.parse(rates.ETH.expiresAt), Date.parse(rates.NEAR.expiresAt))).toISOString();
-  return Object.freeze({ kind: "fee-estimate-v1", snapshot, feeAssessmentHash: hash("fee-estimate-v1", snapshot), maxExpectedFeeBps, expectedCosts: Object.freeze(expectedCosts), totalExpectedUsdcExact: total, totalExpectedUsdcBaseUnitsCeil: ceil(total), expectedFeeBpsCeil: ceil(fraction(total.numerator * BPS_DENOMINATOR, total.denominator * input.investmentUsdcBaseUnits)), totalMaximumReserveUsdcBaseUnitsCeil: ceil(maximum), eligible: total.numerator * BPS_DENOMINATOR <= input.investmentUsdcBaseUnits * maxExpectedFeeBps * total.denominator, expiresAt, priceAssumption: "one-nominal-test-USDC-per-USD", executionProof: "none-caller-supplied-estimates" });
+  return Object.freeze({ kind: "fee-estimate-v1", snapshot, feeAssessmentHash: hash("fee-estimate-v1", snapshot), ...values, expiresAt, priceAssumption: "one-nominal-test-USDC-per-USD", executionProof: "none-caller-supplied-estimates" });
 }
 
 function verifiedAssessment(assessment: FeeAssessment): FeeAssessment {
@@ -262,14 +287,15 @@ export interface ActualExecutionCostInput extends Pick<FeeEstimateInput, "chainI
   readonly near: readonly ActualNearCost[];
   readonly maxExpectedFeeBps?: bigint;
 }
-/** Accounting interface for 03D/03E: an actual overrun is recorded, never used to cancel paid delivery. */
-export function recordActualExecutionFees(input: ActualExecutionCostInput) {
-  const { rates } = core(input);
-  const limit = bps(input.maxExpectedFeeBps ?? MAX_EXPECTED_FEE_BPS, "Maximum expected fee BPS");
-  requireAllLegs(input.evm, "Actual EVM costs", false); requireAllLegs(input.near, "Actual NEAR costs", false);
+/** Receipt cost mathematics only. Callers must independently establish receipt authenticity and finality. */
+export function valueActualExecutionCosts(evmInput: readonly ActualEvmCost[], nearInput: readonly ActualNearCost[],
+  conversion: RationalFeeRates, investmentUsdcBaseUnits: bigint, maximumExpectedFeeBps = MAX_EXPECTED_FEE_BPS) {
+  integer(investmentUsdcBaseUnits, "USDC investment", true);
+  const rates = rationalRates(conversion), limit = bps(maximumExpectedFeeBps, "Maximum expected fee BPS");
+  requireAllLegs(evmInput, "Actual EVM costs", false); requireAllLegs(nearInput, "Actual NEAR costs", false);
   const txHashes = new Set<string>(), nearHashes = new Set<string>(), receiptIds = new Set<string>();
   const costs: { readonly leg: PurchaseFeeLeg; readonly payer: FeePayer; readonly asset: FeeAsset; readonly transactionHash: string; readonly nativeBaseUnits: bigint; readonly usdcExact: ExactFraction }[] = [];
-  for (const value of input.evm) {
+  for (const value of evmInput) {
     const txHash = text(value.transactionHash, "EVM receipt transaction hash").toLowerCase();
     if (!/^0x[0-9a-f]{64}$/.test(txHash) || txHashes.has(txHash)) throw new Error("Invalid or duplicate EVM receipt transaction hash");
     if (value.executionStatus !== "success" && value.executionStatus !== "failed") throw new Error("Known EVM execution status is required");
@@ -277,7 +303,7 @@ export function recordActualExecutionFees(input: ActualExecutionCostInput) {
     const amount = integer(value.gasUsed, "Actual EVM gas used", true) * integer(value.effectiveGasPriceWei, "Actual EVM effective gas price");
     costs.push(Object.freeze({ leg: value.leg, payer: value.payer, asset: "ETH", transactionHash: txHash, nativeBaseUnits: amount, usdcExact: nativeToUsdc(amount, "ETH", rates.ETH) }));
   }
-  for (const value of input.near) {
+  for (const value of nearInput) {
     const txHash = text(value.transactionHash, "NEAR transaction hash");
     if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(txHash) || nearHashes.has(txHash)) throw new Error("Invalid or duplicate NEAR transaction hash");
     nearHashes.add(txHash);
@@ -294,6 +320,19 @@ export function recordActualExecutionFees(input: ActualExecutionCostInput) {
     costs.push(Object.freeze({ leg: value.leg, payer: value.payer, asset: "NEAR", transactionHash: txHash, nativeBaseUnits: amount, usdcExact: nativeToUsdc(amount, "NEAR", rates.NEAR) }));
   }
   const total = sum(costs.map(value => value.usdcExact));
-  const actual = Object.freeze({ kind: "actual-execution-costs-v1", chainId: input.chainId, quoteTermsHash: input.quoteTermsHash.toLowerCase(), investmentUsdcBaseUnits: input.investmentUsdcBaseUnits, mode: input.mode, asOf: input.asOf, rates, costs: Object.freeze(costs), totalActualUsdcExact: total, totalActualUsdcBaseUnitsCeil: ceil(total), realizedFeeBpsCeil: ceil(fraction(total.numerator * BPS_DENOMINATOR, total.denominator * input.investmentUsdcBaseUnits)), exceedsOriginalFeePolicy: total.numerator * BPS_DENOMINATOR > input.investmentUsdcBaseUnits * limit * total.denominator, maxExpectedFeeBps: limit, priceAssumption: "one-nominal-test-USDC-per-USD", evidenceSource: "caller-supplied-receipt-observations", settlementObligation: "unchanged-by-accounting" });
+  return Object.freeze({ costs: Object.freeze(costs), totalActualUsdcExact: total, totalActualUsdcBaseUnitsCeil: ceil(total),
+    realizedFeeBpsCeil: ceil(fraction(total.numerator * BPS_DENOMINATOR, total.denominator * investmentUsdcBaseUnits)),
+    exceedsOriginalFeePolicy: total.numerator * BPS_DENOMINATOR > investmentUsdcBaseUnits * limit * total.denominator,
+    maxExpectedFeeBps: limit });
+}
+
+/** Accounting interface for 03D/03E: an actual overrun is recorded, never used to cancel paid delivery. */
+export function recordActualExecutionFees(input: ActualExecutionCostInput) {
+  const { rates } = core(input);
+  const valued = valueActualExecutionCosts(input.evm, input.near,
+    { ETH: { numerator: rates.ETH.usdNumerator, denominator: rates.ETH.usdDenominator },
+      NEAR: { numerator: rates.NEAR.usdNumerator, denominator: rates.NEAR.usdDenominator } },
+    input.investmentUsdcBaseUnits, input.maxExpectedFeeBps ?? MAX_EXPECTED_FEE_BPS);
+  const actual = Object.freeze({ kind: "actual-execution-costs-v1", chainId: input.chainId, quoteTermsHash: input.quoteTermsHash.toLowerCase(), investmentUsdcBaseUnits: input.investmentUsdcBaseUnits, mode: input.mode, asOf: input.asOf, rates, ...valued, priceAssumption: "one-nominal-test-USDC-per-USD", evidenceSource: "caller-supplied-receipt-observations", settlementObligation: "unchanged-by-accounting" });
   return Object.freeze({ ...actual, actualCostRecordHash: hash("actual-execution-costs-v1", actual) });
 }
