@@ -183,14 +183,30 @@ export function nativeDeliveryFeeEstimate(value: NativeDeliveryPreflight, expect
   assumptions: { readonly assumedBaseFeePerGasWei: bigint; readonly assumedPriorityFeePerGasWei: bigint },
   expectedPolicy: NativeDeliveryPolicy = DEFAULT_NATIVE_DELIVERY_POLICY): EvmFeeEstimate {
   assertNativeDelivery(value, expectedTermsHash, expectedPolicy);
+  return estimateNativeDeliveryFees({ estimatedGas: value.snapshot.estimatedGas, baseFeePerGas: value.snapshot.baseFeePerGas },
+    { maxFeePerGas: value.prepared.maxFeePerGas, maxPriorityFeePerGas: value.prepared.maxPriorityFeePerGas }, assumptions, value.policy);
+}
+/** Pre-quote cost adapter: no transaction serialization, nonce selection, RPC or signing. */
+export function estimateNativeDeliveryFees(observation: { readonly estimatedGas: bigint; readonly baseFeePerGas: bigint },
+  fees: { readonly maxFeePerGas: bigint; readonly maxPriorityFeePerGas: bigint },
+  assumptions: { readonly assumedBaseFeePerGasWei: bigint; readonly assumedPriorityFeePerGasWei: bigint },
+  expectedPolicy: NativeDeliveryPolicy = DEFAULT_NATIVE_DELIVERY_POLICY): EvmFeeEstimate {
+  const limits = policy(expectedPolicy), estimate = requireUint256(observation.estimatedGas, "Native gas estimate", true);
+  check(estimate >= 21_000n, "Native gas estimate cannot be below intrinsic gas.");
+  const observedBase = requireUint256(observation.baseFeePerGas, "Observed native base fee");
+  const maximum = requireUint256(fees.maxFeePerGas, "Native maximum fee per gas", true);
+  const tip = requireUint256(fees.maxPriorityFeePerGas, "Native priority fee");
+  const gas = bufferedGas(estimate, limits);
+  check(tip <= maximum && gas <= limits.gasLimitCap && maximum <= limits.maxFeePerGasCap && gas * maximum <= limits.maxTotalFeeWei,
+    "Native cost observation exceeds protective transaction limits.");
   const base = requireUint256(assumptions.assumedBaseFeePerGasWei, "Expected native base fee");
   const priority = requireUint256(assumptions.assumedPriorityFeePerGasWei, "Expected native priority fee");
-  check(base >= value.snapshot.baseFeePerGas && base + priority > 0n && base + priority <= value.prepared.maxFeePerGas && priority === value.prepared.maxPriorityFeePerGas,
+  check(base >= observedBase && base + priority > 0n && base + priority <= maximum && priority === tip,
     "Expected native fee assumptions exceed signed transaction caps.");
-  return Object.freeze({ leg: "treasury-eth-delivery", payer: "treasury", estimatedGas: value.snapshot.estimatedGas,
-    gasBufferBps: value.policy.gasBufferBps, assumedBaseFeePerGasWei: base, assumedPriorityFeePerGasWei: priority,
-    maxPriorityFeePerGasWei: value.prepared.maxPriorityFeePerGas, maxFeePerGasWei: value.prepared.maxFeePerGas,
-    gasLimitCap: value.policy.gasLimitCap, maxTotalFeeWei: value.policy.maxTotalFeeWei });
+  return Object.freeze({ leg: "treasury-eth-delivery", payer: "treasury", estimatedGas: estimate,
+    gasBufferBps: limits.gasBufferBps, assumedBaseFeePerGasWei: base, assumedPriorityFeePerGasWei: priority,
+    maxPriorityFeePerGasWei: tip, maxFeePerGasWei: maximum,
+    gasLimitCap: limits.gasLimitCap, maxTotalFeeWei: limits.maxTotalFeeWei });
 }
 
 /** Quiet-account balance attribution: unrelated same-block ETH activity fails closed on ambiguous deltas. */

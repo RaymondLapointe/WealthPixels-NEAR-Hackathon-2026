@@ -15,7 +15,8 @@
     "test/near/**/*.test.ts",
     "scripts/verify-evidence.ts",
     "scripts/provision-role-key.ts",
-    "scripts/transfer.ts"
+    "scripts/transfer.ts",
+    "scripts/quote-example.ts"
   ],
   "exclude": [
     "node_modules"

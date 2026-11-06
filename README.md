@@ -14,7 +14,7 @@ Task 03B adds pure TypeScript modules for exact six-decimal USDC parsing, immuta
 
 Before payment authorization, total expected system execution costs must be at most `MAX_EXPECTED_FEE_BPS = 1000` (10%) of the investment. This includes all three EVM transactions and all three NEAR MPC signing operations, regardless of payer. Calculations use exact rational USDC equivalents, at least 20% gas buffers, documented conversion inputs and separate expected-fee assumptions and maximum reserves. Missing, expired or unverified inputs fail closed; offline price fixtures cannot authorize payment. Fee-estimation work is a WealthPixels operating expense. The 10% testnet policy makes no claim about production economic viability.
 
-Task 03D must collect fresh verified estimates/prices, bind the assessment into the approved quote, revalidate before payment, persist replay protection, and record actual costs and the realized fee ratio in completion evidence. After accepted payment, a fee increase must leave the delivery obligation outstanding. The accounting interface preserves that rule; the coordinator remains future work.
+Task 03D-1 now binds approved demonstration prices and all six expected costs into an immutable quote and durable prepayment state. Task 03D-2 must connect fresh public cost/funding observations, transaction execution, finality, atomic payment claiming and settlement. After accepted payment, a fee increase must leave the delivery obligation outstanding. Actual costs and the realized fee ratio remain part of the completion-evidence work.
 
 Official Sepolia USDC is [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://developers.circle.com/stablecoins/usdc-contract-addresses), with six decimals. The read-only November 5 check found 0 USDC at both roles. One approved [Circle faucet](https://faucet.circle.com/) allocation of 20 test USDC to Investor would cover the 10-USDC target. Funding has not been requested. Fresh balances are required before any future live preparation.
 
@@ -26,7 +26,31 @@ Native ETH modules now construct exact EIP-1559 value transfers with empty calld
 
 Offline receipt tests reconstruct exact signed bytes, check canonical receipt/parent blocks and at least two confirmations, account for actual gas and verify delivered ETH as an increase over the Investor's existing balance. Unexpected balance activity requires reconciliation. Native signature/receipt positives use a labelled synthetic public algebraic fixture; they are not live NEAR signing or proof of ETH delivery. Mocked workflow tests use no credentials or transaction submission. There is no native live CLI command or completed portfolio purchase yet.
 
-ETH/USD and LINK/USD Sepolia feed addresses, eight decimals and one-hour heartbeats are now verified against Chainlink's official directory. A timestamped CoinGecko NEAR/USD HTTPS source is a candidate with access/rate-limit caveats; the live collector remains disabled. Task 03D must integrate approved freshness policies and all six expected execution costs before accepting payment. The 10% threshold is unchanged. See [Task 03C results, pricing sources and remaining gates](docs/Task03C_Native_ETH_and_Pricing_Readiness.md).
+Task 03C verified ETH/USD and LINK/USD Sepolia feed addresses, eight decimals and one-hour heartbeats against Chainlink's official directory. A timestamped CoinGecko NEAR/USD HTTPS source remains a candidate with access/rate-limit caveats. This research is preserved in [Task 03C results](docs/Task03C_Native_ETH_and_Pricing_Readiness.md). The Task 03D-1 amendment makes approved demonstration prices the hackathon baseline; live price collectors remain future integrations.
+
+## Purchase quotation and prepayment: Task 03D-1
+
+The provider-independent quote engine accepts exact ETH/USD, LINK/USD and NEAR/USD rational observations. Demonstration prices require an explicit approval bound to their proposal digest, one purchase ID, public source/original-observation references and at most five minutes of validity. Historical observations are labelled as demonstration assumptions. There are no trusted current-market defaults or automatic fallbacks.
+
+Each quote freezes the configurable USDC amount, 50/50 allocation, individual asset quantities, prices/provenance/approval, all three EVM plus three NEAR costs, fee ratios, reserves, protective policies and planned role/asset destinations. Total expected system fees must be at most 1,000 bps (10%). Missing/stale costs fail closed. Effective quote expiry is bounded by every required price and cost expiry, including the 60-second fee-observation limit; a nominal 30-minute request cannot extend it.
+
+One locked ignored journal at `.local/transfers/purchase-journal.json` retains the active quote, inventory reservation, separate Investor quote approval and fresh payment-eligibility record. Treasury ETH reserves include delivery value, both delivery fee ceilings and the operating reserve; LINK is separately reserved. Payment eligibility checks Investor USDC/ETH and both NEAR authorities' spendable fee balances. A `payment-authorized` record is an eligibility checkpoint with `executionAuthorized: false`; it cannot sign or send. Its reservation remains held after expiry until Task 03D-2 reconciles any later payment activity. Clearly unpaid, unauthorized quotes can be explicitly expired without repricing or changing the original quote.
+
+Run the fixed, credential-free example:
+
+~~~text
+npm run quote:example
+~~~
+
+It prints a synthetic 10-USDC quote and all six fee components. It performs no RPC calls or journal writes, contains no real price/Investor approval, and proves no live purchase. Tests also exercise prepayment branches with labelled injected observations and simulated approval references. The journal and calculations are implemented; live purchase preparation, signing, broadcasting, payment finality and settlement remain outside this increment. See the [Task 03D-1 report](docs/Task03D1_Quotation_and_Prepayment.md).
+
+## External Pricing Integration and Future Production Readiness
+
+WealthPixels intentionally treats asset pricing as a replaceable external service. The proof of concept uses explicitly approved demonstration pricing to isolate and prove portfolio allocation, economic screening and delivery of individually owned assets. Demonstration assumptions are preserved as such; they are not production market pricing.
+
+The `PriceProvider` interface separates price acquisition from allocation calculation, fee eligibility and transaction execution. Offline tests use interchangeable providers without changing that arithmetic or delivery code. Chainlink, CoinGecko, institutional data services and other future providers can be integrated at this boundary. The future provider choice is deliberately left open; no paid API or additional blockchain pricing infrastructure is introduced.
+
+Before production deployment, WealthPixels intends to select a suitable third-party provider and implement the required freshness, availability, integrity, failure-handling and market-risk controls. The hackathon's demonstration pricing and Sepolia fee ratios do not establish production economic viability.
 
 ## Quick start for judges
 
