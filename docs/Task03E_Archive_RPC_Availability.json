@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-public-beacon-archive-availability-investigation",
+  "status": "historical-availability-unresolved",
+  "diagnosticOnly": true,
+  "executionProof": "none; public read-only capability checks, not a purchase or transaction execution",
+  "scope": {
+    "maximumAlternativeProviders": 2,
+    "alternativeProvidersProbed": 2,
+    "getAttemptsPerAlternative": 1,
+    "automaticRetries": false,
+    "tlsValidationBypassed": false,
+    "httpDowngradeAttempted": false,
+    "credentialsOrPaidAccountsUsed": false,
+    "newInfrastructureIntroduced": false
+  },
+  "historicalReference": {
+    "executionBlockNumber": "12070134",
+    "executionBlockHash": "0x7573c5332c3e3a4e4a5290fd41c48a48ffb36c7f6075ea1d6eace292136816b5",
+    "parentBeaconBlockRoot": "0x80351703abf0588cfd6a0f6600c2b7f56d946021c371647d4cb5b34ce2bb0400",
+    "parentBeaconStateRoot": "0xa58da6009159dacf76d5a965b760b954fd5a2c630eaf28f4b4b4df2294603113",
+    "statePath": "/eth/v1/beacon/states/0xa58da6009159dacf76d5a965b760b954fd5a2c630eaf28f4b4b4df2294603113/finality_checkpoints",
+    "referenceDisclosure": "Historical block used to test service retention only; not evidence of a three-leg portfolio purchase"
+  },
+  "priorPublicnodeFinding": {
+    "source": "Parent agent's completed bounded probe; not repeated during this alternative investigation",
+    "endpoint": "https://ethereum-sepolia-beacon-api.publicnode.com",
+    "historicalHeaderLookup": "succeeded and returned the state root above",
+    "exactHistoricalStateFinalityHttpStatus": 404,
+    "observationDateUtc": "2026-11-07",
+    "exactObservationWallClock": "2026-11-07T13:34:54.4304346Z",
+    "elapsedMilliseconds": 637,
+    "inference": "Recent-state availability does not establish retention of older historical state queries"
+  },
+  "alternatives": [
+    {
+      "provider": "ChainSafe Lodestar public Sepolia Beacon API",
+      "officialEndpointDocumentation": "https://chainsafe.github.io/lodestar/1.43.0/libraries/lightclient-prover/lightclient/",
+      "additionalOfficialDocumentation": "https://chainsafe.github.io/lodestar/1.43.0/libraries/lightclient-prover/prover/",
+      "documentedEndpoint": "https://lodestar-sepolia.chainsafe.io",
+      "probedUrl": "https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/states/0xa58da6009159dacf76d5a965b760b954fd5a2c630eaf28f4b4b4df2294603113/finality_checkpoints",
+      "startedAt": "2026-11-07T13:40:34.3562195Z",
+      "elapsedMilliseconds": 617,
+      "httpStatus": 500,
+      "result": "unavailable",
+      "safeCategory": "ProtocolError",
+      "exceptionType": "WebException",
+      "checkpointDataRetrieved": false,
+      "retryAttempted": false,
+      "interpretation": "The server returned an error for this exact state query. The response does not establish a specific pruning policy or a permanent outage."
+    },
+    {
+      "provider": "Nimbus unstable Sepolia Beacon test API",
+      "officialEndpointDocumentation": "https://nimbus.guide/rest-api.html",
+      "documentedEndpoint": "http://unstable.sepolia.beacon-api.nimbus.team/",
+      "probedUrl": "https://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/states/0xa58da6009159dacf76d5a965b760b954fd5a2c630eaf28f4b4b4df2294603113/finality_checkpoints",
+      "httpsDisclosure": "The same officially documented hostname was tested over HTTPS to preserve the application's HTTPS-only transport requirement. Nimbus documentation lists HTTP; no HTTP downgrade was attempted.",
+      "documentedReliabilityLimit": "Nimbus identifies these as development test servers that may be unavailable or disabled and should not be relied upon for validation.",
+      "startedAt": "2026-11-07T13:40:25.2080171Z",
+      "elapsedMilliseconds": 533,
+      "httpStatus": null,
+      "result": "unavailable",
+      "safeCategory": "TrustFailure",
+      "exceptionType": "WebException",
+      "checkpointDataRetrieved": false,
+      "retryAttempted": false,
+      "interpretation": "The Windows HTTPS client rejected certificate trust before receiving an HTTP response. Historical state availability was therefore not established; this result alone does not prove whether the backend retains that state."
+    }
+  ],
+  "conclusion": {
+    "compatibleAlternativeVerified": false,
+    "remainingDependency": "A publicly accessible HTTPS Beacon provider capable of retaining and returning the exact historical parent-state finality checkpoints and associated checkpoint blocks/envelopes",
+    "judgingRisk": "A recent live verification may succeed while the same strict public verification becomes incomplete after the provider discards the historical state. No tested endpoint currently establishes durable availability.",
+    "requiredVerifierBehavior": "Treat missing or unavailable historical state as incomplete. Preserve all historical finality safeguards; do not replace the query with today's finalized head, operator timestamps or cached fixture responses.",
+    "nextDecision": "Before claiming durable credential-free judging reproducibility, establish a suitable archival public service or separately design an authenticated portable historical-finality proof. A retained unproven RPC snapshot is not a replacement live proof."
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "historical-basic-public-readiness-not-purchase",
+  "diagnosticOnly": true,
+  "executionProof": "none; public accounts/contracts only, no purchase preparation, simulation, signing, broadcast or funding",
+  "sampledAt": "2026-11-07T13:30:14.387Z",
+  "expiresAt": "2026-11-07T13:31:12.000Z",
+  "sources": {
+    "evmRpc": "https://rpc.sepolia.ethpandaops.io",
+    "nearRpc": "https://archival-rpc.testnet.fastnear.com"
+  },
+  "evm": {
+    "chainId": "11155111",
+    "blockNumber": "12083970",
+    "blockHash": "0x759532a38dedbdb8369dda4b7a43d56d9ca60bfd43531b57dfa3a3ee97f7bbe4",
+    "baseFeePerGasWei": "17",
+    "treasury": {
+      "address": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+      "ethWei": "49999999856304440",
+      "usdcBaseUnits": "0",
+      "linkBaseUnits": "24100000000000000000",
+      "confirmedNonce": 1,
+      "pendingNonce": 1
+    },
+    "investor": {
+      "address": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+      "ethWei": "49999999956182840",
+      "usdcBaseUnits": "20000000",
+      "linkBaseUnits": "900000000000000000",
+      "confirmedNonce": 1,
+      "pendingNonce": 1
+    },
+    "usdcImplementationAddress": "0xDa317C1d3E835dD5F1BE459006471aCAA1289068",
+    "usdcImplementationCodeHash": "0xf4898b096a273d86cda13cce6503404da4005565fae6026a94919b231229d85b"
+  },
+  "near": {
+    "blockHeight": "276637367",
+    "mpcVersion": "3.18.0",
+    "minimumGasTgas": 15,
+    "treasurySpendableYocto": "9997375179042797999999999",
+    "investorSpendableYocto": "9997375988080103099999999",
+    "roleKeysMpcRootDomainPathAndDerivationsMatched": true
+  },
+  "conclusion": "Investor has 20 test USDC for the 10-USDC target. Fresh quantities, all six costs and role funding still require separate live-preparation approval. This historical snapshot authorizes nothing."
+}

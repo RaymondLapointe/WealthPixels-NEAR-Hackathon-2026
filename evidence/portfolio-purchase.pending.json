@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "kind": "wealthpixels-portfolio-purchase",
+  "mode": "live",
+  "status": "pending",
+  "message": "No live portfolio purchase has executed. After separately approved payment and both deliveries, export and publicly verify the completed purchase. This placeholder contains no transaction evidence and must never be reported as a successful purchase."
+}

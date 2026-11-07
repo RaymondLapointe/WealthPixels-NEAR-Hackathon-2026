@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "kind": "public-historical-finality-capability-diagnostic",
+  "status": "passed",
+  "recordCompleteness": "complete returned diagnostic proof; exact observation wall-clock time was not separately captured",
+  "diagnosticOnly": true,
+  "executionProof": "none; unrelated canonical blocks only, NOT a WealthPixels purchase, payment or asset-delivery proof",
+  "scope": "Read-only verification of standard Ethereum Sepolia execution and Beacon API history. No purchase preparation, signing, credential access, funding or broadcasting.",
+  "observationWallClock": null,
+  "linkedExecutionBlockTimestampIso": "2026-11-07T13:03:24.000Z",
+  "sourceEndpoints": {
+    "executionRpc": "https://rpc.sepolia.ethpandaops.io",
+    "beaconApi": "https://ethereum-sepolia-beacon-api.publicnode.com"
+  },
+  "invocationNotes": [
+    "The initial attempt to pipe inline code through scripts/with-node22.ps1 was rejected by PowerShell parameter binding before any diagnostic RPC request.",
+    "The corrected invocation used the existing project-local Node 22 executable, --input-type=module and --import tsx with inline public read-only code.",
+    "No network calls were repeated to create this record; it preserves the result already obtained."
+  ],
+  "input": {
+    "paymentBlockNumber": "12074439",
+    "paymentBlockHash": "0x058d7850bd87ae51333126430347d8ee92193989b227321d3c1541e6f504fcdd",
+    "linkBlockNumber": "12083839",
+    "linkBlockHash": "0x4587081ff25f413bf2fe5f35086982159da8d7b8a5dd927dd3bab9c2747a8780",
+    "fieldNameDisclosure": "payment/link are the verifier interface field names; these inputs are unrelated canonical reference blocks, not transaction observations"
+  },
+  "proof": {
+    "paymentBlockNumber": "12074439",
+    "paymentBlockHash": "0x058d7850bd87ae51333126430347d8ee92193989b227321d3c1541e6f504fcdd",
+    "linkBlockNumber": "12083839",
+    "linkBlockHash": "0x4587081ff25f413bf2fe5f35086982159da8d7b8a5dd927dd3bab9c2747a8780",
+    "kind": "historical-payment-finality",
+    "chainId": "11155111",
+    "trustModel": "public-execution-and-beacon-rpc",
+    "consensusProofVerified": false,
+    "parentHeaderRootVerified": true,
+    "linkTimestamp": "1794056604",
+    "parentBeaconBlockRoot": "0xf264b4ea89e66749ff954288aa9f30a91e7e11c2eeffd6ea70d00f4b4a158028",
+    "parentBeaconSlot": "11526916",
+    "parentBeaconStateRoot": "0xde746a90219736798c898124f1288cf4f82dde727a67811d4c8900af0a8c5987",
+    "checkpointRoot": "0x3087199b0afc7615d48fece43d0f7ac746967e34f52a3d01dd07be3682fc36a2",
+    "checkpointEpoch": "360214",
+    "checkpointSlot": "11526848",
+    "checkpointFork": "gloas",
+    "finalizedThroughExecutionBlockNumber": "12083769",
+    "finalizedThroughExecutionBlockHash": "0x218abfbf1850cf14da7de21c5cf382c42e293f17163d0cbe571caf6dee8415e8",
+    "checkpointExecutionPayloadBlockNumber": "12083770",
+    "checkpointExecutionPayloadBlockHash": "0xd6f53137957b8dc9ccee3289535d7c0f4390ffe34edd21fdadc5fc45374c6736",
+    "finalityBoundary": "gloas-checkpoint-execution-parent",
+    "limitation": "Execution and Beacon archival RPC responses are trusted. Header SSZ hashes are checked; BeaconState/body Merkle proofs and BLS consensus signatures are not verified. This verifies historical parent-state finality, never a current-finalized-tag substitute."
+  },
+  "verifiedApiCapabilities": [
+    "Execution eth_getBlockByNumber exposes the canonical parentBeaconBlockRoot",
+    "Root-keyed Beacon header lookup and local SSZ header-root verification",
+    "Historical finality_checkpoints at the exact state_root committed by the anchored parent header",
+    "Root-keyed finalized checkpoint header and Beacon block lookup",
+    "Standard Gloas execution_payload_envelopes lookup, bid/envelope association and canonical execution-parent lookup"
+  ],
+  "officialSources": {
+    "executionParentBeaconRoot": "https://eips.ethereum.org/EIPS/eip-4788",
+    "beaconHeaderDefinition": "https://github.com/ethereum/consensus-specs/blob/master/specs/phase0/beacon-chain.md#beaconblockheader",
+    "beaconHeaderApi": "https://raw.githubusercontent.com/ethereum/beacon-APIs/master/apis/beacon/blocks/header.yaml",
+    "historicalFinalityApi": "https://raw.githubusercontent.com/ethereum/beacon-APIs/master/apis/beacon/states/finality_checkpoints.yaml",
+    "beaconBlockApi": "https://raw.githubusercontent.com/ethereum/beacon-APIs/master/apis/beacon/blocks/block.v2.yaml",
+    "gloasEnvelopeApi": "https://raw.githubusercontent.com/ethereum/beacon-APIs/master/apis/beacon/execution_payload/envelope_get.yaml",
+    "gloasParentExecutionPayloadApplication": "https://github.com/ethereum/consensus-specs/blob/master/specs/gloas/beacon-chain.md#new-process_parent_execution_payload"
+  },
+  "availabilityLimit": "This successful public-service diagnostic does not guarantee future archival availability. A later missing state, block or Gloas envelope must remain unresolved rather than being replaced by current finalized data or fixtures."
+}

@@ -2,7 +2,7 @@
 
 WealthPixels has demonstrated treasury-owned test LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
 
-**Current status, November 6, 2026:** both live LINK transfers remain confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. Verified balances after the return are 24.1 LINK / 0.9 LINK. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes; the credential-free public verification command passed. Detailed records: [Treasury delivery](evidence/treasury-link-delivery.json) and [Investor return](evidence/investor-link-return.json). The portfolio purchase coordinator is implemented and tested offline; a live portfolio purchase remains a separately approved milestone.
+**Current status, November 7, 2026:** both live LINK transfers remain confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. Verified balances after the return are 24.1 LINK / 0.9 LINK. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes; the credential-free public verification command passed. Detailed records: [Treasury delivery](evidence/treasury-link-delivery.json) and [Investor return](evidence/investor-link-return.json). The portfolio purchase coordinator and evidence verifier are implemented and tested offline; a live portfolio purchase remains a separately approved milestone.
 
 The hackathon demonstrator may control both disposable testnet roles on one computer. Separate accounts and authorizations demonstrate protocol behavior, **not independent production custody**.
 
@@ -14,7 +14,7 @@ Task 03B introduced exact six-decimal USDC parsing, immutable allocation terms, 
 
 Before payment authorization, total expected system execution costs must be at most `MAX_EXPECTED_FEE_BPS = 1000` (10%) of the investment. This includes all three EVM transactions and all three NEAR MPC signing operations, regardless of payer. Calculations use exact rational USDC equivalents, at least 20% gas buffers, documented conversion inputs and separate expected-fee assumptions and maximum reserves. Missing, expired or unverified inputs fail closed; offline price fixtures cannot authorize payment. Fee-estimation work is a WealthPixels operating expense. The 10% testnet policy makes no claim about production economic viability.
 
-Task 03D-1 binds approved demonstration prices and all six expected costs into an immutable quote. Task 03D-2 adds public cost/funding collectors, role-specific execution, finalized payment claiming, durable settlement obligations, bounded recovery and actual fee accounting. After accepted payment, fee increases and quote expiration leave delivery obligations outstanding. Task 03E will implement the public purchase evidence manifest and verifier.
+Task 03D-1 binds approved demonstration prices and all six expected costs into an immutable quote. Task 03D-2 adds public cost/funding collectors, role-specific execution, finalized payment claiming, durable settlement obligations, bounded recovery and actual fee accounting. After accepted payment, fee increases and quote expiration leave delivery obligations outstanding. Task 03E adds separate public purchase evidence export and independent verification; no live portfolio purchase is claimed.
 
 Official Sepolia USDC is [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://developers.circle.com/stablecoins/usdc-contract-addresses), with six decimals. The read-only November 5 check found 0 USDC at both roles. One approved [Circle faucet](https://faucet.circle.com/) allocation of 20 test USDC to Investor would cover the 10-USDC target. Funding has not been requested. Fresh balances are required before any future live preparation.
 
@@ -71,7 +71,39 @@ npm run purchase -- inspect-networks --near-rpc https://archival-rpc.testnet.fas
 
 The November 6 public snapshot found Investor **20 USDC**, Treasury **24.1 LINK**, Investor **0.9 LINK**, about **0.05 ETH** at each role, and confirmed/pending nonce **1** for both. These are timestamped observations, not continuing readiness approval. The live collector additionally supports all three gas simulations, fee assumptions and storage-reserved NEAR funding; those are required afresh for a separately approved live quote. USDC proxy implementation approval is explicit rather than silently inferred from the RPC that observes it.
 
-Read the [Task 03D-2 report and operator sequence](docs/Task03D2_Purchase_Execution_and_Recovery.md). Task 03E public purchase evidence export/verification and all live purchase operations remain separate checkpoints. Existing published LINK evidence is unchanged.
+Read the [Task 03D-2 report and operator sequence](docs/Task03D2_Purchase_Execution_and_Recovery.md). Task 03E public evidence is described below. All live purchase operations remain separately approved checkpoints. Existing published LINK evidence is unchanged.
+
+## Public portfolio purchase evidence: Task 03E
+
+WealthPixels' purchase proposition is a small USDC payment followed by delivery of individual native ETH and LINK assets from Treasury principal inventory directly to the Investor's NEAR-controlled Ethereum address. The Investor receives no pooled portfolio token. Pricing comes through the replaceable `PriceProvider` interface; the hackathon uses explicitly approved demonstration assumptions, not production real-time market data. The demonstrator may operate both accounts, and the three transactions settle sequentially rather than atomically.
+
+The new public manifest contains the immutable approved quote/prices, six expected costs, separate public authorities and signing hashes, three Ethereum hashes/parameters/receipt references, asset movements, actual execution costs and final settlement. It excludes credentials, executable transaction bytes, local file paths, raw runtime state and the operator's journal. The complete live purchase manifest does not exist yet; [the pending placeholder](evidence/portfolio-purchase.pending.json) makes that explicit.
+
+Current credential-free commands:
+
+~~~text
+npm test
+npm run typecheck
+npm run purchase:dry-run
+npm run test:purchase-evidence
+npm run verify:purchase -- --manifest evidence/portfolio-purchase.pending.json
+~~~
+
+The final command currently reports **incomplete / PENDING**, makes no network requests and exits **2**; it is not a passing purchase proof. Tests and the dry-run use explicitly labelled fixtures and do not execute a live purchase. Once a real completed manifest has been exported and published after approval, reviewers can place it in `evidence/portfolio-purchase.json` and run:
+
+~~~text
+npm run verify:purchase -- --manifest evidence/portfolio-purchase.json --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io --beacon-rpc https://ethereum-sepolia-beacon-api.publicnode.com
+~~~
+
+Use `--expected-quote-hash` to pin a separately preserved approved quote hash. Optional `--report evidence/NEW_REPORT.json` preserves success, failure or partial checks without overwriting prior evidence. Exit **0** means every implemented public check passed, **2** means incomplete/unavailable history, and **1** means contradictory/invalid evidence. No signing identity, funding or operator journal is required. `npm run purchase:export-evidence -- --help` describes the separate operator-only extraction of public fields after completion.
+
+Verification reconstructs exact signed bytes from public transactions, matches all three direct NEAR MPC signatures against the full trusted derived keys, and checks official token contracts, USDC six-decimal payment, LINK events, native value/gas, canonical historical balances, finality, order, nonces and actual fees. Historical finalized payment **before** LINK release is checked through Ethereum consensus state anchored by the LINK execution block's parent Beacon root. Beacon REST access is another interface to Ethereum, not another blockchain integration. Missing archive data produces incomplete verification; cached fixtures and today's finalized tag cannot replace it.
+
+Historical `eth_call`, `eth_getBalance`, code/nonces, logs, receipts and exact-state Beacon checkpoint/block/envelope history require archive-capable public services. A November 7 probe passed for recent consensus history but failed for an approximately two-day-old state on the default provider; two documented alternatives also failed. Durable judge reproducibility remains conditional on resolving that retention dependency. Requests are paced and bounded; endpoints are configurable and no paid account is required by the software. Public RPC access queries public state; it grants no asset authority. NEAR account signing authority authorizes an MPC request. An RPC provider can relay already-signed bytes but cannot independently authorize the transfer.
+
+Verification trusts configured RPC responses; it is not a light client or a BLS/SSZ state-proof verifier. Operator approvals, quote association and original gas estimates remain disclosed local assertions. It does not prove independent production custody, global uniqueness across other journals or trustless/atomic settlement. See [purchase evidence format and limits](evidence/README.md) and the [Task 03E completion report](docs/Task03E_Public_Purchase_Evidence_and_Verification.md).
+
+WealthPixels follows a Buy and Build approach: integrate established blockchain infrastructure rather than operate its own RPC nodes without a compelling need. Public services serve the hackathon; production may add commercial providers, redundancy and service-level protections. Provider changes do not change the portfolio protocol or verification rules. The existing two-way LINK evidence remains a separate completed live demonstration.
 
 ## External Pricing Integration and Future Production Readiness
 

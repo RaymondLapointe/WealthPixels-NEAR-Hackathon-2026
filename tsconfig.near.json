@@ -18,7 +18,9 @@
     "scripts/transfer.ts",
     "scripts/quote-example.ts",
     "scripts/purchase.ts",
-    "scripts/purchase-dry-run.ts"
+    "scripts/purchase-dry-run.ts",
+    "scripts/export-purchase-evidence.ts",
+    "scripts/verify-purchase-evidence.ts"
   ],
   "exclude": [
     "node_modules"
