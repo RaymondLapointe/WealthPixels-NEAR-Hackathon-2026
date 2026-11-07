@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "kind": "task03fa-bounded-beacon-archive-documentation-review",
+  "status": "unresolved-no-qualified-new-public-provider",
+  "baselineCommit": "4d39bce263c7e8c531caa283b0fef3c056d34a74",
+  "baselineValidation": "447 offline tests and TypeScript passed before this report was saved",
+  "scope": {
+    "newProviderDocumentationReviews": 2,
+    "maximumNewProviders": 2,
+    "qualifiedProbeCandidates": 0,
+    "newBeaconOrExecutionRpcRequests": 0,
+    "previousProviderRequestsRepeated": false,
+    "credentialsAccountsOrPaidServicesUsed": false,
+    "newInfrastructureOrDependenciesIntroduced": false,
+    "sourceCodeChanged": false
+  },
+  "priorFindingReference": {
+    "report": "docs/Task03E_Archive_RPC_Availability.json",
+    "historicalExecutionBlockNumber": "12070134",
+    "historicalExecutionBlockHash": "0x7573c5332c3e3a4e4a5290fd41c48a48ffb36c7f6075ea1d6eace292136816b5",
+    "parentBeaconBlockRoot": "0x80351703abf0588cfd6a0f6600c2b7f56d946021c371647d4cb5b34ce2bb0400",
+    "parentBeaconStateRoot": "0xa58da6009159dacf76d5a965b760b954fd5a2c630eaf28f4b4b4df2294603113",
+    "requiredPath": "/eth/v1/beacon/states/0xa58da6009159dacf76d5a965b760b954fd5a2c630eaf28f4b4b4df2294603113/finality_checkpoints",
+    "previousProvidersNotRetested": ["Publicnode", "ChainSafe Lodestar", "Nimbus"]
+  },
+  "candidateSetReviewedBeforeAnyProbe": [
+    {
+      "provider": "ethPandaOps",
+      "officialSources": [
+        "https://ethpandaops.io/docs/guides/client-developers/api-access/"
+      ],
+      "primaryDocumentationFindings": [
+        "The API-access page describes node-access authentication and corresponding client-access headers.",
+        "Its Hoodi/Sepolia section currently lists Hoodi consensus-layer URLs; it does not establish a public HTTPS Sepolia Beacon archive endpoint.",
+        "Execution archive availability or a checkpoint-sync service would not by itself establish support for the exact historical Beacon state query."
+      ],
+      "qualification": "excluded-before-probe",
+      "reason": "A suitable public Sepolia Beacon archive route was not verified from the reviewed official documentation. No hostname was guessed.",
+      "rpcRequests": 0
+    },
+    {
+      "provider": "BlockReq",
+      "officialSources": [
+        "https://blockreq.com/chains/ethereum",
+        "https://blockreq.com/docs/build/supported-networks/",
+        "https://blockreq.com/docs/build/public-endpoints/"
+      ],
+      "primaryDocumentationFindings": [
+        "Current published-network and public-endpoint tables list Ethereum mainnet Beacon separately from Ethereum Sepolia execution-layer JSON-RPC.",
+        "The reviewed current pages do not publish a qualifying Sepolia Beacon endpoint.",
+        "Public-endpoint documentation describes restricted trial access and does not promise deep historical data.",
+        "A search-result snippet suggested additional Beacon routes, but this was not confirmed by the current primary documentation and was not treated as endpoint authorization or capability proof."
+      ],
+      "qualification": "excluded-before-probe",
+      "reason": "The documented Sepolia execution archive route does not establish Sepolia Beacon historical-state support, and no qualifying public route was confirmed.",
+      "rpcRequests": 0
+    }
+  ],
+  "qualifiedCandidateSetBeforeProbing": [],
+  "rpcRequestsExecuted": [],
+  "stopReason": "No suitable new publicly documented HTTPS Sepolia Beacon archive candidate was promptly verified. The bounded investigation stopped without probes; the prior failed requests were not repeated.",
+  "conclusion": {
+    "archivalDependencyResolved": false,
+    "retentionClaim": "none; provider documentation alone does not prove current or future retention of the required historical state, checkpoint block and payload-envelope data",
+    "strictHistoricalVerification": "Preserved. Missing history must remain incomplete; today's finalized head, cached RPC snapshots and offline fixtures are not substitutes for the required historical observation.",
+    "recommendation": "After a separately approved live purchase completes, promptly run and preserve its public verification result. This reduces immediate observation-age risk but does not guarantee later judges can independently retrieve historical Beacon state.",
+    "remainingDecision": "Durable credential-free public verification still requires a suitable archival service or a separately authorized authenticated portable historical-finality proof. Neither was established or implemented in this task.",
+    "nativeTestBoundary": "This archive investigation concerns historical payment-before-delivery verification for a portfolio purchase. It supplies no purchase evidence and does not authorize preparation or execution of a standalone native ETH transfer."
+  }
+}

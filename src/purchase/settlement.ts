@@ -63,7 +63,7 @@ export interface PurchaseExecutionDriver {
   assertPrepared(quote: PurchaseQuote, prepared: PreparedPurchaseLeg): void;
   recheck(quote: PurchaseQuote, prepared: PreparedPurchaseLeg): Promise<unknown>;
   verifyAuthority(role: AuthorityRole): Promise<unknown>;
-  prepareSigning(role: AuthorityRole, digest: string, credentialPath: string): Promise<PreparedMpcSigning>;
+  prepareSigning(role: AuthorityRole, digest: string, credentialPath: string, submissionDeadlineMs?: number): Promise<PreparedMpcSigning>;
   readSigning(role: AuthorityRole, hash: string): Promise<unknown>;
   assemble(quote: PurchaseQuote, prepared: PreparedPurchaseLeg, nearHash: string, outcome: unknown): PurchaseLegSigned;
   assertSigned(quote: PurchaseQuote, prepared: PreparedPurchaseLeg, signed: PurchaseLegSigned): void;

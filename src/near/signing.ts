@@ -209,10 +209,18 @@ export interface PreparedMpcSigning {
 /** Local preparation only. The returned broadcast capability is the sole mutation path. */
 export async function prepareMpcSigning(options: {
   role: AuthorityRole; credentialPath: string; rpcUrl: string; digest: string; repositoryRoot?: string;
+  /** Immutable caller-derived deadline; checked again after the final authority read, immediately before send_tx. */
+  submissionDeadlineMs?: number;
 }, fixtures?: MpcSigningOfflineFixtures): Promise<PreparedMpcSigning> {
   const role = requireRole(options.role), endpoint = rpcUrl(options.rpcUrl), digest = digestHex(options.digest);
+  const submissionDeadlineMs = options.submissionDeadlineMs;
+  const requireSubmissionTime = () => requireThat(submissionDeadlineMs === undefined ||
+    Number.isSafeInteger(submissionDeadlineMs) && submissionDeadlineMs > Date.now(), "INVALID_INPUT",
+    "The original signing submission deadline expired or is invalid; preserve the recorded hash and reconcile without retrying.");
+  requireSubmissionTime();
   fixtureMode(fixtures);
   const verified = await verifyRoleMpc(role, endpoint, fixtures);
+  requireSubmissionTime();
   const signer = await selectedSigner(role, options.credentialPath, options.repositoryRoot ?? DEFAULT_REPOSITORY, fixtures);
   const request: MpcSignRequest = Object.freeze({
     payload_v2: Object.freeze({ Ecdsa: digest.slice(2) }), path: DERIVATION_PATH, domain_id: ECDSA_DOMAIN_ID,
@@ -243,6 +251,7 @@ export async function prepareMpcSigning(options: {
       const current = await verifyRoleMpc(role, endpoint, fixtures);
       requireThat(current.accessKeyNonce === verified.accessKeyNonce, "PUBLIC_CHECK_FAILED",
         "The role's access-key nonce changed. Stop and review the persisted transaction hash.");
+      requireSubmissionTime();
       try {
         // One HTTP POST, no SDK broadcast retry, redirect, nonce rebuild or re-signing.
         return await rpcFor(endpoint, fixtures)("send_tx", { signed_tx_base64: signedBytes, wait_until: "NONE" });

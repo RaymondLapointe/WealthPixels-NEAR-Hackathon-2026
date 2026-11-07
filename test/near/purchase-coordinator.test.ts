@@ -119,6 +119,24 @@ test("shorter fee observation expiry is checked after signing preparation, befor
   assert.equal(f.count("prepareSigning"), 1); assert.equal(f.count("nearSubmit"), 0);
   assert.equal(await readFile(f.journalFile, "utf8"), before);
 }));
+test("payment signing forwards the earliest original preparation, quote and economic deadline to the MPC wire adapter", async () => {
+  for (const bound of ["fee", "quote"] as const) await sandbox(async (f, c) => {
+    await prepare(f, c, "usdc-payment");
+    f.clock.advance(bound === "fee" ? 10_000 : 59_000);
+    if (bound === "fee") f.controls.costTransform = value => ({ ...value, expiresAt: new Date(f.clock.now() + 1000).toISOString() });
+    const deadlines: (number | undefined)[] = [];
+    const guarded = createPurchaseCoordinator({ ...f.driver, async prepareSigning(role, digest, path, deadline) {
+      deadlines.push(deadline); return f.driver.prepareSigning(role, digest, path, deadline);
+    } }, { root: f.root });
+    const result = await sign(f, guarded, "usdc-payment"), e = result.active!.execution!, entry = e.legs["usdc-payment"]!;
+    const expected = Math.min(Date.parse(entry.preparedAt) + 900_000, Date.parse(f.quote.expiresAt), Date.parse(e.paymentAuthorization!.eligibility.expiresAt));
+    assert.deepEqual(deadlines, [expected]);
+    assert.ok(deadlines[0]! <= Date.parse(f.quote.expiresAt));
+    assert.ok(deadlines[0]! <= Date.parse(e.paymentAuthorization!.eligibility.expiresAt));
+    assert.equal(expected, bound === "fee" ? f.clock.now() + 1000 : Date.parse(f.quote.expiresAt));
+    assert.equal(result.active!.quote.expiresAt, f.quote.expiresAt); assert.equal(f.count("nearSubmit", "usdc-payment"), 1);
+  });
+});
 
 function tenPercentCosts(value: CompletePurchaseCosts): CompletePurchaseCosts {
   // At ETH=2500 and 1.1gwei, the three buffered EVM estimates cost exactly

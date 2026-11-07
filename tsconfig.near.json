@@ -20,7 +20,9 @@
     "scripts/purchase.ts",
     "scripts/purchase-dry-run.ts",
     "scripts/export-purchase-evidence.ts",
-    "scripts/verify-purchase-evidence.ts"
+    "scripts/verify-purchase-evidence.ts",
+    "scripts/native-test.ts",
+    "scripts/native-test-dry-run.ts"
   ],
   "exclude": [
     "node_modules"

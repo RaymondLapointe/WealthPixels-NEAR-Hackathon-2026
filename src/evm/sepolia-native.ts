@@ -114,6 +114,11 @@ function validateObservation(prepared: PreparedNativeTransfer, observed: NativeD
   check(observed.treasuryBalanceWei >= prepared.amountWei + prepared.maximumFeeWei + limits.operatingReserveWei,
     "Treasury ETH cannot cover delivery value, maximum fee and required operating reserve.");
 }
+/** Shared native checks, independent of purchase quotation or payment state. */
+export function validateNativeTransferObservation(prepared: PreparedNativeTransfer, observed: NativeDeliverySnapshot,
+  limits: NativeDeliveryPolicy = DEFAULT_NATIVE_DELIVERY_POLICY): void {
+  validateObservation(prepared, snapshot(observed), policy(limits));
+}
 
 /** Pure snapshot builder. Callers establish public observations and approval separately. */
 export function prepareNativeDelivery(terms: PurchaseTerms, approvedTermsHash: string,
@@ -144,14 +149,14 @@ async function read(rpc: SepoliaReadRpc, method: SepoliaReadMethod, params: read
   catch { throw new NativeDeliveryError("RPC_FAILED", `Native public RPC read failed (${method}); raw details suppressed. No retry was attempted.`); }
 }
 
-/** Read-only observation capability. No caller in this milestone invokes it on a live RPC. */
-export async function observeNativeDelivery(terms: PurchaseTerms, approvedTermsHash: string, rpc: SepoliaReadRpc): Promise<NativeDeliverySnapshot> {
-  approvedTerms(terms, approvedTermsHash);
+/** Exact native-value observations; no token, quotation, payment or transaction submission capability. */
+export async function observeNativeTransferAmount(amountWei: bigint, rpc: SepoliaReadRpc): Promise<NativeDeliverySnapshot> {
+  requireUint256(amountWei, "Native observation amount", true);
   check(quantity(await read(rpc, "eth_chainId", [])) === 11155111n, "Native observation requires Sepolia.");
   const block = record(await read(rpc, "eth_getBlockByNumber", ["latest", false]));
   const blockNumber = quantity(block.number), blockHash = hash(block.hash), blockTag = tag(blockNumber);
   const senderAddress = VERIFIED_IDENTITIES.treasury.evmAddress, recipientAddress = VERIFIED_IDENTITIES.investor.evmAddress;
-  const call = { from: senderAddress, to: recipientAddress, value: tag(terms.quantities.ethWei), data: "0x" };
+  const call = { from: senderAddress, to: recipientAddress, value: tag(amountWei), data: "0x" };
   const [senderCode, recipientCode, treasury, investor, confirmed, pending, simulationResult, estimate] = await Promise.all([
     read(rpc, "eth_getCode", [senderAddress, blockTag]), read(rpc, "eth_getCode", [recipientAddress, blockTag]),
     read(rpc, "eth_getBalance", [senderAddress, blockTag]), read(rpc, "eth_getBalance", [recipientAddress, blockTag]),
@@ -165,6 +170,11 @@ export async function observeNativeDelivery(terms: PurchaseTerms, approvedTermsH
   return snapshot({ chainId: 11155111n, senderAddress, recipientAddress, senderCode: senderCode as string, recipientCode: recipientCode as string,
     confirmedNonce: Number(confirmedNonce), pendingNonce: Number(pendingNonce), treasuryBalanceWei: quantity(treasury), investorBalanceWei: quantity(investor),
     estimatedGas: quantity(estimate), baseFeePerGas: quantity(block.baseFeePerGas), simulationResult: simulationResult as string, blockNumber, blockHash });
+}
+/** Purchase adapter retains its original terms validation. */
+export async function observeNativeDelivery(terms: PurchaseTerms, approvedTermsHash: string, rpc: SepoliaReadRpc): Promise<NativeDeliverySnapshot> {
+  approvedTerms(terms, approvedTermsHash);
+  return observeNativeTransferAmount(terms.quantities.ethWei, rpc);
 }
 /** Refresh exact existing bytes; never rebuild a transaction to accommodate changing state. */
 export async function recheckNativeDelivery(value: NativeDeliveryPreflight, rpc: SepoliaReadRpc, expectedTermsHash: string,

@@ -150,6 +150,62 @@ test("prepares exact direct v2 request and transaction hash before any send", as
   await assert.rejects(prepared.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
 });
 
+async function signingClock(action: (clock: { now(): number; advance(ms: number): void }) => Promise<void>) {
+  const original = Date.now; let now = Date.parse("2026-11-07T12:00:00.000Z");
+  Date.now = () => now;
+  try { await action({ now: () => now, advance(ms) { now += ms; } }); }
+  finally { Date.now = original; }
+}
+test("an unexpired immutable MPC submission deadline permits exactly one mocked send", async () => signingClock(async clock => {
+  const f = fixture(), packet = await prepareMpcSigning({ ...options(), submissionDeadlineMs: clock.now() + 1000 }, f.services);
+  assert.equal(f.calls.filter(call => call.method === "send_tx").length, 0);
+  await packet.broadcastOnce(); await assert.rejects(packet.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+  assert.equal(f.calls.filter(call => call.method === "send_tx").length, 1);
+  assert.equal(f.calls.filter(call => call.kind === "local-sign-mock").length, 1);
+}));
+test("expired or malformed MPC submission deadlines fail before public reads or credential access", async () => signingClock(async clock => {
+  for (const submissionDeadlineMs of [clock.now(), clock.now() - 1, -1, 0, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1,
+    "invalid" as unknown as number]) {
+    const f = fixture();
+    await assert.rejects(prepareMpcSigning({ ...options(), submissionDeadlineMs }, f.services), isCode("INVALID_INPUT"));
+    assert.deepEqual(f.calls, []);
+  }
+}));
+test("expiry during the initial public authority check prevents reading or locally signing credentials", async () => signingClock(async clock => {
+  const f = fixture(), rpc = f.services.rpc.bind(f.services);
+  f.services.rpc = async (method, params) => {
+    const result = await rpc(method, params);
+    if (method === "query") clock.advance(1000);
+    return result;
+  };
+  await assert.rejects(prepareMpcSigning({ ...options(), submissionDeadlineMs: clock.now() + 1000 }, f.services), isCode("INVALID_INPUT"));
+  assert.equal(f.calls.filter(call => call.method === "query").length, 1);
+  assert.equal(f.calls.some(call => ["file-metadata", "credential-read", "signer-created", "local-sign-mock"].includes(call.kind)), false);
+  assert.equal(f.calls.some(call => call.method === "send_tx"), false);
+}));
+test("deadline crossing during the final internal authority read prevents send and consumes the single attempt", async () => signingClock(async clock => {
+  const f = fixture(), rpc = f.services.rpc.bind(f.services); let queries = 0;
+  f.services.rpc = async (method, params) => {
+    const result = await rpc(method, params);
+    if (method === "query" && ++queries === 2) clock.advance(1000);
+    return result;
+  };
+  const packet = await prepareMpcSigning({ ...options(), submissionDeadlineMs: clock.now() + 1000 }, f.services), originalHash = packet.transactionHash;
+  await assert.rejects(packet.broadcastOnce(), isCode("INVALID_INPUT"));
+  await assert.rejects(packet.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+  assert.equal(queries, 2); assert.equal(f.calls.filter(call => call.method === "send_tx").length, 0);
+  assert.equal(f.calls.filter(call => call.kind === "local-sign-mock").length, 1); assert.equal(packet.transactionHash, originalHash);
+}));
+test("mutating caller deadline options cannot extend the deadline captured by a prepared MPC packet", async () => signingClock(async clock => {
+  const f = fixture(), input = { ...options(), submissionDeadlineMs: clock.now() + 1000 };
+  const packet = await prepareMpcSigning(input, f.services);
+  input.submissionDeadlineMs += 600_000; clock.advance(1000);
+  await assert.rejects(packet.broadcastOnce(), isCode("INVALID_INPUT"));
+  await assert.rejects(packet.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+  assert.equal(f.calls.filter(call => call.method === "send_tx").length, 0);
+  assert.equal(f.calls.filter(call => call.kind === "credential-read").length, 1);
+}));
+
 test("unknown submission is attempted once and cannot be retried or locally re-signed", async () => {
   const f = fixture(); f.changes.sendFails = true;
   const prepared = await prepareMpcSigning(options(), f.services);

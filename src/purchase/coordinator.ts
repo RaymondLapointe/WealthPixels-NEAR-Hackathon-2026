@@ -224,7 +224,9 @@ export function createPurchaseCoordinator(driver: PurchaseExecutionDriver,
         } else { await paidProof(r); if (input.leg === "eth-delivery") await confirmedLinkProof(r);
           fundingDeadline = (await remainingFunding(r, input.leg, entry.prepared)).expiresAt; }
         fresh(entry);
-        const packet = await driver.prepareSigning(input.role, input.approval, input.credentialPath);
+        const submissionDeadlineMs = Math.min(utc(entry.preparedAt) + AGE, input.leg === "usdc-payment" ?
+          Math.min(utc(r.quote.expiresAt), utc(authorization!.eligibility.expiresAt)) : utc(fundingDeadline));
+        const packet = await driver.prepareSigning(input.role, input.approval, input.credentialPath, submissionDeadlineMs);
         fresh(entry); if (input.leg === "usdc-payment") { newPayment(r); check(now() < utc(authorization!.eligibility.expiresAt), "Economic eligibility expired before the first MPC submission."); }
         else check(fundingDeadline && now() < utc(fundingDeadline), "Treasury funding observations expired before the first MPC submission.");
         validNearHash(packet.transactionHash);

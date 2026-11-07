@@ -141,7 +141,8 @@ export function createPurchaseExecutionServices(options: PurchaseExecutionServic
     assertPrepared: assertPreparedFees,
     async recheck(quote, prepared) { assertPreparedFees(quote, prepared); return recheckPurchaseLeg(prepared, quote, quote.quoteHash, rpc); },
     async verifyAuthority(role) { return inspectNearSigningAuthority(readinessOptions(), requireRole(role), dependencies.readinessPorts); },
-    prepareSigning(role, digest, credentialPath) { return prepareMpcSigning({ role: requireRole(role), digest, credentialPath, rpcUrl: nearRpcUrl, repositoryRoot: options.repositoryRoot }); },
+    prepareSigning(role, digest, credentialPath, submissionDeadlineMs) { return prepareMpcSigning({ role: requireRole(role), digest, credentialPath,
+      rpcUrl: nearRpcUrl, repositoryRoot: options.repositoryRoot, submissionDeadlineMs }); },
     readSigning(role, hash) { return readMpcSigningOutcome(requireRole(role), hash, nearRpcUrl); },
     assemble(quote, prepared, nearHashValue, outcome) {
       assertPreparedFees(quote, prepared);

@@ -105,6 +105,24 @@ Verification trusts configured RPC responses; it is not a light client or a BLS/
 
 WealthPixels follows a Buy and Build approach: integrate established blockchain infrastructure rather than operate its own RPC nodes without a compelling need. Public services serve the hackathon; production may add commercial providers, redundancy and service-level protections. Provider changes do not change the portfolio protocol or verification rules. The existing two-way LINK evidence remains a separate completed live demonstration.
 
+## Standalone ETH test readiness: Task 03F-A
+
+An operator entry point now supports a separately approved small Treasury-to-Investor native ETH test, without a USDC quote or fabricated portfolio payment. Its own exact-wei intent and ignored state bind the public authorities, policy, amount and transaction hashes. It reuses the existing native builders, full MPC-key verification, canonical receipt/balance accounting and one-attempt signing/broadcast transports.
+
+~~~text
+npm run native:test -- --help
+npm run native:test:dry-run
+npm run test:native-standalone
+~~~
+
+The native example is **offline preparation only**, using synthetic observations with no state writes, credentials, signing or broadcast. A genuine Treasury-native signing/receipt success remains a separately approved live test. Standalone prepare/sign/broadcast commands refuse active purchase reservations or obligations; they never change the purchase journal. Inspection/reconciliation remain available. State and new audit files belong in ignored `.local/transfers/native-tests/`.
+
+The normal 15-minute preparation rule remains. Expired signed recovery requires the exact intent, original timestamp acknowledgment and signed-hash approval, plus a new preserved audit within 30 seconds and fresh public checks. It cannot re-sign, replace, alter fees or resend an uncertain attempt. An immutable submission deadline now reaches the MPC adapter's final check immediately before `send_tx`, so slow authority reads cannot extend either native preparation or purchase fee eligibility.
+
+The bounded archive review examined two new providers' official documentation and found no qualified public Sepolia Beacon archive route; **zero new probes** were made and the earlier failed requests were not repeated. The historical dependency remains unresolved. A live purchase can be verified promptly while required recent history remains available, with no guarantee of later independent retrieval. Missing history always remains incomplete; an earlier report or cached response does not replace a new verification.
+
+The [Task 03F-A report](docs/Task03FA_Native_Test_and_Live_Readiness.md) and [future operator runbook](docs/Task03FA_Live_Operator_Runbook.md) give the exact command/approval sequence, including the unchanged 60-second first-payment window. No live native test or portfolio purchase was prepared or executed in this increment.
+
 ## External Pricing Integration and Future Production Readiness
 
 WealthPixels intentionally treats asset pricing as a replaceable external service. The proof of concept uses explicitly approved demonstration pricing to isolate and prove portfolio allocation, economic screening and delivery of individually owned assets. Demonstration assumptions are preserved as such; they are not production market pricing.
