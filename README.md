@@ -143,6 +143,8 @@ npm run typecheck
 
 Dependency installation needs internet or a populated npm cache. The tests themselves need no RPC, credentials, account creation, blockchain funding or Windows-specific setup. PowerShell and the development-only Windows Node launcher are optional.
 
+The isolated [Experiment B MPC diagnostic](docs/ExperimentB_Implementation_Report.md) has credential-free tests (`npm run test:experiment-b`) and offline help (`npm run near:mpc-diagnostic -- --help`). Its [operator runbook](docs/ExperimentB_Operator_Runbook.md) requires separate approvals for public preparation and one digest-and-NEAR-hash-bound submission, plus an explicit MPC fee budget. This helper constructs no Ethereum transaction; its synthetic tests do not establish live MPC success.
+
 ## Three evaluation modes
 
 | Mode | Command / status | Credentials or funding |
