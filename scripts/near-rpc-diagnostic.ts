@@ -135,7 +135,9 @@ export async function runExperimentACli(argsValue: readonly string[], options: E
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   runExperimentACli(process.argv.slice(2)).catch(error => {
     // Unknown transport/filesystem/parser errors may contain untrusted or sensitive text.
-    process.stderr.write((error instanceof CliInputError || error instanceof ExperimentAError ? error.message :
+    if (error instanceof ExperimentAError && error.publicFeeBalance) {
+      process.stderr.write(JSON.stringify({ code: error.code, message: error.message, feeBalance: error.publicFeeBalance }, null, 2) + "\n");
+    } else process.stderr.write((error instanceof CliInputError || error instanceof ExperimentAError ? error.message :
       "Experiment A command failed. Preserve its state and inspect/reconcile without retrying submission.") + "\n");
     process.exitCode = 1;
   });

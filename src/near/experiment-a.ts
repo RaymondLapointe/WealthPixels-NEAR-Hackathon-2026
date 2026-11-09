@@ -70,9 +70,18 @@ export interface ExperimentAState {
     readonly otherNonceActivity: boolean; readonly balanceObservation: "latest-public-state-not-isolated-historical-proof" } | null;
 }
 export class ExperimentAError extends Error {
-  constructor(readonly code: string, message: string, readonly diagnostic?: NearSubmissionDiagnostic) {
+  constructor(readonly code: string, message: string, readonly diagnostic?: NearSubmissionDiagnostic,
+    readonly publicFeeBalance?: ExperimentAFeeBalanceDetails) {
     super(message); this.name = "ExperimentAError";
   }
+}
+export interface ExperimentAFeeBalanceDetails {
+  readonly balanceYocto: string; readonly storageUsage: number; readonly storageReserveYocto: string;
+  readonly spendableYocto: string; readonly gasPriceYocto: string; readonly estimatedGas: string;
+  readonly estimatedFeeYocto: string; readonly approvedFeeBudgetYocto: string; readonly suppliedFeeBudgetYocto: string;
+  readonly requiredSpendableYocto: string; readonly requiredGrossBalanceYocto: string;
+  readonly comparisons: Readonly<Record<"storageCovered" | "spendableArithmeticMatches" | "positiveGasPrice" | "positiveGasEstimate" |
+    "feeArithmeticMatches" | "approvedBudgetUnchanged" | "feeWithinBudget" | "spendableCoversFeeAndTransfer", boolean>>;
 }
 function check(value: unknown, code: string, message: string): asserts value {
   if (!value) throw new ExperimentAError(code, message);
@@ -164,10 +173,25 @@ function assertPreflight(value: ExperimentAPreflight): void {
     "INVALID_STATE", "Invalid diagnostic nonce or reference block.");
   check(Number.isSafeInteger(p.storageUsage) && p.storageUsage >= 0 && Number.isSafeInteger(p.transactionValidityPeriod) && p.transactionValidityPeriod > 0,
     "INVALID_STATE", "Invalid storage or transaction validity observation.");
-  check(quantity(p.balanceYocto) >= quantity(p.storageReserveYocto) && quantity(p.spendableYocto) === quantity(p.balanceYocto) - quantity(p.storageReserveYocto) &&
-    quantity(p.gasPriceYocto) > 0n && quantity(p.estimatedGas) > 0n && quantity(p.estimatedFeeYocto) === quantity(p.estimatedGas) * quantity(p.gasPriceYocto) &&
-    p.feeBudgetYocto === EXPERIMENT_A_FEE_BUDGET_YOCTO && quantity(p.estimatedFeeYocto) <= quantity(p.feeBudgetYocto) && quantity(p.spendableYocto) >= quantity(p.estimatedFeeYocto) + 1n,
-    "FEE_OR_BALANCE_FAILED", "The diagnostic fee budget or storage-safe balance is insufficient.");
+  const balance = quantity(p.balanceYocto), reserve = quantity(p.storageReserveYocto), spendable = quantity(p.spendableYocto);
+  const gasPrice = quantity(p.gasPriceYocto), gas = quantity(p.estimatedGas), fee = quantity(p.estimatedFeeYocto), budget = quantity(p.feeBudgetYocto);
+  const comparisons = {
+    storageCovered: balance >= reserve, spendableArithmeticMatches: spendable === balance - reserve,
+    positiveGasPrice: gasPrice > 0n, positiveGasEstimate: gas > 0n, feeArithmeticMatches: fee === gas * gasPrice,
+    approvedBudgetUnchanged: p.feeBudgetYocto === EXPERIMENT_A_FEE_BUDGET_YOCTO,
+    feeWithinBudget: fee <= budget, spendableCoversFeeAndTransfer: spendable >= fee + 1n,
+  };
+  if (!Object.values(comparisons).every(Boolean)) {
+    const details: ExperimentAFeeBalanceDetails = { balanceYocto: balance.toString(), storageUsage: p.storageUsage,
+      storageReserveYocto: reserve.toString(), spendableYocto: spendable.toString(), gasPriceYocto: gasPrice.toString(),
+      estimatedGas: gas.toString(), estimatedFeeYocto: fee.toString(), approvedFeeBudgetYocto: EXPERIMENT_A_FEE_BUDGET_YOCTO,
+      suppliedFeeBudgetYocto: budget.toString(), requiredSpendableYocto: (fee + 1n).toString(), requiredGrossBalanceYocto: (reserve + fee + 1n).toString(), comparisons };
+    const malformed = !comparisons.spendableArithmeticMatches || !comparisons.positiveGasPrice || !comparisons.positiveGasEstimate ||
+      !comparisons.feeArithmeticMatches || !comparisons.approvedBudgetUnchanged;
+    const code = malformed ? "FEE_CALCULATION_INVALID" : !comparisons.storageCovered || !comparisons.spendableCoversFeeAndTransfer ? "BALANCE_INSUFFICIENT" : "FEE_BUDGET_EXCEEDED";
+    throw new ExperimentAError(code, code === "FEE_BUDGET_EXCEEDED" ? "The diagnostic estimated fee exceeds the unchanged approved budget." :
+      code === "BALANCE_INSUFFICIENT" ? "The diagnostic storage-safe balance is insufficient." : "The diagnostic fee or balance arithmetic is inconsistent.", undefined, details);
+  }
 }
 function assertStoredProof(value: unknown, state: ExperimentAState, endpoint: string): void {
   const p = object(value);

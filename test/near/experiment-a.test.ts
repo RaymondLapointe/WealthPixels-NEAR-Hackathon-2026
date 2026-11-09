@@ -5,7 +5,7 @@ import { actions, baseDecode, baseEncode, createTransaction, PublicKey } from "n
 import { VERIFIED_IDENTITIES } from "../../src/near/identities.js";
 import {
   assertExperimentAState, observeExperimentA, prepareExperimentA, publicExperimentASummary,
-  reconcileExperimentA, submitExperimentA, type ExperimentAState,
+  reconcileExperimentA, submitExperimentA, ExperimentAError, type ExperimentAState,
 } from "../../src/near/experiment-a.js";
 import {
   experimentAFixture, EXPERIMENT_A_FIXTURE_AT, EXPERIMENT_A_FIXTURE_BLOCK,
@@ -99,6 +99,31 @@ test("fee estimation uses exact protocol costs and rejects excessive, missing or
     await assert.rejects(f.prepare());
     assert.equal(f.count("credential-read-mock"), 0); assert.equal(f.sendCount(), 0);
   }
+});
+
+test("fee-budget rejection exposes exact public guard values without changing the calculation", async () => {
+  const f = experimentAFixture(); f.control.config.runtime_config.min_gas_purchase_price = "1000000000";
+  await assert.rejects(observeExperimentA({ primaryRpc: f.primary, secondaryRpc: f.secondary }, f.ports), error => {
+    assert.ok(error instanceof ExperimentAError); assert.equal(error.code, "FEE_BUDGET_EXCEEDED");
+    const d = error.publicFeeBalance!;
+    assert.equal(d.estimatedFeeYocto, "446365125000000000000"); assert.equal(d.approvedFeeBudgetYocto, "100000000000000000000");
+    assert.equal(d.requiredSpendableYocto, "446365125000000000001");
+    assert.equal(d.comparisons.feeWithinBudget, false); assert.equal(d.comparisons.spendableCoversFeeAndTransfer, true);
+    assert.equal(Object.values(d.comparisons).filter(value => !value).length, 1);
+    assert.doesNotMatch(JSON.stringify(d), /private_key|credential|signed_tx/); return true;
+  });
+  assert.equal(f.count("credential-read-mock"), 0); assert.equal(f.sendCount(), 0);
+});
+
+test("insufficient spendable balance is reported separately from an eligible fee", async () => {
+  const f = experimentAFixture(); f.control.balance = 182n * 10n ** 19n + 1n;
+  await assert.rejects(observeExperimentA({ primaryRpc: f.primary, secondaryRpc: f.secondary }, f.ports), error => {
+    assert.ok(error instanceof ExperimentAError); assert.equal(error.code, "BALANCE_INSUFFICIENT");
+    assert.equal(error.publicFeeBalance!.spendableYocto, "1");
+    assert.equal(error.publicFeeBalance!.comparisons.feeWithinBudget, true);
+    assert.equal(error.publicFeeBalance!.comparisons.spendableCoversFeeAndTransfer, false); return true;
+  });
+  assert.equal(f.count("credential-read-mock"), 0); assert.equal(f.sendCount(), 0);
 });
 
 test("preparation and public snapshots cannot be used to silently refresh original timestamps", async () => {
