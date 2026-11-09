@@ -1,10 +1,14 @@
 # Public testnet evidence
 
-This directory holds two separate demonstrations: the completed two-way LINK evidence below and the pending three-leg portfolio purchase. No live portfolio purchase has executed.
+This directory holds the completed two-way LINK evidence, the completed Experiment A ordinary NEAR diagnostic summary, and the pending three-leg portfolio purchase. No live portfolio purchase has executed.
 
 sepolia-link.json is the judge-facing manifest. As of November 5, 2026 its status is "complete": the real 1 LINK Treasury delivery and separately authorized 0.1 LINK Investor return are confirmed and public verification passed. It records both NEAR signing hashes, both Sepolia transaction hashes and the verified public role addresses/root. Detailed public observations are in [treasury-link-delivery.json](treasury-link-delivery.json) and [investor-link-return.json](investor-link-return.json). Account establishment and derivation are recorded in [Task02B1_Public_Identities.json](../docs/Task02B1_Public_Identities.json). These records contain no credentials or fabricated transactions.
 
 ## Commands and outcomes
+
+Experiment A is recorded separately in [experiment-a-near-self-transfer.json](experiment-a-near-self-transfer.json). It summarizes the live 1-yoctoNEAR Investor self-transfer, its FINAL outcomes from both public endpoints, execution-block hash, receipt IDs, nonce and actual fee. It contains no credentials, signed executable bytes or local runtime paths. The original ignored diagnostic record is preserved.
+
+This summary is an export of completed observations, not a fresh RPC verification or a portfolio/MPC result. The LINK and purchase manifest verifiers use different schemas and do not accept this diagnostic summary. Its public transaction can be independently queried through NEAR RPC `tx` with hash `GtjwK1T6j2yfAfcV3VSHjj9uVeD6nEf9odKvYR6G1MwP`, sender `wealthpixels-investor.testnet` and `wait_until: "NONE"`. No new lookup was made during packaging. Timestamps in the summary are operator observation times; the execution block is identified by hash, without inventing an unretained height or timestamp.
 
 - npm test: offline fixtures only; no RPC.
 - npm run verify:evidence: default public manifest.

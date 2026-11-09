@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "kind": "recorded-live-near-testnet-diagnostic-summary",
+  "experiment": "A",
+  "diagnosticId": "experiment-a-investor-20261109-001",
+  "status": "final-success",
+  "network": "testnet",
+  "operatorModel": "single-operator-disposable-testnet-identity",
+  "transaction": {
+    "hash": "GtjwK1T6j2yfAfcV3VSHjj9uVeD6nEf9odKvYR6G1MwP",
+    "signerAccountId": "wealthpixels-investor.testnet",
+    "receiverAccountId": "wealthpixels-investor.testnet",
+    "signingPublicKey": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc",
+    "nonce": "275946428000002",
+    "action": "Transfer",
+    "amountYocto": "1"
+  },
+  "execution": {
+    "canonicalBlockHash": "81og6xZ8jWiQqKV6QouC36joQyoGPJCJFAL5ad2riZeX",
+    "finalExecutionStatus": "FINAL",
+    "success": true,
+    "receiptIds": [
+      "9CxEKBLvdFUJf2iSSPRwLx7a2CT3QmrKk2MxbuKv9ZCw",
+      "53ytopPmgVzyWUcFCjKwgPUoLRXThKqPiTtnGtk2ghm8"
+    ],
+    "allReceiptOutcomesVerified": true,
+    "finalAccessKeyNonce": "275946428000002",
+    "otherNonceActivityObserved": false,
+    "observedFeeYocto": "44636512500000000000",
+    "observedFeeNear": "0.0000446365125"
+  },
+  "verification": {
+    "sources": [
+      {
+        "endpoint": "https://test.rpc.fastnear.com",
+        "reportedStatus": "FINAL",
+        "success": true
+      },
+      {
+        "endpoint": "https://archival-rpc.testnet.near.org",
+        "reportedStatus": "FINAL",
+        "success": true
+      }
+    ],
+    "checks": [
+      "exact-transaction-identity",
+      "investor-ed25519-signature",
+      "complete-receipt-outcomes",
+      "canonical-finalized-execution-block",
+      "final-access-key-nonce",
+      "public-token-burn-accounting"
+    ],
+    "basis": "Completed live RPC observations preserved by the diagnostic; no new RPC verification during this offline export."
+  },
+  "observationTimestamps": {
+    "preparedAt": "2026-11-09T22:56:25.339Z",
+    "submissionIntentRecordedAt": "2026-11-09T23:02:28.472Z",
+    "rpcAcknowledgmentRecordedAt": "2026-11-09T23:02:28.635Z",
+    "reconciliationCompletedAt": "2026-11-09T23:03:18.640Z",
+    "basis": "Operator observation timestamps in UTC, not execution-block timestamps."
+  },
+  "limitations": [
+    "This is a compact public summary, not a full receipt-proof archive or a light-client proof.",
+    "It establishes one ordinary NEAR transaction, not an MPC signing result or a portfolio purchase."
+  ]
+}
