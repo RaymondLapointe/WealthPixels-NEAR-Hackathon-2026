@@ -5,6 +5,7 @@ import { isDeepStrictEqual } from "node:util";
 import { actions, baseDecode, baseEncode, createTransaction, KeyPairSigner, PublicKey,
   type KeyPairString, type SignedTransaction, type Transaction } from "near-api-js";
 import { VERIFIED_IDENTITIES } from "./identities.js";
+import { calculateExperimentAFeeModel, type ExperimentAFeeModel } from "./experiment-a-fees.js";
 import { assertNearSubmissionDiagnostic, nearRpcErrorDiagnostic, nearRpcResponseDiagnostic,
   type NearSubmissionDiagnostic } from "./submission.js";
 
@@ -38,6 +39,7 @@ export interface ExperimentAPreflight {
   readonly previousNonce: string; readonly balanceYocto: string; readonly storageUsage: number;
   readonly storageReserveYocto: string; readonly spendableYocto: string;
   readonly gasPriceYocto: string; readonly estimatedGas: string; readonly estimatedFeeYocto: string;
+  readonly feeModel: ExperimentAFeeModel;
   readonly feeBudgetYocto: typeof EXPERIMENT_A_FEE_BUDGET_YOCTO;
   readonly transactionValidityPeriod: number;
 }
@@ -79,9 +81,10 @@ export interface ExperimentAFeeBalanceDetails {
   readonly balanceYocto: string; readonly storageUsage: number; readonly storageReserveYocto: string;
   readonly spendableYocto: string; readonly gasPriceYocto: string; readonly estimatedGas: string;
   readonly estimatedFeeYocto: string; readonly approvedFeeBudgetYocto: string; readonly suppliedFeeBudgetYocto: string;
+  readonly upfrontGasYocto: string; readonly feeModel: ExperimentAFeeModel;
   readonly requiredSpendableYocto: string; readonly requiredGrossBalanceYocto: string;
   readonly comparisons: Readonly<Record<"storageCovered" | "spendableArithmeticMatches" | "positiveGasPrice" | "positiveGasEstimate" |
-    "feeArithmeticMatches" | "approvedBudgetUnchanged" | "feeWithinBudget" | "spendableCoversFeeAndTransfer", boolean>>;
+    "feeArithmeticMatches" | "approvedBudgetUnchanged" | "feeWithinBudget" | "spendableCoversUpfrontFunding", boolean>>;
 }
 function check(value: unknown, code: string, message: string): asserts value {
   if (!value) throw new ExperimentAError(code, message);
@@ -163,7 +166,7 @@ export function createExperimentAPorts(repositoryRoot = process.cwd()): Experime
 }
 function assertPreflight(value: ExperimentAPreflight): void {
   const p = object(value);
-  exact(p, ["kind", "mode", "networkId", "primaryRpc", "secondaryRpc", "observedAt", "accountId", "publicKey", "referenceBlock", "previousNonce", "balanceYocto", "storageUsage", "storageReserveYocto", "spendableYocto", "gasPriceYocto", "estimatedGas", "estimatedFeeYocto", "feeBudgetYocto", "transactionValidityPeriod"]);
+  exact(p, ["kind", "mode", "networkId", "primaryRpc", "secondaryRpc", "observedAt", "accountId", "publicKey", "referenceBlock", "previousNonce", "balanceYocto", "storageUsage", "storageReserveYocto", "spendableYocto", "gasPriceYocto", "estimatedGas", "estimatedFeeYocto", "feeModel", "feeBudgetYocto", "transactionValidityPeriod"]);
   check(p.kind === "experiment-a-read-only-preflight" && ["live", "offline-fixtures"].includes(p.mode) && p.networkId === "testnet" &&
     p.accountId === IDENTITY.accountId && p.publicKey === IDENTITY.accessPublicKey, "INVALID_STATE", "Diagnostic observations differ from the Investor identity.");
   check(experimentARpcUrl(p.primaryRpc) === p.primaryRpc && experimentARpcUrl(p.secondaryRpc) === p.secondaryRpc && p.primaryRpc !== p.secondaryRpc,
@@ -175,20 +178,26 @@ function assertPreflight(value: ExperimentAPreflight): void {
     "INVALID_STATE", "Invalid storage or transaction validity observation.");
   const balance = quantity(p.balanceYocto), reserve = quantity(p.storageReserveYocto), spendable = quantity(p.spendableYocto);
   const gasPrice = quantity(p.gasPriceYocto), gas = quantity(p.estimatedGas), fee = quantity(p.estimatedFeeYocto), budget = quantity(p.feeBudgetYocto);
+  const model = object(p.feeModel), expected = calculateExperimentAFeeModel({ protocolVersion: model.protocolVersion, sendGas: model.sendGas,
+    executionGas: model.executionGas, blockGasPriceYocto: model.blockGasPriceYocto, receiptPurchaseFloorYocto: model.receiptPurchaseFloorYocto });
+  const upfront = quantity(expected.requiredSpendableYocto);
   const comparisons = {
     storageCovered: balance >= reserve, spendableArithmeticMatches: spendable === balance - reserve,
-    positiveGasPrice: gasPrice > 0n, positiveGasEstimate: gas > 0n, feeArithmeticMatches: fee === gas * gasPrice,
+    positiveGasPrice: gasPrice > 0n, positiveGasEstimate: gas > 0n,
+    feeArithmeticMatches: isDeepStrictEqual(model, expected) && gas === quantity(expected.sendGas) + quantity(expected.executionGas) &&
+      gasPrice === quantity(expected.assumedBlockGasPriceYocto) && fee === quantity(expected.estimatedExecutionFeeYocto),
     approvedBudgetUnchanged: p.feeBudgetYocto === EXPERIMENT_A_FEE_BUDGET_YOCTO,
-    feeWithinBudget: fee <= budget, spendableCoversFeeAndTransfer: spendable >= fee + 1n,
+    feeWithinBudget: fee <= budget, spendableCoversUpfrontFunding: spendable >= upfront,
   };
   if (!Object.values(comparisons).every(Boolean)) {
     const details: ExperimentAFeeBalanceDetails = { balanceYocto: balance.toString(), storageUsage: p.storageUsage,
       storageReserveYocto: reserve.toString(), spendableYocto: spendable.toString(), gasPriceYocto: gasPrice.toString(),
       estimatedGas: gas.toString(), estimatedFeeYocto: fee.toString(), approvedFeeBudgetYocto: EXPERIMENT_A_FEE_BUDGET_YOCTO,
-      suppliedFeeBudgetYocto: budget.toString(), requiredSpendableYocto: (fee + 1n).toString(), requiredGrossBalanceYocto: (reserve + fee + 1n).toString(), comparisons };
+      suppliedFeeBudgetYocto: budget.toString(), upfrontGasYocto: expected.upfrontGasYocto, feeModel: expected,
+      requiredSpendableYocto: upfront.toString(), requiredGrossBalanceYocto: (reserve + upfront).toString(), comparisons };
     const malformed = !comparisons.spendableArithmeticMatches || !comparisons.positiveGasPrice || !comparisons.positiveGasEstimate ||
       !comparisons.feeArithmeticMatches || !comparisons.approvedBudgetUnchanged;
-    const code = malformed ? "FEE_CALCULATION_INVALID" : !comparisons.storageCovered || !comparisons.spendableCoversFeeAndTransfer ? "BALANCE_INSUFFICIENT" : "FEE_BUDGET_EXCEEDED";
+    const code = malformed ? "FEE_CALCULATION_INVALID" : !comparisons.storageCovered || !comparisons.spendableCoversUpfrontFunding ? "BALANCE_INSUFFICIENT" : "FEE_BUDGET_EXCEEDED";
     throw new ExperimentAError(code, code === "FEE_BUDGET_EXCEEDED" ? "The diagnostic estimated fee exceeds the unchanged approved budget." :
       code === "BALANCE_INSUFFICIENT" ? "The diagnostic storage-safe balance is insufficient." : "The diagnostic fee or balance arithmetic is inconsistent.", undefined, details);
   }
@@ -226,11 +235,22 @@ export async function observeExperimentA(options: { primaryRpc?: string; seconda
   const config = object(await ports.rpc(primaryRpc, "EXPERIMENTAL_protocol_config", { block_id: h.hash }));
   check(config.chain_id === "testnet", "WRONG_NETWORK", "The protocol configuration is not Testnet.");
   const runtime = object(config.runtime_config), costs = object(runtime.transaction_costs), receipt = object(costs.action_receipt_creation_config), transfer = object(object(costs.action_creation_config).transfer_cost);
-  const gas = quantity(receipt.send_sir) + quantity(receipt.execution) + quantity(transfer.send_sir) + quantity(transfer.execution);
+  check(config.protocol_version === 88, "UNSUPPORTED_PRICING", "The diagnostic supports only the documented protocol-88 pricing schedule.");
+  for (const source of [runtime, costs]) {
+    if (Object.hasOwn(source, "gas_refund_penalty")) {
+      const penalty = object(source.gas_refund_penalty);
+      check(quantity(penalty.numerator) === 0n && quantity(penalty.denominator) > 0n, "UNSUPPORTED_PRICING", "The observed refund penalty contradicts the documented zero-penalty schedule.");
+    }
+    if (Object.hasOwn(source, "min_gas_refund_penalty")) check(quantity(source.min_gas_refund_penalty) === 0n,
+      "UNSUPPORTED_PRICING", "The observed minimum refund penalty is unsupported.");
+  }
+  const sendGas = quantity(receipt.send_sir) + quantity(transfer.send_sir), executionGas = quantity(receipt.execution) + quantity(transfer.execution);
+  const gas = sendGas + executionGas;
   const price = object(await ports.rpc(primaryRpc, "gas_price", [h.hash]));
-  const market = quantity(price.gas_price), minimum = quantity(runtime.min_gas_purchase_price), ratio = costs.pessimistic_gas_price_inflation_ratio;
-  check(Array.isArray(ratio) && ratio.length === 2 && quantity(ratio[0]) >= quantity(ratio[1]) && quantity(ratio[1]) > 0n, "INVALID_RESPONSE", "Missing conservative gas-price assumptions.");
-  const gasPrice = ((market > minimum ? market : minimum) * quantity(ratio[0]) + quantity(ratio[1]) - 1n) / quantity(ratio[1]);
+  const market = quantity(price.gas_price), minimum = quantity(runtime.min_gas_purchase_price);
+  check(sendGas > 0n && executionGas > 0n && market > 0n && minimum > 0n, "UNSUPPORTED_PRICING", "Required pricing inputs must be positive.");
+  const feeModel = calculateExperimentAFeeModel({ protocolVersion: config.protocol_version, sendGas: sendGas.toString(), executionGas: executionGas.toString(),
+    blockGasPriceYocto: market.toString(), receiptPurchaseFloorYocto: minimum.toString() });
   check(Number.isSafeInteger(account.storage_usage) && account.storage_usage >= 0, "INVALID_RESPONSE", "Invalid Investor storage observation.");
   const balance = quantity(account.amount), reserve = BigInt(account.storage_usage) * quantity(runtime.storage_amount_per_byte);
   check(balance >= reserve, "FEE_OR_BALANCE_FAILED", "Investor storage reserve is insufficient.");
@@ -239,7 +259,8 @@ export async function observeExperimentA(options: { primaryRpc?: string; seconda
   const observed: ExperimentAPreflight = { kind: "experiment-a-read-only-preflight", mode: ports.mode, networkId: "testnet", primaryRpc, secondaryRpc,
     observedAt: new Date(startedAt).toISOString(), accountId: IDENTITY.accountId, publicKey: IDENTITY.accessPublicKey, referenceBlock: { hash: h.hash, height: h.height, timestampNanosec: String(h.timestamp_nanosec) },
     previousNonce: quantity(keys.keys[0].access_key.nonce).toString(), balanceYocto: balance.toString(), storageUsage: account.storage_usage,
-    storageReserveYocto: reserve.toString(), spendableYocto: (balance - reserve).toString(), gasPriceYocto: gasPrice.toString(), estimatedGas: gas.toString(), estimatedFeeYocto: (gas * gasPrice).toString(),
+    storageReserveYocto: reserve.toString(), spendableYocto: (balance - reserve).toString(), gasPriceYocto: feeModel.assumedBlockGasPriceYocto,
+    estimatedGas: gas.toString(), estimatedFeeYocto: feeModel.estimatedExecutionFeeYocto, feeModel,
     feeBudgetYocto: EXPERIMENT_A_FEE_BUDGET_YOCTO, transactionValidityPeriod: config.transaction_validity_period };
   assertPreflight(observed); return structuredClone(observed);
 }

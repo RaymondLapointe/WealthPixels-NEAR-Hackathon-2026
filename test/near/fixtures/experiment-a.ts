@@ -13,6 +13,7 @@ export const EXPERIMENT_A_FIXTURE_HEIGHT = 276944000;
 export const EXPERIMENT_A_FIXTURE_NONCE = 275946428000001n;
 export const EXPERIMENT_A_FIXTURE_BALANCE = 9_999_195_988_080_103_099_999_999n;
 export const EXPERIMENT_A_FIXTURE_FEE = 44_636_512_500_000_000_000n;
+export const EXPERIMENT_A_FIXTURE_ESTIMATED_FEE = 89_273_025_000_000_000_000n;
 export const EXPERIMENT_A_FIXTURE_CREDENTIAL = resolve("..", "offline-fixture-credentials", "investor.json");
 const PRIMARY = "https://primary.offline.invalid", SECONDARY = "https://secondary.offline.invalid";
 const RECEIPT = baseEncode(new Uint8Array(32).fill(4));
@@ -31,7 +32,7 @@ export function experimentAFixture() {
     network: "testnet", nonce: EXPERIMENT_A_FIXTURE_NONCE, balance: EXPERIMENT_A_FIXTURE_BALANCE,
     extraKey: false, key: identity.accessPublicKey, permission: "FullAccess", gasPrice: "100000000", signatureValid: true,
     config: { chain_id: "testnet", protocol_version: 88, transaction_validity_period: 86400,
-      runtime_config: { storage_amount_per_byte: "10000000000000000000", min_gas_purchase_price: "100000000",
+      runtime_config: { storage_amount_per_byte: "10000000000000000000", min_gas_purchase_price: "1000000000",
         transaction_costs: { action_receipt_creation_config: { send_sir: 108059500000, execution: 108059500000, send_not_sir: 108059500000 },
           action_creation_config: { transfer_cost: { send_sir: 115123062500, execution: 115123062500, send_not_sir: 115123062500 } },
           pessimistic_gas_price_inflation_ratio: [1, 1] } } },

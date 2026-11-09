@@ -10,6 +10,7 @@ import {
 import {
   experimentAFixture, EXPERIMENT_A_FIXTURE_AT, EXPERIMENT_A_FIXTURE_BLOCK,
   EXPERIMENT_A_FIXTURE_HEIGHT, EXPERIMENT_A_FIXTURE_NONCE, EXPERIMENT_A_FIXTURE_FEE,
+  EXPERIMENT_A_FIXTURE_ESTIMATED_FEE,
   EXPERIMENT_A_FIXTURE_CREDENTIAL,
 } from "./fixtures/experiment-a.js";
 
@@ -87,7 +88,7 @@ test("wrong network, changed access key, function-call permission and additional
 
 test("fee estimation uses exact protocol costs and rejects excessive, missing or unavailable mandatory inputs", async () => {
   const valid = experimentAFixture(), state = await valid.prepare();
-  assert.match(JSON.stringify(state.preflight), new RegExp(EXPERIMENT_A_FIXTURE_FEE.toString()));
+  assert.equal(state.preflight.estimatedFeeYocto, EXPERIMENT_A_FIXTURE_ESTIMATED_FEE.toString());
   for (const mutate of [
     (f: Fixture) => { f.control.gasPrice = "100000000000000000000000000000000"; },
     (f: Fixture) => { delete f.control.config.runtime_config.transaction_costs.action_creation_config.transfer_cost; },
@@ -101,14 +102,14 @@ test("fee estimation uses exact protocol costs and rejects excessive, missing or
   }
 });
 
-test("fee-budget rejection exposes exact public guard values without changing the calculation", async () => {
-  const f = experimentAFixture(); f.control.config.runtime_config.min_gas_purchase_price = "1000000000";
+test("execution-fee rejection exposes exact public guard values and a separate upfront reserve", async () => {
+  const f = experimentAFixture(); f.control.gasPrice = "200000000";
   await assert.rejects(observeExperimentA({ primaryRpc: f.primary, secondaryRpc: f.secondary }, f.ports), error => {
     assert.ok(error instanceof ExperimentAError); assert.equal(error.code, "FEE_BUDGET_EXCEEDED");
     const d = error.publicFeeBalance!;
-    assert.equal(d.estimatedFeeYocto, "446365125000000000000"); assert.equal(d.approvedFeeBudgetYocto, "100000000000000000000");
-    assert.equal(d.requiredSpendableYocto, "446365125000000000001");
-    assert.equal(d.comparisons.feeWithinBudget, false); assert.equal(d.comparisons.spendableCoversFeeAndTransfer, true);
+    assert.equal(d.estimatedFeeYocto, "178546050000000000000"); assert.equal(d.approvedFeeBudgetYocto, "100000000000000000000");
+    assert.equal(d.requiredSpendableYocto, "312455587500000000001");
+    assert.equal(d.comparisons.feeWithinBudget, false); assert.equal(d.comparisons.spendableCoversUpfrontFunding, true);
     assert.equal(Object.values(d.comparisons).filter(value => !value).length, 1);
     assert.doesNotMatch(JSON.stringify(d), /private_key|credential|signed_tx/); return true;
   });
@@ -121,9 +122,51 @@ test("insufficient spendable balance is reported separately from an eligible fee
     assert.ok(error instanceof ExperimentAError); assert.equal(error.code, "BALANCE_INSUFFICIENT");
     assert.equal(error.publicFeeBalance!.spendableYocto, "1");
     assert.equal(error.publicFeeBalance!.comparisons.feeWithinBudget, true);
-    assert.equal(error.publicFeeBalance!.comparisons.spendableCoversFeeAndTransfer, false); return true;
+    assert.equal(error.publicFeeBalance!.comparisons.spendableCoversUpfrontFunding, false); return true;
   });
   assert.equal(f.count("credential-read-mock"), 0); assert.equal(f.sendCount(), 0);
+});
+
+test("expected-fee eligibility never borrows an anticipated refund for upfront affordability", async () => {
+  const f = experimentAFixture(); f.control.balance = 182n * 10n ** 19n + EXPERIMENT_A_FIXTURE_ESTIMATED_FEE + 10n;
+  await assert.rejects(observeExperimentA({ primaryRpc: f.primary, secondaryRpc: f.secondary }, f.ports), error => {
+    assert.ok(error instanceof ExperimentAError); assert.equal(error.code, "BALANCE_INSUFFICIENT");
+    const d = error.publicFeeBalance!;
+    assert.equal(d.comparisons.feeWithinBudget, true); assert.equal(d.comparisons.spendableCoversUpfrontFunding, false);
+    assert.ok(BigInt(d.spendableYocto) > BigInt(d.estimatedFeeYocto));
+    assert.equal(d.requiredSpendableYocto, "267819075000000000001"); return true;
+  });
+  assert.equal(f.count("credential-read-mock"), 0); assert.equal(f.sendCount(), 0);
+});
+
+test("unsupported or unavailable receipt pricing stops before credentials or preparation", async () => {
+  for (const change of [(f: Fixture) => { delete f.control.config.runtime_config.min_gas_purchase_price; },
+    (f: Fixture) => { f.control.config.protocol_version = 89; },
+    (f: Fixture) => { f.control.config.runtime_config.transaction_costs.gas_refund_penalty = { numerator: 1, denominator: 100 }; },
+    (f: Fixture) => { f.control.config.runtime_config.min_gas_refund_penalty = 1; },
+    (f: Fixture) => { f.control.gasPrice = "0"; }]) {
+    const f = experimentAFixture(); change(f);
+    await assert.rejects(observeExperimentA({ primaryRpc: f.primary, secondaryRpc: f.secondary }, f.ports));
+    assert.equal(f.count("credential-read-mock"), 0); assert.equal(f.sendCount(), 0);
+  }
+});
+
+test("a price increase before signing revalidates fee eligibility without replacing the approved transaction", async () => {
+  const f = experimentAFixture(), state = await f.prepare(), originalHash = state.transactionHash, expiry = state.expiresAt;
+  f.control.gasPrice = "200000000";
+  await submitExperimentA(state, approval(state), f.ports, f.save);
+  assert.equal(state.status, "failed-before-send"); assert.equal(state.transactionHash, originalHash); assert.equal(state.expiresAt, expiry);
+  assert.equal(f.count("credential-read-mock"), 0); assert.equal(f.sendCount(), 0);
+});
+
+test("immutable preparation binds the fee model and its explicit price/refund assumptions", async () => {
+  const f = experimentAFixture(), state = await f.prepare();
+  assert.equal(state.preflight.feeModel.refundPolicy, "near-protocol-88-zero-refund-penalty");
+  assert.equal(state.preflight.feeModel.priceGrowthNumerator, "2");
+  for (const field of ["estimatedExecutionFeeYocto", "upfrontGasYocto", "receiptPurchasePriceYocto", "priceGrowthNumerator"]) {
+    const altered = structuredClone(state); (altered.preflight.feeModel as any)[field] = "1";
+    assert.throws(() => assertExperimentAState(altered));
+  }
 });
 
 test("preparation and public snapshots cannot be used to silently refresh original timestamps", async () => {
