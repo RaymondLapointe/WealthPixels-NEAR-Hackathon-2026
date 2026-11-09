@@ -10,7 +10,11 @@ import {
 import { normalizeMpcSignature, type MpcEcdsaSignature } from "../evm/erc20-transfer.js";
 import { DERIVATION_PATH, ECDSA_DOMAIN_ID, MPC_CONTRACT_ID, type AuthorityRole } from "./config.js";
 import { requireRole, VERIFIED_IDENTITIES, VERIFIED_MPC_ROOT } from "./identities.js";
-import { deriveEvmPublicKey, ReadOnlyMpcClient, type MpcDerivation, type MpcInspection } from "./mpc.js";
+import { deriveEvmPublicKey, MpcReadOnlyError, ReadOnlyMpcClient, type MpcDerivation, type MpcInspection } from "./mpc.js";
+import {
+  appendNearSubmissionEvent, assertNearSubmissionDiagnostic, createNearSubmissionRecord, nearRpcErrorDiagnostic,
+  nearRpcResponseDiagnostic, type NearSubmissionDiagnostic, type NearSubmissionRecord, type NearSubmissionStage,
+} from "./submission.js";
 
 export const MPC_SIGNING_GAS_TGAS = 100;
 export const MPC_SIGNING_DEPOSIT_YOCTO = "1";
@@ -23,7 +27,8 @@ type RpcMethod = ReadMethod | "send_tx";
 export class MpcSigningError extends Error {
   constructor(readonly code: "INVALID_INPUT" | "PUBLIC_CHECK_FAILED" | "CREDENTIAL_FAILED" |
     "PREPARATION_FAILED" | "ALREADY_ATTEMPTED" | "SUBMISSION_UNKNOWN" | "RPC_FAILED" |
-    "METHOD_NOT_FOUND" | "INVALID_OUTCOME", message: string) {
+    "METHOD_NOT_FOUND" | "INVALID_OUTCOME" | "PERSISTENCE_FAILED", message: string,
+    readonly diagnostic?: NearSubmissionDiagnostic) {
     super(message); this.name = "MpcSigningError";
   }
 }
@@ -55,22 +60,43 @@ function transactionHash(value: string): string {
   } catch { throw new MpcSigningError("INVALID_INPUT", "Use a 32-byte base58 NEAR transaction hash."); }
 }
 async function rawRpc(endpoint: string, method: RpcMethod, params: unknown): Promise<unknown> {
+  let response: Response;
   try {
-    const response = await fetch(endpoint, {
+    response = await fetch(endpoint, {
       method: "POST", headers: { "content-type": "application/json" }, redirect: "error",
       body: JSON.stringify({ jsonrpc: "2.0", id: "wealthpixels-signing", method, params }),
       signal: AbortSignal.timeout(20000),
     });
-    if (!response.ok) throw new Error();
-    const body = object(await response.json(), "RPC_FAILED", "Invalid public RPC response.");
-    if (body.jsonrpc !== "2.0" || body.id !== "wealthpixels-signing") throw new Error();
-    if (body.error?.code === -32601) throw new MpcSigningError("METHOD_NOT_FOUND", "The public RPC method is unavailable.");
-    if (body.error || !("result" in body)) throw new Error();
-    return body.result;
   } catch (error) {
-    if (error instanceof MpcSigningError && error.code === "METHOD_NOT_FOUND") throw error;
-    throw new MpcSigningError("RPC_FAILED", "The public NEAR RPC request failed.");
+    throw new MpcSigningError("RPC_FAILED", "The public NEAR RPC transport failed.", {
+      category: error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name) ? "TIMEOUT" : "NETWORK_ERROR",
+    });
   }
+  if (!response.ok) throw new MpcSigningError("RPC_FAILED", "The public NEAR RPC returned an HTTP error.", {
+    category: "HTTP_ERROR", httpStatus: response.status,
+  });
+  let body: Record<string, any>;
+  try { body = object(await response.json(), "RPC_FAILED", "Invalid public RPC response."); }
+  catch { throw new MpcSigningError("RPC_FAILED", "The public NEAR RPC response was malformed.", {
+    category: "RPC_RESPONSE_INVALID", httpStatus: response.status,
+  }); }
+  if (body.jsonrpc !== "2.0" || body.id !== "wealthpixels-signing") throw new MpcSigningError("RPC_FAILED", "The public NEAR RPC envelope was invalid.", {
+    category: "RPC_RESPONSE_INVALID", httpStatus: response.status,
+  });
+  if (body.error) throw new MpcSigningError(body.error?.code === -32601 ? "METHOD_NOT_FOUND" : "RPC_FAILED",
+    "The public NEAR RPC returned an error.", nearRpcErrorDiagnostic(body.error, response.status));
+  if (!("result" in body)) throw new MpcSigningError("RPC_FAILED", "The public NEAR RPC result was missing.", {
+    category: "RPC_RESPONSE_INVALID", httpStatus: response.status,
+  });
+  return body.result;
+}
+function safeDiagnostic(error: unknown, fallback: NearSubmissionDiagnostic["category"]): NearSubmissionDiagnostic {
+  if (error instanceof MpcSigningError && error.diagnostic) {
+    try { assertNearSubmissionDiagnostic(error.diagnostic); return structuredClone(error.diagnostic); } catch { /* Reject untrusted detail. */ }
+  }
+  if (error instanceof MpcReadOnlyError && error.code === "READ_FAILED") return { category: "MPC_READ_UNAVAILABLE" };
+  if (error instanceof MpcReadOnlyError && error.code === "INVALID_RESPONSE") return { category: "RPC_RESPONSE_INVALID" };
+  return { category: fallback };
 }
 export interface LocalNearTransactionSigner {
   getPublicKey(): Promise<PublicKey>;
@@ -142,7 +168,8 @@ export async function verifyRoleMpc(
     return Object.freeze({ role, inspection, derivation, accessPublicKey: expected.accessPublicKey, accessKeyNonce: accessKeyNonce.toString() });
   } catch (error) {
     if (error instanceof MpcSigningError && error.code === "PUBLIC_CHECK_FAILED") throw error;
-    throw new MpcSigningError("PUBLIC_CHECK_FAILED", "The selected role's public finalized MPC and account checks failed.");
+    throw new MpcSigningError("PUBLIC_CHECK_FAILED", "The selected role's public finalized MPC and account checks failed.",
+      safeDiagnostic(error, "PUBLIC_CHECK_FAILED"));
   }
 }
 
@@ -202,8 +229,9 @@ export interface PreparedMpcSigning {
   readonly request: MpcSignRequest;
   readonly gasTgas: typeof MPC_SIGNING_GAS_TGAS;
   readonly depositYocto: typeof MPC_SIGNING_DEPOSIT_YOCTO;
+  readonly submission: NearSubmissionRecord;
   /** Persist transactionHash durably before calling. A failed/uncertain attempt cannot be retried. */
-  broadcastOnce(): Promise<unknown>;
+  broadcastOnce(persistSubmission: (record: NearSubmissionRecord) => Promise<void>): Promise<unknown>;
 }
 
 /** Local preparation only. The returned broadcast capability is the sole mutation path. */
@@ -241,23 +269,51 @@ export async function prepareMpcSigning(options: {
     hash = baseEncode(expectedHash);
     signedBytes = Buffer.from(signed.signedTransaction.encode()).toString("base64");
   } catch { throw new MpcSigningError("PREPARATION_FAILED", "Local NEAR transaction preparation failed; nothing was submitted."); }
+  requireSubmissionTime();
+  let submission = createNearSubmissionRecord({ role, transactionHash: hash, digest,
+    precedingAccessKeyNonce: verified.accessKeyNonce,
+    referenceBlock: { hash: verified.inspection.blockHash, height: verified.inspection.blockHeight }, rpcUrl: endpoint,
+    preparedAt: new Date(Date.now()).toISOString(),
+    submissionDeadlineAt: submissionDeadlineMs === undefined ? null : new Date(submissionDeadlineMs).toISOString() });
   let attempted = false;
   return Object.freeze({
     transactionHash: hash, signerAccountId: VERIFIED_IDENTITIES[role].accountId, receiverId: MPC_CONTRACT_ID,
-    request, gasTgas: MPC_SIGNING_GAS_TGAS, depositYocto: MPC_SIGNING_DEPOSIT_YOCTO,
-    async broadcastOnce(): Promise<unknown> {
+    request, gasTgas: MPC_SIGNING_GAS_TGAS, depositYocto: MPC_SIGNING_DEPOSIT_YOCTO, submission,
+    async broadcastOnce(persistSubmission: (record: NearSubmissionRecord) => Promise<void>): Promise<unknown> {
       requireThat(!attempted, "ALREADY_ATTEMPTED", "This prepared NEAR submission was already attempted. Reconcile its persisted hash.");
       attempted = true;
-      const current = await verifyRoleMpc(role, endpoint, fixtures);
-      requireThat(current.accessKeyNonce === verified.accessKeyNonce, "PUBLIC_CHECK_FAILED",
-        "The role's access-key nonce changed. Stop and review the persisted transaction hash.");
-      requireSubmissionTime();
+      requireThat(typeof persistSubmission === "function", "PERSISTENCE_FAILED", "Durable public submission recording is required before sending.");
+      async function record(stage: NearSubmissionStage, diagnostic?: NearSubmissionDiagnostic): Promise<void> {
+        const next = appendNearSubmissionEvent(submission, { stage, at: new Date(Date.now()).toISOString(), ...(diagnostic ? { diagnostic } : {}) });
+        try { await persistSubmission(next); }
+        catch { throw new MpcSigningError("PERSISTENCE_FAILED", "Public submission metadata could not be saved. Preserve the last durable stage; do not retry."); }
+        submission = next;
+      }
+      await record("public-checks");
+      try {
+        const current = await verifyRoleMpc(role, endpoint, fixtures);
+        requireThat(current.accessKeyNonce === verified.accessKeyNonce, "PUBLIC_CHECK_FAILED",
+          "The role's access-key nonce changed. Stop and review the persisted transaction hash.");
+        requireSubmissionTime();
+      } catch (error) {
+        await record("checks-failed-before-send", safeDiagnostic(error,
+          error instanceof MpcSigningError && error.code === "INVALID_INPUT" ? "DEADLINE_EXPIRED" : "PUBLIC_CHECK_FAILED"));
+        throw error;
+      }
+      // This durable intent is NOT proof that the HTTP request reached the network.
+      await record("send-intent");
+      try { requireSubmissionTime(); }
+      catch (error) { await record("checks-failed-before-send", { category: "DEADLINE_EXPIRED" }); throw error; }
+      let result: unknown;
       try {
         // One HTTP POST, no SDK broadcast retry, redirect, nonce rebuild or re-signing.
-        return await rpcFor(endpoint, fixtures)("send_tx", { signed_tx_base64: signedBytes, wait_until: "NONE" });
-      } catch {
+        result = await rpcFor(endpoint, fixtures)("send_tx", { signed_tx_base64: signedBytes, wait_until: "NONE" });
+      } catch (error) {
+        await record("rpc-uncertain", safeDiagnostic(error, "UNCLASSIFIED_ERROR"));
         throw new MpcSigningError("SUBMISSION_UNKNOWN", "NEAR submission outcome is unknown. Reconcile the persisted hash; do not submit again.");
       }
+      await record("rpc-response", nearRpcResponseDiagnostic(result));
+      return result;
     },
   });
 }

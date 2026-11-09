@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
+import { assertNearSubmissionRecord, assertNearSubmissionSuccessor } from "../near/submission.js";
 import { authorizeEvmBroadcast } from "../evm/broadcast.js";
 import { addPaymentClaim, paymentClaimId } from "./claims.js";
 import { assessAuthorizedPurchaseCosts, valueAuthorizedActualCosts } from "./authorized-costs.js";
@@ -233,17 +234,23 @@ export function createPurchaseCoordinator(driver: PurchaseExecutionDriver,
         check(packet.signerAccountId === r.quote.transactions[PURCHASE_LEGS.indexOf(input.leg)]!.nearAccountId && packet.receiverId === "v1.signer-prod.testnet" &&
           packet.request.payload_v2.Ecdsa === input.approval.slice(2) && packet.request.domain_id === 0 && packet.request.path === "wealthpixels/sepolia/v1" &&
           packet.gasTgas === 100 && packet.depositYocto === "1", "Prepared direct MPC request differs from the exact approved purchase leg.");
-        const marked: PurchaseLegExecution = { ...entry, status: "near-submitting", nearTransactionHash: packet.transactionHash,
+        assertNearSubmissionRecord(packet.submission, { role: input.role, transactionHash: packet.transactionHash, digest: input.approval });
+        const marked: PurchaseLegExecution = { ...entry, status: "near-submitting", nearTransactionHash: packet.transactionHash, nearSubmission: structuredClone(packet.submission),
           signingApproval: { digest: input.approval, reference: label(input.reference, "Signing approval reference"), at: at() } };
         e = changed(e, { paymentAuthorization: authorization, legs: withLeg(e, input.leg, marked) }, "near-submitting", input.leg, input.reference);
         await persist(store, r, e); // Hash and consumed authorization are durable before the sole submission capability.
         let status: "near-submitted" | "near-uncertain" = "near-submitted";
         try { fresh(marked); if (input.leg === "usdc-payment") { newPayment(r); check(now() < utc(authorization!.eligibility.expiresAt), "Economic eligibility expired after the durable marker."); }
           else check(fundingDeadline && now() < utc(fundingDeadline), "Treasury funding observations expired after the durable marker.");
-          await packet.broadcastOnce(); }
+          await packet.broadcastOnce(async next => {
+            const current = store.current().active!, execution = current.execution!, latest = execution.legs[input.leg]!;
+            assertNearSubmissionSuccessor(latest.nearSubmission!, next);
+            await persist(store, current, changed(execution, { legs: withLeg(execution, input.leg,
+              { ...latest, nearSubmission: structuredClone(next) }) }, "near-submission-observation", input.leg, input.reference));
+          }); }
         catch { status = "near-uncertain"; }
         const current = store.current().active!; e = current.execution!;
-        return persist(store, current, changed(e, { legs: withLeg(e, input.leg, { ...marked, status }) }, status, input.leg, input.reference));
+        return persist(store, current, changed(e, { legs: withLeg(e, input.leg, { ...e.legs[input.leg]!, status }) }, status, input.leg, input.reference));
       });
     },
     async reconcileSigning(input: PurchaseStep) {

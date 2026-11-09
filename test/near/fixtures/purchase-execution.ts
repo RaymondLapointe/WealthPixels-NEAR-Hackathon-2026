@@ -9,6 +9,7 @@ import { baseEncode } from "near-api-js";
 import { VERIFIED_IDENTITIES } from "../../../src/near/identities.js";
 import type { AuthorityRole } from "../../../src/near/config.js";
 import type { PreparedMpcSigning } from "../../../src/near/signing.js";
+import { offlineNearSubmission, runOfflineNearSubmission } from "./near-submission.js";
 import { preparePurchaseLeg, assertPreparedPurchaseLeg, type PurchaseLeg, type PreparedPurchaseLeg,
   type PurchaseLegSigned, type PurchaseLegReceiptResult, type VerifiedPurchaseLeg, type FailedPurchaseLegProof } from "../../../src/purchase/legs.js";
 import type { CompletePurchaseCosts } from "../../../src/purchase/costs.js";
@@ -200,9 +201,11 @@ export async function createPurchaseExecutionFixture(options: FixtureOptions = {
       const transactionHash = nearHash(`${found.quote.purchaseId}:${found.prepared.leg}:${digest}`);
       const entry = { ...found, role, attempted: false, outcome: undefined as unknown }; signing.set(transactionHash, entry);
       if (controls.prepareSigningDelayMs) clock.advance(controls.prepareSigningDelayMs);
-      return { transactionHash, signerAccountId: VERIFIED_IDENTITIES[role].accountId, receiverId: "v1.signer-prod.testnet", request:
+      const submission = offlineNearSubmission(role, digest, transactionHash, clock.iso());
+      return { transactionHash, submission, signerAccountId: VERIFIED_IDENTITIES[role].accountId, receiverId: "v1.signer-prod.testnet", request:
         { payload_v2: { Ecdsa: digest.slice(2) }, path: "wealthpixels/sepolia/v1", domain_id: 0 }, gasTgas: 100, depositYocto: "1",
-        async broadcastOnce() {
+        async broadcastOnce(persist: Parameters<PreparedMpcSigning["broadcastOnce"]>[0]) {
+          return runOfflineNearSubmission(submission, persist, async () => {
           assert.equal(entry.attempted, false, "SIMULATED NEAR capability is single-use"); entry.attempted = true;
           record("nearSubmit", found.prepared.leg, role, transactionHash);
           if (controls.nearSubmit[found.prepared.leg] === "timeout-before") throw new Error("SIMULATED NEAR transport uncertainty before processing");
@@ -211,6 +214,7 @@ export async function createPurchaseExecutionFixture(options: FixtureOptions = {
           ledger[`${role}Near`] -= 900_000_000_000_000_000_000n;
           if (controls.nearSubmit[found.prepared.leg] === "timeout-after") throw new Error("SIMULATED NEAR timeout after acceptance");
           return entry.outcome;
+          }, clock.iso);
         } } as unknown as PreparedMpcSigning;
     },
     async readSigning(role, hash) { const entry = signing.get(hash); assert.ok(entry); record("readSigning", entry.prepared.leg, role, hash);

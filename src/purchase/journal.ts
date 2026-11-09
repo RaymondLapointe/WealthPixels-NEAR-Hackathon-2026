@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
+import { assertNearSubmissionSuccessor } from "../near/submission.js";
 import { baseDecode } from "near-api-js";
 import { decodeEncodedState, runtimeStatePath, saveEncodedState, withStateLock } from "../execution/state.js";
 import { VERIFIED_IDENTITIES } from "../near/identities.js";
@@ -277,6 +278,10 @@ export async function withPurchaseExecutionJournal<T>(root: string, policy: Purc
             (!old.paidAt || old.paidAt === fresh.paidAt) && (!old.paymentClaim || old.paymentClaim === fresh.paymentClaim), "Execution history, authorization or obligation cannot be reset.");
           for (const leg of PURCHASE_LEGS) {
             const previous = old.legs[leg], entry = fresh.legs[leg]; if (!previous) continue;
+            if (previous.nearSubmission) {
+              check(entry?.nearSubmission, "Public NEAR submission metadata cannot be discarded.");
+              if (!isDeepStrictEqual(previous.nearSubmission, entry.nearSubmission)) assertNearSubmissionSuccessor(previous.nearSubmission, entry.nearSubmission);
+            }
             if (!entry) check(previous.status === "prepared" && !previous.nearTransactionHash && !previous.signed && !previous.evmAttempt &&
               fresh.retiredUnsigned.some(item => item.leg === leg && item.preparedAt === previous.preparedAt && isDeepStrictEqual(item.prepared, previous.prepared)), "A transaction attempt cannot be discarded.");
             else check(isDeepStrictEqual(previous.prepared, entry.prepared) && previous.preparedAt === entry.preparedAt &&

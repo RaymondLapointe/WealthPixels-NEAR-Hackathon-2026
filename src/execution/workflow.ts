@@ -3,6 +3,7 @@ import { assembleSignedErc20Transfer } from "../evm/erc20-transfer.js";
 import { authorizeEvmBroadcast, type EvmBroadcastTransport } from "../evm/broadcast.js";
 import { assertLinkPreflight, recheckSepoliaLinkTransfer, verifySepoliaLinkReceipt, type SepoliaReadRpc } from "../evm/sepolia-link.js";
 import { normalizeMpcOutcome, type prepareMpcSigning, type verifyRoleMpc, type readMpcSigningOutcome } from "../near/signing.js";
+import { assertNearSubmissionRecord, assertNearSubmissionSuccessor } from "../near/submission.js";
 import type { ExecutionState } from "./state.js";
 
 export interface ExecutionPorts {
@@ -34,12 +35,20 @@ export async function requestSignature(
   const signing = await ports.prepareSigning({
     role: state.role, credentialPath: input.credentialPath, rpcUrl: input.nearRpcUrl,
     digest: state.preflight.prepared.unsignedHash,
+    submissionDeadlineMs: Date.parse(state.createdAt) + 15 * 60_000,
   });
+  assertNearSubmissionRecord(signing.submission, { role: state.role, transactionHash: signing.transactionHash, digest: state.preflight.prepared.unsignedHash });
   state.nearTransactionHash = signing.transactionHash;
+  state.nearSubmission = structuredClone(signing.submission);
   state.status = "near-submitting";
   await ports.save(state); // If this fails, broadcastOnce is never invoked.
   try {
-    await signing.broadcastOnce();
+    await signing.broadcastOnce(async next => {
+      assertNearSubmissionSuccessor(state.nearSubmission!, next);
+      const candidate: ExecutionState = { ...structuredClone(state), nearSubmission: structuredClone(next) };
+      await ports.save(candidate);
+      state.nearSubmission = candidate.nearSubmission;
+    });
     state.status = "near-submitted";
   } catch {
     state.status = "near-uncertain";

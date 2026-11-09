@@ -116,7 +116,7 @@ test("standalone signing approvals and public preflight failures precede any cre
 
 test("standalone NEAR hash and attempt marker precede exactly one mocked submission", async () => {
   const f = standaloneExecutionFixture(); await requestStandaloneNativeSignature(f.state, f.input, f.ports);
-  assert.deepEqual(f.events, ["public-mpc-verification", "prepare-signing-packet", "near-submitting", "MOCK-near-submit", "near-submitted"]);
+  assert.deepEqual(f.events, ["public-mpc-verification", "prepare-signing-packet", "near-submitting", "near-submitting", "near-submitting", "MOCK-near-submit", "near-submitting", "near-submitted"]);
   assert.equal(f.state.nearTransactionHash, STANDALONE_NEAR_HASH); assert.equal(f.state.status, "near-submitted");
   assert.equal(f.saved[0]!.signingApproval!.digest, f.preflight.prepared.unsignedHash);
   await assert.rejects(requestStandaloneNativeSignature(f.state, f.input, f.ports), /already attempted/);
@@ -127,12 +127,12 @@ test("NEAR timeout and pre/post-submission save failures preserve attempted stat
   const timed = standaloneExecutionFixture({ timeout: true }); await requestStandaloneNativeSignature(timed.state, timed.input, timed.ports);
   assert.equal(timed.state.status, "near-uncertain"); assert.match(timed.state.recovery!, /no automatic/);
   await assert.rejects(requestStandaloneNativeSignature(timed.state, timed.input, timed.ports));
-  for (const failedSave of [1, 2]) {
+  for (const failedSave of ["initial", "final"] as const) {
     const f = standaloneExecutionFixture(); let saves = 0;
-    f.ports.save = async () => { if (++saves === failedSave) throw new Error("SIMULATED durable save failure"); };
+    f.ports.save = async next => { saves++; if (failedSave === "initial" ? saves === 1 : next.status === "near-submitted") throw new Error("SIMULATED durable save failure"); };
     await assert.rejects(requestStandaloneNativeSignature(f.state, f.input, f.ports), /durable save/);
     assert.equal(f.state.status, "near-submitting"); assert.equal(f.state.nearTransactionHash, STANDALONE_NEAR_HASH);
-    assert.equal(f.events.filter(e => e === "MOCK-near-submit").length, failedSave === 1 ? 0 : 1);
+    assert.equal(f.events.filter(e => e === "MOCK-near-submit").length, failedSave === "initial" ? 0 : 1);
     await assert.rejects(requestStandaloneNativeSignature(f.state, f.input, f.ports), /already attempted/);
   }
 });
@@ -194,15 +194,19 @@ test("standalone file-backed locking persists hash before a mocked POST and surv
     await saveStandaloneNativeState(file, f.state, f.intent.intentHash, root);
     await withStandaloneNativeStateLock(file, f.intent.intentHash, async (state, save) => {
       const originalPrepare = f.ports.prepareSigning;
-      f.ports.prepareSigning = async (...args) => { const packet = await originalPrepare(...args); return { ...packet, async broadcastOnce() {
+      f.ports.prepareSigning = async (...args) => { const packet = await originalPrepare(...args); return { ...packet, async broadcastOnce(persist) {
         const persisted = await readStandaloneNativeState(file, f.intent.intentHash, root);
         assert.equal(persisted.status, "near-submitting"); assert.equal(persisted.nearTransactionHash, packet.transactionHash);
-        assert.equal(persisted.createdAt, STANDALONE_AT); return packet.broadcastOnce();
+        assert.equal(persisted.createdAt, STANDALONE_AT); return packet.broadcastOnce(persist);
       } }; };
       await requestStandaloneNativeSignature(state, f.input, { ...f.ports, save });
     }, root);
     const restarted = await readStandaloneNativeState(file, f.intent.intentHash, root);
     assert.equal(restarted.status, "near-submitted"); assert.equal(restarted.nearTransactionHash, STANDALONE_NEAR_HASH);
+    assert.equal(restarted.nearSubmission!.transactionNonce, "8");
+    assert.equal(restarted.nearSubmission!.precedingAccessKeyNonce, "7");
+    assert.deepEqual(restarted.nearSubmission!.referenceBlock, { hash: "1".repeat(32), height: 123 });
+    assert.deepEqual(restarted.nearSubmission!.events.map(event => event.stage), ["prepared", "public-checks", "send-intent", "rpc-response"]);
     await assert.rejects(requestStandaloneNativeSignature(restarted, f.input, f.ports), /already attempted/);
     assert.equal(f.events.filter(e => e === "MOCK-near-submit").length, 1);
     assert.match(await readFile(file, "utf8"), /\$bigint/);
@@ -211,4 +215,52 @@ test("standalone file-backed locking persists hash before a mocked POST and surv
     assert.ok(resolve(root).startsWith(resolve(join(tmpdir(), "wealthpixels-standalone-native-offline-"))), "Cleanup must remain inside its generated test directory.");
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("legacy standalone uncertain records remain unchanged without invented submission metadata", async () => {
+  const f = standaloneExecutionFixture(); await requestStandaloneNativeSignature(f.state, f.input, f.ports);
+  delete f.state.nearSubmission; f.state.status = "near-uncertain";
+  const text = encodeStandaloneNativeState(f.state), restarted = decodeStandaloneNativeState(text, f.intent.intentHash);
+  assert.equal(restarted.nearSubmission, undefined); assert.equal(encodeStandaloneNativeState(restarted), text);
+  await assert.rejects(requestStandaloneNativeSignature(restarted, f.input, f.ports), /already attempted/);
+});
+
+test("standalone submission metadata rejects changed nonce, reference, digest, role and hidden fields", async () => {
+  const f = standaloneExecutionFixture(); await requestStandaloneNativeSignature(f.state, f.input, f.ports);
+  const original = f.state.nearSubmission!;
+  for (const changed of [
+    { ...original, transactionNonce: "9" }, { ...original, referenceBlock: { ...original.referenceBlock, hash: "invalid" } },
+    { ...original, digest: `0x${"ff".repeat(32)}` }, { ...original, role: "investor" },
+    { ...original, private_key: "OFFLINE-UNTRUSTED-FIELD-MUST-NOT-BE-ACCEPTED" },
+  ]) assert.throws(() => decodeStandaloneNativeState(encodeStandaloneNativeState({ ...f.state, nearSubmission: changed }), f.intent.intentHash));
+  const summary = publicStandaloneNativeExecutionSummary(f.state) as any;
+  assert.deepEqual(summary.nearSubmission, original); assert.equal(summary.nearSubmission.rpcOrigin, "https://offline.invalid");
+  assert.doesNotMatch(JSON.stringify(summary.nearSubmission), /credentialPath|private_key|signed_tx_base64/);
+});
+
+test("a pre-send metadata persistence failure prevents submission and retains the last durable stage", async () => {
+  const f = standaloneExecutionFixture(), save = f.ports.save;
+  f.ports.save = async next => {
+    if (next.nearSubmission?.events.at(-1)?.stage === "send-intent") throw new Error("SIMULATED pre-send persistence failure");
+    await save(next);
+  };
+  await requestStandaloneNativeSignature(f.state, f.input, f.ports);
+  assert.equal(f.state.status, "near-uncertain"); assert.equal(f.state.nearSubmission!.events.at(-1)!.stage, "public-checks");
+  assert.equal(f.events.includes("MOCK-near-submit"), false);
+  const restarted = decodeStandaloneNativeState(encodeStandaloneNativeState(f.saved.at(-1)!), f.intent.intentHash);
+  await assert.rejects(requestStandaloneNativeSignature(restarted, f.input, f.ports), /already attempted/);
+});
+
+test("a post-send diagnostic persistence failure keeps send-intent and blocks duplicate signing after restart", async () => {
+  const f = standaloneExecutionFixture(), save = f.ports.save;
+  f.ports.save = async next => {
+    if (next.nearSubmission?.events.at(-1)?.stage === "rpc-response") throw new Error("SIMULATED post-send persistence failure");
+    await save(next);
+  };
+  await requestStandaloneNativeSignature(f.state, f.input, f.ports);
+  assert.equal(f.state.status, "near-uncertain"); assert.equal(f.state.nearSubmission!.events.at(-1)!.stage, "send-intent");
+  assert.equal(f.events.filter(event => event === "MOCK-near-submit").length, 1);
+  const restarted = decodeStandaloneNativeState(encodeStandaloneNativeState(f.saved.at(-1)!), f.intent.intentHash);
+  await assert.rejects(requestStandaloneNativeSignature(restarted, f.input, f.ports), /already attempted/);
+  assert.equal(f.events.filter(event => event === "MOCK-near-submit").length, 1);
 });

@@ -2,6 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 import { keccak256 } from "ethers";
 import { baseDecode } from "near-api-js";
 import type { PreparedMpcSigning } from "../near/signing.js";
+import { assertNearSubmissionRecord, type NearSubmissionRecord } from "../near/submission.js";
 import type { AuthorityRole } from "../near/config.js";
 import type { EvmBroadcastTransport } from "../evm/broadcast.js";
 import { VERIFIED_IDENTITIES } from "../near/identities.js";
@@ -35,6 +36,7 @@ export interface PurchaseLegExecution {
   readonly prepared: PreparedPurchaseLeg; readonly preparedAt: string; readonly status: LegStatus;
   readonly signingApproval: { readonly digest: string; readonly reference: string; readonly at: string } | null;
   readonly nearTransactionHash: string | null; readonly nearOutcome: unknown | null;
+  readonly nearSubmission?: NearSubmissionRecord;
   readonly signed: PurchaseLegSigned | null; readonly audit: PurchaseBroadcastAudit | null;
   readonly evmAttempt: { readonly signedHash: string; readonly at: string; readonly auditHash: string } | null;
   /** Read-only discovery of the exact signed hash outside this process; never a local-send approval. */
@@ -130,7 +132,9 @@ export function assertPurchaseExecution(quote: PurchaseQuote, approval: QuoteApp
       validNearHash(entry.nearTransactionHash);
       check(entry.signingApproval?.digest === p.prepared.unsignedHash && entry.signingApproval.reference.length > 0, "Missing exact signing approval.");
       if (leg === "usdc-payment") check(value.paymentAuthorization, "Payment signature attempt requires consumed quote authorization.");
-    } else check(!entry.nearTransactionHash && !entry.signed && !entry.evmAttempt, "Unsigned preparation contains a prior attempt.");
+    } else check(!entry.nearTransactionHash && !entry.nearSubmission && !entry.signed && !entry.evmAttempt, "Unsigned preparation contains a prior attempt.");
+    if (entry.nearSubmission !== undefined) assertNearSubmissionRecord(entry.nearSubmission,
+      { role, transactionHash: validNearHash(entry.nearTransactionHash), digest: p.prepared.unsignedHash });
     if (entry.signed) check(keccak256(entry.signed.serialized) === entry.signed.hash && entry.signed.senderAddress === VERIFIED_IDENTITIES[role].evmAddress && entry.nearOutcome,
       "Signed payload hash, role or public MPC proof is missing.");
     if (["signed", "evm-submitting", "evm-submitted", "evm-uncertain", "observed", "confirmed", "failed"].includes(entry.status)) check(entry.signed, "Signed transaction is required at this stage.");

@@ -6,7 +6,11 @@ import { SigningKey } from "ethers";
 import { baseEncode, PublicKey, SignedTransaction, Signature as NearSignature } from "near-api-js";
 import { DERIVATION_PATH, MPC_CONTRACT_ID, type AuthorityRole } from "../../src/near/config.js";
 import { VERIFIED_IDENTITIES, VERIFIED_MPC_ROOT } from "../../src/near/identities.js";
-import { deriveEvmPublicKey, type MpcDerivation, type MpcInspection } from "../../src/near/mpc.js";
+import { deriveEvmPublicKey, MpcReadOnlyError, type MpcDerivation, type MpcInspection } from "../../src/near/mpc.js";
+import {
+  assertNearSubmissionRecord, assertNearSubmissionSuccessor, nearRpcErrorDiagnostic, nearRpcResponseDiagnostic,
+  type NearSubmissionRecord,
+} from "../../src/near/submission.js";
 import { assembleSignedErc20Transfer, normalizeMpcSignature } from "../../src/evm/erc20-transfer.js";
 import {
   recordedOutcome, recordedState, RECORDED_EVM_HASH, RECORDED_NEAR_HASH,
@@ -116,6 +120,8 @@ function options(role: AuthorityRole = "treasury") {
   return { role, credentialPath: credentialPath(role), rpcUrl: "https://rpc.testnet.near.org", digest: DIGEST, repositoryRoot: REPOSITORY };
 }
 
+const discardSubmission = async (_record: NearSubmissionRecord) => {};
+
 test("public role verification pins sole FullAccess and nonce to the MPC finalized block without credential reads", async () => {
   const f = fixture(), verified = await verifyRoleMpc("treasury", options().rpcUrl, f.services);
   assert.equal(verified.accessKeyNonce, "9");
@@ -134,12 +140,19 @@ test("prepares exact direct v2 request and transaction hash before any send", as
   assert.match(prepared.transactionHash, /^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
   assert.deepEqual(f.calls.filter((entry) => entry.kind === "credential-read").map((entry) => entry.path), [credentialPath("treasury")]);
   assert.equal(f.calls.filter((entry) => entry.method === "send_tx").length, 0);
-  await prepared.broadcastOnce();
+  await prepared.broadcastOnce(discardSubmission);
   const sends = f.calls.filter((entry) => entry.method === "send_tx");
   assert.equal(sends.length, 1);
   assert.equal((sends[0].params as any).wait_until, "NONE");
   const signed = SignedTransaction.decode(Buffer.from((sends[0].params as any).signed_tx_base64, "base64"));
   assert.equal(signed.transaction.nonce, 10n);
+  assert.equal(prepared.submission.transactionNonce, signed.transaction.nonce.toString());
+  assert.equal(prepared.submission.precedingAccessKeyNonce, "9");
+  assert.equal(prepared.submission.referenceBlock.hash, baseEncode(Uint8Array.from(signed.transaction.blockHash)));
+  assert.equal(prepared.submission.referenceBlock.height, 100);
+  assert.equal(prepared.submission.transactionHash, prepared.transactionHash);
+  assert.equal(prepared.submission.digest, DIGEST);
+  assert.equal(prepared.submission.rpcOrigin, "https://rpc.testnet.near.org");
   assert.equal(signed.transaction.signerId, VERIFIED_IDENTITIES.treasury.accountId);
   assert.equal(signed.transaction.publicKey.toString(), VERIFIED_IDENTITIES.treasury.accessPublicKey);
   assert.equal(signed.transaction.receiverId, MPC_CONTRACT_ID);
@@ -147,7 +160,141 @@ test("prepares exact direct v2 request and transaction hash before any send", as
   const call = (signed.transaction.actions[0] as any).functionCall;
   assert.equal(call.methodName, "sign"); assert.equal(call.gas, 100000000000000n); assert.equal(call.deposit, 1n);
   assert.deepEqual(JSON.parse(new TextDecoder().decode(Uint8Array.from(call.args))), { request: prepared.request });
-  await assert.rejects(prepared.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+  await assert.rejects(prepared.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
+});
+
+function submissionRecorder(initial: NearSubmissionRecord) {
+  const records = [initial];
+  return { records, async persist(next: NearSubmissionRecord) {
+    assertNearSubmissionSuccessor(records.at(-1)!, next); records.push(next);
+  } };
+}
+
+test("public signing stages are persisted in order before mocked transmission and snapshots are immutable", async () => {
+  const f = fixture(), packet = await prepareMpcSigning(options(), f.services), log = submissionRecorder(packet.submission);
+  const rpc = f.services.rpc.bind(f.services);
+  f.services.rpc = async (method, params) => {
+    if (method === "send_tx") assert.equal(log.records.at(-1)!.events.at(-1)!.stage, "send-intent");
+    return rpc(method, params);
+  };
+  await packet.broadcastOnce(async next => {
+    assert.throws(() => { (next.referenceBlock as { height: number }).height++; });
+    assert.throws(() => { (next.events as unknown[]).push({ stage: "rpc-response" }); });
+    await log.persist(next);
+  });
+  assert.deepEqual(log.records.map(r => r.events.at(-1)!.stage), ["prepared", "public-checks", "send-intent", "rpc-response"]);
+  assert.deepEqual(log.records.at(-1)!.events.at(-1)!.diagnostic, { category: "RPC_RESPONSE", finalExecutionStatus: "NONE" });
+  assert.equal(packet.submission.events.length, 1);
+  assert.doesNotMatch(JSON.stringify(log.records), /private_key|offline-fixture|signed_tx_base64|treasury\.json/);
+});
+
+test("missing durable recorder blocks transmission and consumes the one allowed attempt", async () => {
+  const f = fixture(), packet = await prepareMpcSigning(options(), f.services);
+  await assert.rejects(packet.broadcastOnce(undefined as never), isCode("PERSISTENCE_FAILED"));
+  await assert.rejects(packet.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
+  assert.equal(f.calls.some(c => c.method === "send_tx"), false);
+});
+
+test("failed persistence before public checks or send intent prevents transmission without retry", async () => {
+  for (const failedStage of ["public-checks", "send-intent"]) {
+    const f = fixture(), packet = await prepareMpcSigning(options(), f.services), log = submissionRecorder(packet.submission);
+    await assert.rejects(packet.broadcastOnce(async next => {
+      if (next.events.at(-1)!.stage === failedStage) throw new Error("private filesystem detail");
+      await log.persist(next);
+    }), error => isCode("PERSISTENCE_FAILED")(error) && !String(error).includes("private filesystem"));
+    assert.equal(log.records.at(-1)!.events.at(-1)!.stage, failedStage === "public-checks" ? "prepared" : "public-checks");
+    await assert.rejects(packet.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
+    assert.equal(f.calls.some(c => c.method === "send_tx"), false);
+  }
+});
+
+test("failed post-send persistence preserves send intent and cannot invoke another send", async () => {
+  const f = fixture(), packet = await prepareMpcSigning(options(), f.services), log = submissionRecorder(packet.submission);
+  await assert.rejects(packet.broadcastOnce(async next => {
+    if (next.events.at(-1)!.stage === "rpc-response") throw new Error("offline durable-write failure");
+    await log.persist(next);
+  }), isCode("PERSISTENCE_FAILED"));
+  assert.equal(log.records.at(-1)!.events.at(-1)!.stage, "send-intent");
+  await assert.rejects(packet.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
+  assert.equal(f.calls.filter(c => c.method === "send_tx").length, 1);
+});
+
+test("pre-send public-check failures record sanitized availability classifications", async () => {
+  for (const [code, category] of [["READ_FAILED", "MPC_READ_UNAVAILABLE"], ["INVALID_RESPONSE", "RPC_RESPONSE_INVALID"],
+    ["WRONG_NETWORK", "PUBLIC_CHECK_FAILED"]] as const) {
+    const f = fixture(), packet = await prepareMpcSigning(options(), f.services), log = submissionRecorder(packet.submission);
+    f.services.readMpc = async () => { throw new MpcReadOnlyError(code, "secret endpoint details must not escape"); };
+    await assert.rejects(packet.broadcastOnce(log.persist), isCode("PUBLIC_CHECK_FAILED"));
+    assert.equal(log.records.at(-1)!.events.at(-1)!.stage, "checks-failed-before-send");
+    assert.deepEqual(log.records.at(-1)!.events.at(-1)!.diagnostic, { category });
+    assert.equal(f.calls.some(c => c.method === "send_tx"), false);
+    assert.doesNotMatch(JSON.stringify(log.records), /secret endpoint/);
+  }
+});
+
+test("safe RPC diagnostics survive the public-authority wrapper before transmission", async () => {
+  const f = fixture(), packet = await prepareMpcSigning(options(), f.services), log = submissionRecorder(packet.submission);
+  f.services.rpc = async () => { throw new MpcSigningError("RPC_FAILED", "untrusted server text", { category: "HTTP_ERROR", httpStatus: 429 }); };
+  await assert.rejects(packet.broadcastOnce(log.persist), isCode("PUBLIC_CHECK_FAILED"));
+  assert.deepEqual(log.records.at(-1)!.events.at(-1)!.diagnostic, { category: "HTTP_ERROR", httpStatus: 429 });
+  assert.equal(f.calls.some(c => c.method === "send_tx"), false);
+});
+
+test("unknown mocked send records a sanitized uncertain outcome and preserves the exact metadata", async () => {
+  const f = fixture(), packet = await prepareMpcSigning(options(), f.services), log = submissionRecorder(packet.submission);
+  f.changes.sendFails = true;
+  await assert.rejects(packet.broadcastOnce(log.persist), isCode("SUBMISSION_UNKNOWN"));
+  assert.deepEqual(log.records.at(-1)!.events.at(-1)!.diagnostic, { category: "UNCLASSIFIED_ERROR" });
+  assert.equal(log.records.at(-1)!.events.at(-1)!.stage, "rpc-uncertain");
+  assertNearSubmissionRecord(log.records.at(-1), { role: "treasury", transactionHash: packet.transactionHash, digest: DIGEST });
+  assert.doesNotMatch(JSON.stringify(log.records), /arbitrary transport|signed_tx_base64/);
+  await assert.rejects(packet.broadcastOnce(log.persist), isCode("ALREADY_ATTEMPTED"));
+});
+
+test("submission diagnostics copy only allowlisted response and error primitives", () => {
+  const diagnostic = nearRpcErrorDiagnostic({ code: -32000, name: "HANDLER_ERROR", message: "private text",
+    cause: { name: "UNKNOWN_TRANSACTION", info: { private_key: "not-a-real-key" } }, data: "untrusted" }, 200);
+  assert.deepEqual(diagnostic, { category: "RPC_ERROR", httpStatus: 200, rpcCode: -32000, rpcErrorName: "UNKNOWN_TRANSACTION" });
+  assert.deepEqual(nearRpcErrorDiagnostic({ code: "secret", name: "unknown-private-name", cause: { name: "secret" } }), { category: "RPC_ERROR" });
+  assert.deepEqual(nearRpcResponseDiagnostic({ final_execution_status: "FINAL", transaction: { hash: HASH, secret: "private" }, logs: ["private"] }),
+    { category: "RPC_RESPONSE", finalExecutionStatus: "FINAL", transactionHash: HASH });
+  assert.deepEqual(nearRpcResponseDiagnostic({ final_execution_status: "arbitrary-secret", transaction: { hash: "private" } }), { category: "RPC_RESPONSE" });
+});
+
+test("real RPC transport diagnostics are offline mocked and never preserve response text", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    const scenarios = [
+      { response: () => new Response("private HTTP body", { status: 429 }), diagnostic: { category: "HTTP_ERROR", httpStatus: 429 } },
+      { response: () => new Response("not JSON private content", { status: 200 }), diagnostic: { category: "RPC_RESPONSE_INVALID", httpStatus: 200 } },
+      { response: () => Response.json({ jsonrpc: "2.0", id: "wrong-private-id", result: {} }), diagnostic: { category: "RPC_RESPONSE_INVALID", httpStatus: 200 } },
+      { response: () => Response.json({ jsonrpc: "2.0", id: "wealthpixels-signing", error: { code: -32000, message: "private RPC message",
+        cause: { name: "UNKNOWN_TRANSACTION", info: "private" } } }), diagnostic: { category: "RPC_ERROR", httpStatus: 200, rpcCode: -32000, rpcErrorName: "UNKNOWN_TRANSACTION" } },
+      { response: () => { throw new DOMException("private timeout details", "TimeoutError"); }, diagnostic: { category: "TIMEOUT" } },
+      { response: () => { throw new Error("private network details"); }, diagnostic: { category: "NETWORK_ERROR" } },
+    ];
+    for (const scenario of scenarios) {
+      let requests = 0;
+      globalThis.fetch = async () => { requests++; return scenario.response(); };
+      await assert.rejects(readMpcSigningOutcome("treasury", HASH, options().rpcUrl), error => {
+        assert.ok(error instanceof MpcSigningError); assert.deepEqual(error.diagnostic, scenario.diagnostic);
+        assert.doesNotMatch(JSON.stringify(error), /private/); return true;
+      });
+      assert.equal(requests, 1);
+    }
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("public submission records reject authority, nonce, digest and unsafe-field changes", async () => {
+  const f = fixture(), packet = await prepareMpcSigning(options(), f.services), binding = { role: "treasury" as const, transactionHash: packet.transactionHash, digest: DIGEST };
+  for (const change of [{ role: "investor" }, { transactionNonce: "11" }, { digest: "0x" + "00".repeat(32) },
+    { credentialPath: "private-path" }, { rpcOrigin: "https://rpc.testnet.near.org/private-key" }]) {
+    assert.throws(() => assertNearSubmissionRecord({ ...packet.submission, ...change }, binding));
+  }
+  const modified = { ...packet.submission, referenceBlock: { ...packet.submission.referenceBlock, height: 101 },
+    events: [...packet.submission.events, { stage: "public-checks" as const, at: packet.submission.preparedAt }] };
+  assert.throws(() => assertNearSubmissionSuccessor(packet.submission, modified));
+  assert.throws(() => assertNearSubmissionSuccessor(packet.submission, packet.submission));
 });
 
 async function signingClock(action: (clock: { now(): number; advance(ms: number): void }) => Promise<void>) {
@@ -156,10 +303,24 @@ async function signingClock(action: (clock: { now(): number; advance(ms: number)
   try { await action({ now: () => now, advance(ms) { now += ms; } }); }
   finally { Date.now = original; }
 }
+
+test("deadline crossing while send intent is persisted records no-send expiry and consumes the attempt", async () => signingClock(async clock => {
+  const f = fixture(), packet = await prepareMpcSigning({ ...options(), submissionDeadlineMs: clock.now() + 1000 }, f.services);
+  const log = submissionRecorder(packet.submission);
+  await assert.rejects(packet.broadcastOnce(async next => {
+    await log.persist(next);
+    if (next.events.at(-1)!.stage === "send-intent") clock.advance(1000);
+  }), isCode("INVALID_INPUT"));
+  assert.deepEqual(log.records.at(-1)!.events.at(-1)!.diagnostic, { category: "DEADLINE_EXPIRED" });
+  assert.equal(log.records.at(-1)!.events.at(-1)!.stage, "checks-failed-before-send");
+  assert.equal(log.records.at(-1)!.submissionDeadlineAt, new Date(clock.now()).toISOString());
+  await assert.rejects(packet.broadcastOnce(log.persist), isCode("ALREADY_ATTEMPTED"));
+  assert.equal(f.calls.some(c => c.method === "send_tx"), false);
+}));
 test("an unexpired immutable MPC submission deadline permits exactly one mocked send", async () => signingClock(async clock => {
   const f = fixture(), packet = await prepareMpcSigning({ ...options(), submissionDeadlineMs: clock.now() + 1000 }, f.services);
   assert.equal(f.calls.filter(call => call.method === "send_tx").length, 0);
-  await packet.broadcastOnce(); await assert.rejects(packet.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+  await packet.broadcastOnce(discardSubmission); await assert.rejects(packet.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
   assert.equal(f.calls.filter(call => call.method === "send_tx").length, 1);
   assert.equal(f.calls.filter(call => call.kind === "local-sign-mock").length, 1);
 }));
@@ -191,8 +352,8 @@ test("deadline crossing during the final internal authority read prevents send a
     return result;
   };
   const packet = await prepareMpcSigning({ ...options(), submissionDeadlineMs: clock.now() + 1000 }, f.services), originalHash = packet.transactionHash;
-  await assert.rejects(packet.broadcastOnce(), isCode("INVALID_INPUT"));
-  await assert.rejects(packet.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+  await assert.rejects(packet.broadcastOnce(discardSubmission), isCode("INVALID_INPUT"));
+  await assert.rejects(packet.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
   assert.equal(queries, 2); assert.equal(f.calls.filter(call => call.method === "send_tx").length, 0);
   assert.equal(f.calls.filter(call => call.kind === "local-sign-mock").length, 1); assert.equal(packet.transactionHash, originalHash);
 }));
@@ -200,8 +361,8 @@ test("mutating caller deadline options cannot extend the deadline captured by a 
   const f = fixture(), input = { ...options(), submissionDeadlineMs: clock.now() + 1000 };
   const packet = await prepareMpcSigning(input, f.services);
   input.submissionDeadlineMs += 600_000; clock.advance(1000);
-  await assert.rejects(packet.broadcastOnce(), isCode("INVALID_INPUT"));
-  await assert.rejects(packet.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+  await assert.rejects(packet.broadcastOnce(discardSubmission), isCode("INVALID_INPUT"));
+  await assert.rejects(packet.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
   assert.equal(f.calls.filter(call => call.method === "send_tx").length, 0);
   assert.equal(f.calls.filter(call => call.kind === "credential-read").length, 1);
 }));
@@ -209,8 +370,8 @@ test("mutating caller deadline options cannot extend the deadline captured by a 
 test("unknown submission is attempted once and cannot be retried or locally re-signed", async () => {
   const f = fixture(); f.changes.sendFails = true;
   const prepared = await prepareMpcSigning(options(), f.services);
-  await assert.rejects(prepared.broadcastOnce(), isCode("SUBMISSION_UNKNOWN"));
-  await assert.rejects(prepared.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+  await assert.rejects(prepared.broadcastOnce(discardSubmission), isCode("SUBMISSION_UNKNOWN"));
+  await assert.rejects(prepared.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
   assert.equal(f.calls.filter((entry) => entry.method === "send_tx").length, 1);
   assert.equal(f.calls.filter((entry) => entry.kind === "local-sign-mock").length, 1);
 });
@@ -220,8 +381,8 @@ test("changed nonce or root between preparation and submission prevents send", a
     (f: ReturnType<typeof fixture>) => { f.changes.root = "changed-public-root"; }]) {
     const f = fixture(), prepared = await prepareMpcSigning(options(), f.services);
     mutate(f);
-    await assert.rejects(prepared.broadcastOnce(), isCode("PUBLIC_CHECK_FAILED"));
-    await assert.rejects(prepared.broadcastOnce(), isCode("ALREADY_ATTEMPTED"));
+    await assert.rejects(prepared.broadcastOnce(discardSubmission), isCode("PUBLIC_CHECK_FAILED"));
+    await assert.rejects(prepared.broadcastOnce(discardSubmission), isCode("ALREADY_ATTEMPTED"));
     assert.equal(f.calls.filter((entry) => entry.method === "send_tx").length, 0);
   }
 });

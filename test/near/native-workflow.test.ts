@@ -12,6 +12,7 @@ import { DEFAULT_NATIVE_DELIVERY_POLICY } from "../../src/evm/sepolia-native.js"
 import { assembleSignedErc20Transfer } from "../../src/evm/erc20-transfer.js";
 import { normalizeMpcOutcome } from "../../src/near/signing.js";
 import { VERIFIED_IDENTITIES } from "../../src/near/identities.js";
+import { offlineNearSubmission } from "./fixtures/near-submission.js";
 import { nativeObservationRpc, nativePreflight } from "./fixtures/native-delivery.js";
 import { recordedOutcome, recordedState, RECORDED_NEAR_HASH } from "./fixtures/recorded-mpc.js";
 
@@ -41,6 +42,7 @@ function deniedPorts(): NativeExecutionPorts {
 function mockPorts(value: NativeExecutionState, events: string[], result: "success" | "timeout" = "success"): NativeExecutionPorts {
   const ports = deniedPorts(); ports.evm = nativeObservationRpc().rpc;
   ports.prepareSigning = async () => ({ transactionHash: NEAR_HASH, signerAccountId: VERIFIED_IDENTITIES.treasury.accountId,
+    submission: offlineNearSubmission("treasury", value.preflight.prepared.unsignedHash, NEAR_HASH),
     receiverId: "v1.signer-prod.testnet", request: { payload_v2: { Ecdsa: value.preflight.prepared.unsignedHash.slice(2) },
       path: "wealthpixels/sepolia/v1", domain_id: 0 }, gasTgas: 100, depositYocto: "1",
     async broadcastOnce() { events.push("mock-near-send"); if (result === "timeout") throw new Error("offline timeout"); return {}; } });

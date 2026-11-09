@@ -4,7 +4,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { createPurchaseCoordinator, type PurchaseBroadcastApproval } from "../../src/purchase/coordinator.js";
 import type { PurchaseLeg } from "../../src/purchase/legs.js";
-import type { PurchaseJournal } from "../../src/purchase/journal.js";
+import { withPurchaseExecutionJournal, type PurchaseJournal } from "../../src/purchase/journal.js";
+import { DEFAULT_PURCHASE_QUOTE_POLICY } from "../../src/purchase/quote.js";
 import type { CompletePurchaseCosts } from "../../src/purchase/costs.js";
 import type { AuthorizedActualCosts } from "../../src/purchase/authorized-costs.js";
 import { sealExecution } from "../../src/purchase/settlement.js";
@@ -66,11 +67,34 @@ test("credential-free fixture completes durable 10-USDC payment, LINK delivery a
   for (const leg of ["usdc-payment", "link-delivery", "eth-delivery"] as const) {
     assert.equal(f.count("nearSubmit", leg), 1); assert.equal(f.count("evmSubmit", leg), 1);
     assert.equal((execution.legs[leg]!.nearOutcome as { kind: string }).kind, "OFFLINE-SIMULATED-MPC-RESULT-NOT-LIVE");
+    const metadata = execution.legs[leg]!.nearSubmission!;
+    assert.equal(metadata.role, step(f, leg).role); assert.equal(metadata.transactionHash, execution.legs[leg]!.nearTransactionHash);
+    assert.equal(metadata.digest, execution.legs[leg]!.prepared.prepared.unsignedHash);
+    assert.deepEqual(metadata.events.map(event => event.stage), ["prepared", "public-checks", "send-intent", "rpc-response"]);
   }
   const persisted = await readFile(f.journalFile, "utf8"); assert.match(persisted, /OFFLINE-SIMULATED/); assert.match(persisted, /\$bigint/);
   const restarted = createPurchaseCoordinator(f.driver, { root: f.root }); assert.deepEqual(await restarted.inspect(), finished);
   assert.equal(f.calls.filter(call => call.operation === "prepareSigning" && call.role === "investor")[0]!.credentialPath, f.rolePaths.investor);
   assert.notEqual(f.rolePaths.investor, f.rolePaths.treasury);
+}));
+
+test("purchase journal preserves public signing metadata and rejects removal, replacement or event rewind", async () => sandbox(async (f, c) => {
+  await prepare(f, c, "usdc-payment"); await sign(f, c, "usdc-payment");
+  const before = await readFile(f.journalFile, "utf8");
+  await withPurchaseExecutionJournal(f.root, DEFAULT_PURCHASE_QUOTE_POLICY, async store => {
+    const current = store.current(), record = current.active!, e = record.execution!, entry = e.legs["usdc-payment"]!, metadata = entry.nearSubmission!;
+    for (const altered of [undefined, { ...metadata, referenceBlock: { ...metadata.referenceBlock, height: metadata.referenceBlock.height + 1 } },
+      { ...metadata, events: metadata.events.slice(0, 1) }]) {
+      const { nearSubmission: _previous, ...withoutMetadata } = entry;
+      const changedEntry = altered === undefined ? withoutMetadata : { ...entry, nearSubmission: altered };
+      const execution = sealExecution({ ...e, legs: { ...e.legs, "usdc-payment": changedEntry } });
+      await assert.rejects(store.commit({ ...current, revision: current.revision + 1, active: { ...record, execution } }), /submission|metadata|events/i);
+    }
+  });
+  assert.equal(await readFile(f.journalFile, "utf8"), before);
+  const restarted = createPurchaseCoordinator(f.driver, { root: f.root }), current = await restarted.inspect();
+  assert.equal(current.active!.execution!.legs["usdc-payment"]!.nearSubmission!.events.at(-1)!.stage, "rpc-response");
+  await assert.rejects(sign(f, restarted, "usdc-payment"), /fresh unattempted/); assert.equal(f.count("nearSubmit", "usdc-payment"), 1);
 }));
 
 test("complete purchase quantities stay configurable for 1, 5, 20 and 100 USDC", async () => {

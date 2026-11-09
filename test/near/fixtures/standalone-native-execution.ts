@@ -6,6 +6,7 @@ import { createStandaloneNativeState, type StandaloneNativeExecutionPorts, type 
   type StandaloneNativeApproval } from "../../../src/execution/standalone-native.js";
 import { VERIFIED_IDENTITIES } from "../../../src/near/identities.js";
 import { nativeSnapshot, nativeObservationRpc } from "./native-delivery.js";
+import { offlineNearSubmission, runOfflineNearSubmission } from "./near-submission.js";
 
 // Fixed synthetic observations and mocked submission capabilities only. This
 // fixture generates no keys/signatures and reads no credentials or live RPCs.
@@ -29,11 +30,15 @@ export function standaloneExecutionFixture(options: { amountWei?: bigint; nearHa
     prepareSigning: async args => {
       events.push("prepare-signing-packet"); assert.equal(args.role, "treasury"); assert.equal(args.credentialPath, credentialPath);
       assert.equal(args.digest, preflight.prepared.unsignedHash);
-      return { transactionHash: options.nearHash ?? STANDALONE_NEAR_HASH, signerAccountId: VERIFIED_IDENTITIES.treasury.accountId,
+      const submission = offlineNearSubmission("treasury", args.digest, options.nearHash ?? STANDALONE_NEAR_HASH, new Date(clock.now()).toISOString(),
+        args.submissionDeadlineMs === undefined ? null : new Date(args.submissionDeadlineMs).toISOString());
+      return { transactionHash: options.nearHash ?? STANDALONE_NEAR_HASH, submission, signerAccountId: VERIFIED_IDENTITIES.treasury.accountId,
         receiverId: "v1.signer-prod.testnet", request: { payload_v2: { Ecdsa: args.digest.slice(2) }, path: "wealthpixels/sepolia/v1", domain_id: 0 },
-        gasTgas: 100, depositYocto: "1", async broadcastOnce() {
+        gasTgas: 100, depositYocto: "1", async broadcastOnce(persist) {
+          return runOfflineNearSubmission(submission, persist, async () => {
           assert.equal(submitted, false, "Offline NEAR capability must be one-use"); submitted = true; events.push("MOCK-near-submit");
           if (options.timeout) throw new Error("Offline submission timeout; never a live call"); return { fixtureOnly: true };
+          }, () => new Date(clock.now()).toISOString());
         } };
     },
     readOutcome: denied, broadcast: { sendRawTransaction: denied }, saveAudit: denied,

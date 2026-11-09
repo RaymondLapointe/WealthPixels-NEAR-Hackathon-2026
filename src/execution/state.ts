@@ -4,6 +4,7 @@ import type { AuthorityRole } from "../near/config.js";
 import { requireRole } from "../near/identities.js";
 import type { LinkPreflight } from "../evm/sepolia-link.js";
 import { assertLinkPreflight } from "../evm/sepolia-link.js";
+import { assertNearSubmissionRecord, type NearSubmissionRecord } from "../near/submission.js";
 import type { AssembledErc20Transfer } from "../evm/erc20-transfer.js";
 
 export type ExecutionStatus = "prepared" | "near-submitting" | "near-submitted" | "near-uncertain" | "near-failed" | "signed" | "evm-submitting" | "evm-submitted" | "evm-uncertain" | "confirmed";
@@ -14,6 +15,7 @@ export interface ExecutionState {
   preflight: LinkPreflight;
   createdAt: string;
   nearTransactionHash?: string;
+  nearSubmission?: NearSubmissionRecord;
   nearOutcome?: unknown;
   signed?: AssembledErc20Transfer;
   receipt?: unknown;
@@ -72,6 +74,7 @@ export function publicExecutionSummary(state: ExecutionState): unknown {
     role: state.role, status: state.status, createdAt: state.createdAt,
     parameters, feePolicy: state.preflight.policy,
     nearTransactionHash: state.nearTransactionHash,
+    nearSubmission: state.nearSubmission,
     evmTransactionHash: state.signed?.hash,
     recoveredSender: state.signed?.senderAddress,
     recoveryBroadcastAudit: state.recoveryBroadcastAudit,
@@ -98,6 +101,10 @@ export function decodeState(text: string): ExecutionState {
   assertLinkPreflight(value.preflight);
   if (value.role !== value.preflight.role) throw new Error("Transfer state role mismatch.");
   if (value.status !== "prepared" && (!value.nearTransactionHash || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value.nearTransactionHash))) throw new Error("Missing NEAR transaction hash; manual reconciliation is required.");
+  if (value.nearSubmission !== undefined) {
+    if (value.status === "prepared" || !value.nearTransactionHash) throw new Error("Prepared state cannot contain NEAR submission metadata.");
+    assertNearSubmissionRecord(value.nearSubmission, { role: value.role, transactionHash: value.nearTransactionHash, digest: value.preflight.prepared.unsignedHash });
+  }
   return value;
 }
 

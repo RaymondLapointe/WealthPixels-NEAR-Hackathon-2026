@@ -10,6 +10,7 @@ import { decodeState, encodeState, publicExecutionSummary, readState, saveState,
 import { broadcastTransfer, reconcileEvm, reconcileSigning, requestSignature, type ExecutionPorts, type ReconciliationPorts } from "../../src/execution/workflow.js";
 import { VERIFIED_IDENTITIES, requireRole } from "../../src/near/identities.js";
 import { SEPOLIA_LINK } from "../../src/evidence/verify.js";
+import { offlineNearSubmission } from "./fixtures/near-submission.js";
 import {
   recordedOutcome, recordedState, RECORDED_NEAR_HASH, RECORDED_UNSIGNED_HASH, RECORDED_EVM_HASH,
 } from "./fixtures/recorded-mpc.js";
@@ -102,6 +103,7 @@ test("NEAR hash is saved before the only submission; timeout consumes the operat
   const value = state(), ports = mockedReadPorts(value), events: string[] = [];
   ports.prepareSigning = async () => ({
     transactionHash: "1".repeat(32), signerAccountId: VERIFIED_IDENTITIES.treasury.accountId, receiverId: "v1.signer-prod.testnet",
+    submission: offlineNearSubmission("treasury", value.preflight.prepared.unsignedHash, "1".repeat(32)),
     request: { payload_v2: { Ecdsa: value.preflight.prepared.unsignedHash.slice(2) }, path: "wealthpixels/sepolia/v1", domain_id: 0 },
     gasTgas: 100, depositYocto: "1", async broadcastOnce() { events.push("submit"); throw new Error("fixture timeout"); },
   });
@@ -117,6 +119,7 @@ test("a durable-save failure prevents any NEAR submission", async () => {
   const value = state(), ports = mockedReadPorts(value); let sends = 0;
   ports.prepareSigning = async () => ({
     transactionHash: "1".repeat(32), signerAccountId: VERIFIED_IDENTITIES.treasury.accountId, receiverId: "v1.signer-prod.testnet",
+    submission: offlineNearSubmission("treasury", value.preflight.prepared.unsignedHash, "1".repeat(32)),
     request: { payload_v2: { Ecdsa: value.preflight.prepared.unsignedHash.slice(2) }, path: "wealthpixels/sepolia/v1", domain_id: 0 },
     gasTgas: 100, depositYocto: "1", async broadcastOnce() { sends++; },
   });

@@ -9,6 +9,7 @@ import { assertStandaloneNativePreflight, recheckStandaloneNative, type Standalo
 import { verifyNativeTransferReceipt, type NativeDeliverySnapshot, type VerifiedNativeReceipt } from "../evm/sepolia-native.js";
 import type { SepoliaReadRpc } from "../evm/sepolia-link.js";
 import { normalizeMpcOutcome, type prepareMpcSigning, type readMpcSigningOutcome, type verifyRoleMpc } from "../near/signing.js";
+import { assertNearSubmissionRecord, assertNearSubmissionSuccessor, type NearSubmissionRecord } from "../near/submission.js";
 import { VERIFIED_IDENTITIES } from "../near/identities.js";
 import { check, fingerprint, frozen, hexHash, label, utc } from "../purchase/integrity.js";
 import { requireUint256 } from "../purchase/amounts.js";
@@ -44,6 +45,7 @@ export interface StandaloneNativeExecutionState {
   preflight: StandaloneNativePreflight; createdAt: string;
   signingApproval?: { readonly digest: string; readonly reference: string; readonly at: string };
   nearTransactionHash?: string; nearOutcome?: unknown; signed?: AssembledNativeTransfer;
+  nearSubmission?: NearSubmissionRecord;
   broadcastAudit?: StandaloneNativeBroadcastAudit;
   evmAttempt?: { readonly signedHash: string; readonly at: string; readonly auditHash: string };
   externalObservation?: { readonly signedHash: string; readonly at: string };
@@ -152,16 +154,18 @@ function assertNearFailure(state: StandaloneNativeExecutionState, outcome: unkno
 }
 export function assertStandaloneNativeExecutionState(value: StandaloneNativeExecutionState, expectedIntentHash: string): void {
   check(value && value.schemaVersion === 1 && value.kind === "standalone-native-eth-execution" && value.role === "treasury" && statuses.has(value.status), "Unsupported standalone native execution state.");
-  const allowed = new Set(["schemaVersion", "kind", "role", "status", "preflight", "createdAt", "signingApproval", "nearTransactionHash", "nearOutcome", "signed",
+  const allowed = new Set(["schemaVersion", "kind", "role", "status", "preflight", "createdAt", "signingApproval", "nearTransactionHash", "nearSubmission", "nearOutcome", "signed",
     "broadcastAudit", "evmAttempt", "externalObservation", "receipt", "failedReceipt", "recovery"]);
   check(Object.keys(value).every(key => allowed.has(key)), "Unexpected standalone execution fields.");
   utc(value.createdAt); assertStandaloneNativePreflight(value.preflight, expectedIntentHash);
   if (value.recovery !== undefined) label(value.recovery, "Standalone reconciliation note", 2048);
-  if (value.status === "prepared") check(!value.nearTransactionHash && !value.signingApproval && !value.nearOutcome && !value.signed && !value.evmAttempt &&
+  if (value.status === "prepared") check(!value.nearTransactionHash && !value.nearSubmission && !value.signingApproval && !value.nearOutcome && !value.signed && !value.evmAttempt &&
     !value.externalObservation && !value.broadcastAudit && !value.receipt && !value.failedReceipt, "Prepared state cannot contain previous signing or submission evidence.");
   else { nearHash(value.nearTransactionHash); check(value.signingApproval?.digest === value.preflight.prepared.unsignedHash, "Missing original hash-bound signing approval.");
     label(value.signingApproval!.reference, "Signing approval reference"); check(utc(value.signingApproval!.at) >= utc(value.createdAt) &&
       utc(value.signingApproval!.at) - utc(value.createdAt) <= AGE_MS, "Original signing approval was outside preparation validity."); }
+  if (value.nearSubmission !== undefined) assertNearSubmissionRecord(value.nearSubmission,
+    { role: "treasury", transactionHash: nearHash(value.nearTransactionHash), digest: value.preflight.prepared.unsignedHash });
   if (signedStatuses.has(value.status)) verifiedSigned(value);
   else check(!value.signed && !value.receipt && !value.failedReceipt && !value.evmAttempt && !value.externalObservation && !value.broadcastAudit, "Unsigned state cannot contain EVM execution evidence.");
   if (value.status === "near-failed") assertNearFailure(value, value.nearOutcome);
@@ -207,7 +211,7 @@ export function publicStandaloneNativeExecutionSummary(state: StandaloneNativeEx
   return { kind: state.kind, role: state.role, status: state.status, createdAt: state.createdAt,
     expiresAt: new Date(utc(state.createdAt) + AGE_MS).toISOString(), intent: state.preflight.intent, parameters,
     rawGasEstimate: state.preflight.snapshot.estimatedGas, bufferedGasLimit: state.preflight.prepared.gasLimit,
-    nearTransactionHash: state.nearTransactionHash, evmTransactionHash: state.signed?.hash, recoveredSender: state.signed?.senderAddress,
+    nearTransactionHash: state.nearTransactionHash, nearSubmission: state.nearSubmission, evmTransactionHash: state.signed?.hash, recoveredSender: state.signed?.senderAddress,
     signingApproval: state.signingApproval, broadcastAuditHash: state.broadcastAudit?.auditHash, evmAttempt: state.evmAttempt,
     externalObservation: state.externalObservation, receipt: state.receipt, failedReceipt: state.failedReceipt, recovery: state.recovery };
 }
@@ -228,13 +232,17 @@ export async function requestStandaloneNativeSignature(state: StandaloneNativeEx
   check(packet.signerAccountId === n.accountId && packet.receiverId === n.contractId && packet.request.payload_v2.Ecdsa === input.approval.slice(2) &&
     packet.request.path === n.path && packet.request.domain_id === n.domainId && packet.gasTgas === n.gasTgas && packet.depositYocto === n.depositYocto,
   "Prepared signing packet differs from the approved standalone intent and Treasury authority.");
-  const marked: StandaloneNativeExecutionState = { ...structuredClone(state), status: "near-submitting", nearTransactionHash: packet.transactionHash,
+  assertNearSubmissionRecord(packet.submission, { role: "treasury", transactionHash: packet.transactionHash, digest: state.preflight.prepared.unsignedHash });
+  const marked: StandaloneNativeExecutionState = { ...structuredClone(state), status: "near-submitting", nearTransactionHash: packet.transactionHash, nearSubmission: structuredClone(packet.submission),
     signingApproval: { digest: input.approval, reference: input.reference, at: new Date(now(ports)).toISOString() } };
   assertStandaloneNativeExecutionState(marked, input.expectedIntentHash); replaceState(state, marked);
   await ports.save(state); // No submission capability is invoked until this hash/attempt is durable.
-  const candidate = structuredClone(state);
-  try { assertStandalonePreparationFresh(state.createdAt, now(ports)); await packet.broadcastOnce(); candidate.status = "near-submitted"; }
-  catch { candidate.status = "near-uncertain"; candidate.recovery = "Reconcile the existing NEAR hash; no automatic signing submission or retry is permitted."; }
+  let candidate = structuredClone(state);
+  try { assertStandalonePreparationFresh(state.createdAt, now(ports)); await packet.broadcastOnce(async next => {
+    assertNearSubmissionSuccessor(state.nearSubmission!, next);
+    await commit(state, { ...structuredClone(state), nearSubmission: structuredClone(next) }, ports.save, input.expectedIntentHash);
+  }); candidate = { ...structuredClone(state), status: "near-submitted" }; }
+  catch { candidate = { ...structuredClone(state), status: "near-uncertain", recovery: "Reconcile the existing NEAR hash; no automatic signing submission or retry is permitted." }; }
   await commit(state, candidate, ports.save, input.expectedIntentHash);
 }
 export async function reconcileStandaloneNativeSigning(state: StandaloneNativeExecutionState,

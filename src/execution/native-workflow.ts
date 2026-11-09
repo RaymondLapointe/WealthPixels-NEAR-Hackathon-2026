@@ -8,12 +8,14 @@ import { assertNativeDelivery, recheckNativeDelivery, verifyNativeDeliveryReceip
 import type { SepoliaReadRpc } from "../evm/sepolia-link.js";
 import { normalizeMpcOutcome, type prepareMpcSigning, type verifyRoleMpc, type readMpcSigningOutcome } from "../near/signing.js";
 import { VERIFIED_IDENTITIES } from "../near/identities.js";
+import { assertNearSubmissionRecord, assertNearSubmissionSuccessor, type NearSubmissionRecord } from "../near/submission.js";
 import { decodeEncodedState, encodeState, runtimeStatePath, saveEncodedState, withStateLock, type ExecutionStatus } from "./state.js";
 
 export interface NativeExecutionState {
   schemaVersion: 1; kind: "native-eth-execution"; role: "treasury"; status: ExecutionStatus;
   preflight: NativeDeliveryPreflight; createdAt: string;
   nearTransactionHash?: string; nearOutcome?: unknown; signed?: AssembledNativeTransfer;
+  nearSubmission?: NearSubmissionRecord;
   receipt?: VerifiedNativeReceipt; recovery?: string;
 }
 export interface NativeExecutionPorts {
@@ -69,16 +71,18 @@ export function assertNativeExecutionState(value: NativeExecutionState, expected
   expectedPolicy: NativeDeliveryPolicy = DEFAULT_NATIVE_DELIVERY_POLICY): void {
   check(value && typeof value === "object" && !Array.isArray(value) && value.schemaVersion === 1 && value.kind === "native-eth-execution" &&
     value.role === "treasury" && STATUSES.has(value.status), "Unsupported native Treasury execution state.");
-  const allowed = new Set(["schemaVersion", "kind", "role", "status", "preflight", "createdAt", "nearTransactionHash", "nearOutcome", "signed", "receipt", "recovery"]);
+  const allowed = new Set(["schemaVersion", "kind", "role", "status", "preflight", "createdAt", "nearTransactionHash", "nearSubmission", "nearOutcome", "signed", "receipt", "recovery"]);
   check(Object.keys(value).every(key => allowed.has(key)), "Unexpected native execution state fields.");
   check(typeof value.createdAt === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.createdAt) &&
     Number.isFinite(Date.parse(value.createdAt)) && new Date(value.createdAt).toISOString() === value.createdAt, "Invalid original native preparation timestamp.");
   check(value.recovery === undefined || (typeof value.recovery === "string" && value.recovery.length <= 2048), "Invalid native recovery note.");
   assertNativeDelivery(value.preflight, expectedTermsHash, expectedPolicy);
   if (value.status === "prepared") {
-    check(value.nearTransactionHash === undefined && value.nearOutcome === undefined && value.signed === undefined && value.receipt === undefined,
+    check(value.nearTransactionHash === undefined && value.nearSubmission === undefined && value.nearOutcome === undefined && value.signed === undefined && value.receipt === undefined,
       "Prepared native state cannot contain a prior submission or signature.");
   } else nearHash(value.nearTransactionHash);
+  if (value.nearSubmission !== undefined) assertNearSubmissionRecord(value.nearSubmission,
+    { role: "treasury", transactionHash: nearHash(value.nearTransactionHash), digest: value.preflight.prepared.unsignedHash });
   if (SIGNED_STATUSES.has(value.status)) verifiedSignature(value);
   else check(value.signed === undefined && value.receipt === undefined, "An unsigned native state cannot contain signed execution evidence.");
   check(value.status !== "confirmed" || value.receipt !== undefined, "Confirmed native execution requires verified receipt evidence.");
@@ -132,7 +136,7 @@ export function publicNativeExecutionSummary(state: NativeExecutionState): unkno
   const { unsignedSerialized: _unsigned, ...parameters } = state.preflight.prepared;
   return { kind: state.kind, role: state.role, status: state.status, createdAt: state.createdAt,
     termsHash: state.preflight.approvedTermsHash, parameters, policy: state.preflight.policy,
-    nearTransactionHash: state.nearTransactionHash, evmTransactionHash: state.signed?.hash,
+    nearTransactionHash: state.nearTransactionHash, nearSubmission: state.nearSubmission, evmTransactionHash: state.signed?.hash,
     recoveredSender: state.signed?.senderAddress, receipt: state.receipt, recovery: state.recovery };
 }
 
@@ -143,7 +147,8 @@ export async function requestNativeSignature(state: NativeExecutionState,
   await recheckNativeDelivery(state.preflight, ports.evm, input.expectedTermsHash, policy(input));
   assertApproved(state, input);
   const signing = await ports.prepareSigning({ role: "treasury", credentialPath: input.credentialPath,
-    rpcUrl: input.nearRpcUrl, digest: state.preflight.prepared.unsignedHash });
+    rpcUrl: input.nearRpcUrl, digest: state.preflight.prepared.unsignedHash,
+    submissionDeadlineMs: Date.parse(state.createdAt) + 15 * 60_000 });
   assertApproved(state, input);
   nearHash(signing.transactionHash);
   check(signing.signerAccountId === VERIFIED_IDENTITIES.treasury.accountId && signing.receiverId === "v1.signer-prod.testnet" &&
@@ -151,11 +156,18 @@ export async function requestNativeSignature(state: NativeExecutionState,
     signing.request.path === "wealthpixels/sepolia/v1" && signing.gasTgas === 100 && signing.depositYocto === "1",
     "Prepared NEAR signing packet differs from the exact native digest or Treasury authority.");
   state.nearTransactionHash = signing.transactionHash;
+  assertNearSubmissionRecord(signing.submission, { role: "treasury", transactionHash: signing.transactionHash, digest: state.preflight.prepared.unsignedHash });
+  state.nearSubmission = structuredClone(signing.submission);
   state.status = "near-submitting";
   await ports.save(state); // Durable attempt marker always precedes the single mutation capability.
   try {
     assertNativeExecutionState(state, input.expectedTermsHash, policy(input)); assertFresh(state);
-    await signing.broadcastOnce();
+    await signing.broadcastOnce(async next => {
+      assertNearSubmissionSuccessor(state.nearSubmission!, next);
+      const candidate: NativeExecutionState = { ...structuredClone(state), nearSubmission: structuredClone(next) };
+      await ports.save(candidate);
+      state.nearSubmission = candidate.nearSubmission;
+    });
     state.status = "near-submitted";
   } catch {
     state.status = "near-uncertain";
