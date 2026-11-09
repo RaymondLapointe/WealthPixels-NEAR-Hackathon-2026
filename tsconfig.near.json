@@ -22,7 +22,8 @@
     "scripts/export-purchase-evidence.ts",
     "scripts/verify-purchase-evidence.ts",
     "scripts/native-test.ts",
-    "scripts/native-test-dry-run.ts"
+    "scripts/native-test-dry-run.ts",
+    "scripts/near-rpc-diagnostic.ts"
   ],
   "exclude": [
     "node_modules"
