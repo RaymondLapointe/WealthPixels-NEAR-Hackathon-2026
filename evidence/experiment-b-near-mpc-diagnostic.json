@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "kind": "recorded-live-near-testnet-diagnostic-summary",
+  "experiment": "B",
+  "diagnosticId": "experiment-b-investor-20261109-001",
+  "status": "mpc-verified",
+  "network": "testnet",
+  "operatorModel": "single-operator-disposable-testnet-identity",
+  "diagnostic": {
+    "canonicalMessage": "WealthPixels/Experiment-B/NEAR-testnet/MPC-diagnostic/v1\n{\"experimentId\":\"experiment-b-investor-20261109-001\",\"nearAccountId\":\"wealthpixels-investor.testnet\",\"purpose\":\"diagnostic-only-no-asset-transfer\"}\n",
+    "messageEncoding": "UTF-8, including the final newline",
+    "digestAlgorithm": "SHA-256",
+    "approvedDigest": "0x5b0b95e25af32ad03f2097c2c5bf4b63f729a480079f099c820f662d9819874d"
+  },
+  "transaction": {
+    "hash": "CvbiuJEoKXyfppXZUs5Qc6gswXHyNmovbewLLCfkYLdE",
+    "approvedHash": "CvbiuJEoKXyfppXZUs5Qc6gswXHyNmovbewLLCfkYLdE",
+    "signerAccountId": "wealthpixels-investor.testnet",
+    "receiverAccountId": "v1.signer-prod.testnet",
+    "signingPublicKey": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc",
+    "previousNonce": "275946428000002",
+    "nonce": "275946428000003",
+    "action": "FunctionCall",
+    "methodName": "sign",
+    "gas": "100000000000000",
+    "gasTgas": 100,
+    "depositYocto": "1",
+    "derivationPath": "wealthpixels/sepolia/v1",
+    "domainId": 0,
+    "referenceBlock": {
+      "hash": "7PH1M7BXG3yX5yGayX7V2CRs7rKysRM78wH7oU9Edp3L",
+      "height": 276990608
+    }
+  },
+  "execution": {
+    "canonicalBlockHash": "13Hngx7BiwhYu1otVYE4ySPtSxLnspqDwoQjcUg33SpT",
+    "canonicalBlockHeight": 276991247,
+    "finalExecutionStatus": "FINAL",
+    "finalOutcomeStatus": "SuccessValue",
+    "success": true,
+    "transactionOutcome": {
+      "id": "CvbiuJEoKXyfppXZUs5Qc6gswXHyNmovbewLLCfkYLdE",
+      "status": "SuccessReceiptId",
+      "successReceiptId": "FaCutSpWezs7WRDVHyZ3CCYmUzxmE5DR8WCtsqakPKif",
+      "tokensBurntYocto": "31540279211000000000"
+    },
+    "receiptIds": [
+      "FaCutSpWezs7WRDVHyZ3CCYmUzxmE5DR8WCtsqakPKif",
+      "DbsHYL3Bfx6rgWsjehta7WE5JsCnzYHsvmaegddwtbZo",
+      "399fsRGwwUJhR8mzSaWmywnoDEPmePgfmdvKntGknJRJ",
+      "4Z4L9Mc8maDoRpxy3UhJLwNSh6PR8BRCvwK633pZURRS"
+    ],
+    "receiptOutcomes": [
+      {
+        "id": "FaCutSpWezs7WRDVHyZ3CCYmUzxmE5DR8WCtsqakPKif",
+        "blockHash": "7y88wYLStCYPKZ3bNrunXo5nugZagvP2DSRDZz3HYH21",
+        "executorAccountId": "v1.signer-prod.testnet",
+        "status": "SuccessReceiptId",
+        "successReceiptId": "DbsHYL3Bfx6rgWsjehta7WE5JsCnzYHsvmaegddwtbZo",
+        "tokensBurntYocto": "427523535381600000000"
+      },
+      {
+        "id": "DbsHYL3Bfx6rgWsjehta7WE5JsCnzYHsvmaegddwtbZo",
+        "blockHash": "B8p1gZELWzJpsewFuRYu63sfGBWLyB8SuopaQb4PHemf",
+        "executorAccountId": "v1.signer-prod.testnet",
+        "status": "SuccessValue",
+        "valueKind": "Secp256k1-signature",
+        "tokensBurntYocto": "344857752564600000000"
+      },
+      {
+        "id": "399fsRGwwUJhR8mzSaWmywnoDEPmePgfmdvKntGknJRJ",
+        "blockHash": "8nwtxiCap5ppiuzMkcPhjppqq6opntayhUJLyY5ojLfe",
+        "executorAccountId": "wealthpixels-investor.testnet",
+        "status": "SuccessValue",
+        "valueKind": "empty",
+        "tokensBurntYocto": "0"
+      },
+      {
+        "id": "4Z4L9Mc8maDoRpxy3UhJLwNSh6PR8BRCvwK633pZURRS",
+        "blockHash": "Fj3z57xAGx2wxjekopgBoRqc2jXU6xC5dYZbpNgHw57W",
+        "executorAccountId": "wealthpixels-investor.testnet",
+        "status": "SuccessValue",
+        "valueKind": "empty",
+        "tokensBurntYocto": "0"
+      }
+    ],
+    "allReceiptOutcomesVerified": true,
+    "observedFeeYocto": "803921567157200000000",
+    "observedFeeNear": "0.0008039215671572",
+    "feeAccounting": "Exact sum of transaction and receipt tokens_burnt; the attached 1-yoctoNEAR deposit is separate and excluded from this fee."
+  },
+  "mpcSignature": {
+    "scheme": "Secp256k1",
+    "big_r": {
+      "affine_point": "02abd84f497c541d7952ab7c58fe550f64bb29c8e86eb1315a76e450f8bb865dcf"
+    },
+    "s": {
+      "scalar": "52fbb82284cc4cb80f0017cf210098cf8b8223d9acac741ac6e9f1df5d0a8a2d"
+    },
+    "recovery_id": 1
+  },
+  "finalAccessKeyObservation": {
+    "endpoint": "https://test.rpc.fastnear.com",
+    "finality": "final",
+    "blockHash": "4hFqgNHYWKXzuLm17cBzM5yoGKhNHM7b3dHftqC9rLzu",
+    "blockHeight": 276991530,
+    "accountId": "wealthpixels-investor.testnet",
+    "publicKey": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc",
+    "permission": "FullAccess",
+    "nonce": "275946428000003",
+    "matchesFinalizedDiagnosticNonce": true
+  },
+  "verification": {
+    "sources": [
+      {
+        "endpoint": "https://test.rpc.fastnear.com",
+        "reportedStatus": "FINAL",
+        "success": true
+      },
+      {
+        "endpoint": "https://archival-rpc.testnet.near.org",
+        "reportedStatus": "FINAL",
+        "success": true
+      }
+    ],
+    "trustedAuthority": {
+      "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+      "nearAccountId": "wealthpixels-investor.testnet",
+      "derivationPath": "wealthpixels/sepolia/v1",
+      "domainId": 0,
+      "derivedPublicKeySec1": "0x04a45b30f6c2681b41d588870a439068f39414ae8188d1c750291a3cac876f73d34be888379790fa941b66d136dea3ab7309a5843b0ed465c5ab115853c6f23f47",
+      "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
+    },
+    "checks": [
+      "canonical-diagnostic-message-and-approved-sha256-digest",
+      "exact-approved-near-transaction-identity-and-function-call",
+      "investor-ed25519-signature",
+      "complete-successful-receipt-outcomes",
+      "canonical-finalized-execution-and-receipt-blocks",
+      "matching-final-outcomes-from-both-endpoints",
+      "mpc-signature-recovers-full-trusted-derived-public-key-and-address",
+      "final-access-key-nonce",
+      "public-token-burn-accounting"
+    ],
+    "basis": "Completed live RPC observations preserved by the diagnostic and final access-key observation; the production state assertion and MPC outcome normalizer were rerun offline against the saved outcomes. No new RPC verification during this export. Canonical block checks summarize the completed reconciliation; the underlying block RPC responses were not retained in this compact summary."
+  },
+  "observationTimestamps": {
+    "preflightObservedAt": "2026-11-09T23:56:26.643Z",
+    "preparedAt": "2026-11-09T23:56:28.748Z",
+    "approvalRecordedAt": "2026-11-10T00:02:37.439Z",
+    "submissionIntentRecordedAt": "2026-11-10T00:02:40.037Z",
+    "rpcAcknowledgmentRecordedAt": "2026-11-10T00:02:40.204Z",
+    "reconciliationCompletedAt": "2026-11-10T00:04:29.475Z",
+    "finalAccessKeyObservedAt": "2026-11-10T00:05:24.520Z",
+    "basis": "Operator observation timestamps in UTC, not execution-block timestamps; no separate per-endpoint observation times were retained."
+  },
+  "limitations": [
+    "This is a compact public summary of recorded observations, not a fresh RPC verification, a full receipt-proof archive or a light-client proof; public RPC responses remain trust inputs.",
+    "The diagnostic signs the exact domain-separated message above. It does not establish an EVM asset transfer or a portfolio purchase.",
+    "One successful diagnostic observed through two RPC endpoints does not guarantee future RPC availability, future MPC success or production readiness.",
+    "The final access-key nonce matches this diagnostic at the recorded observation; it does not rule out later activity or future key changes."
+  ]
+}

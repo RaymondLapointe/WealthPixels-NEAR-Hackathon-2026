@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "kind": "recorded-public-near-treasury-expiry-checkpoint",
+  "networkId": "testnet",
+  "originalAttempt": {
+    "testId": "native-smoke-20261109-001",
+    "transactionHash": "EhhdBmen29BbsDy7sTHnFsWqNVeS6LiCSowv79AxQhsS",
+    "accountId": "wealthpixels-treasury.testnet",
+    "publicKey": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1",
+    "recordedStatus": "near-uncertain",
+    "originalStateSha256": "fdf668299f096fe4f957029ca5ef73e5b8054f470e83da718f04e408b5b6b860",
+    "exactSelectedTransactionNonceRetained": false,
+    "exactSerializedReferenceBlockRetained": false
+  },
+  "finalHeightObservation": {
+    "kind": "public-near-testnet-final-expiry-checkpoint",
+    "endpoint": "https://test.rpc.fastnear.com",
+    "method": "block",
+    "params": {
+      "finality": "final"
+    },
+    "observedAt": "2026-11-10T12:20:52.803Z",
+    "block": {
+      "height": 277066663,
+      "hash": "A98AzoMAKyHJVo3jKVdiP8kVg6LpxHD95xn6ZBtuNrky",
+      "timestampNanosec": "1794313249779134775",
+      "latestProtocolVersion": 88
+    },
+    "requiredFinalHeight": 277015472,
+    "thresholdReached": true
+  },
+  "reconciliation": {
+    "transactionHash": "EhhdBmen29BbsDy7sTHnFsWqNVeS6LiCSowv79AxQhsS",
+    "requests": [
+      {
+        "operation": "original-transaction-status",
+        "endpoint": "https://test.rpc.fastnear.com",
+        "observedAt": "2026-11-10T12:22:01.797Z",
+        "completedAt": "2026-11-10T12:22:02.287Z",
+        "error": {
+          "category": "RPC_ERROR",
+          "httpStatus": 200,
+          "rpcCode": -32000,
+          "rpcErrorName": "UNKNOWN_TRANSACTION"
+        }
+      },
+      {
+        "operation": "original-transaction-status",
+        "endpoint": "https://archival-rpc.testnet.near.org",
+        "observedAt": "2026-11-10T12:22:01.806Z",
+        "completedAt": "2026-11-10T12:22:05.290Z",
+        "error": {
+          "category": "RPC_ERROR",
+          "httpStatus": 200,
+          "rpcCode": -32000,
+          "rpcErrorName": "UNKNOWN_TRANSACTION"
+        }
+      },
+      {
+        "operation": "treasury-final-access-key",
+        "endpoint": "https://test.rpc.fastnear.com",
+        "observedAt": "2026-11-10T12:22:01.807Z",
+        "completedAt": "2026-11-10T12:22:02.308Z",
+        "accountId": "wealthpixels-treasury.testnet",
+        "publicKey": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1",
+        "result": {
+          "blockHash": "Hf3jfxZ21UjbAbCRhx2juW3RUkCsZULLZcGp7pktZ2ES",
+          "blockHeight": 277066784,
+          "nonce": "275945855000001",
+          "permission": "FullAccess"
+        },
+        "previouslyObservedNonce": "275945855000001",
+        "nonceUnchanged": true
+      }
+    ],
+    "automaticRetries": 0
+  },
+  "historicalEvidence": {
+    "preSigningFinalAccessKey": {
+      "blockHeight": 276923016,
+      "blockHash": "6C4tLe83x1tXUsb8EBAtVZPgksFaaucEVJK4UaTSs4G8",
+      "nonce": "275945855000001",
+      "basis": "Previously preserved public observation; not the exact original transaction reference."
+    },
+    "postAttemptFinalAccessKey": {
+      "blockHeight": 276927644,
+      "blockHash": "8gVmCe229qQkxMVDpB1CXECzPqRpbfNchkkXnsGUacx6",
+      "nonce": "275945855000001",
+      "basis": "Previously preserved public observation."
+    },
+    "laterFinalReferenceUpperBound": {
+      "blockHeight": 276929071,
+      "blockHash": "42W49BAz4aV2NvV97KQ1azWMwHWmo6p4VUiuqLZGPEar",
+      "basis": "Conservative inference from the reviewed implementation selecting a FINAL block before signing and this later recorded FINAL observation. Exact original reference was not retained."
+    },
+    "protocolObservation": {
+      "protocolVersion": 88,
+      "transactionValidityPeriodBlocks": 86400,
+      "originalObservationAt": "2026-11-09T13:56:37.430Z",
+      "endpoint": "https://archival-rpc.testnet.near.org",
+      "basis": "Previously preserved protocol-config response; no new protocol-config request."
+    },
+    "indexedHistory": {
+      "url": "https://testnet.nearblocks.io/address/wealthpixels-treasury.testnet",
+      "previousOutcome": "HTTP 403 challenge; no usable indexed history obtained",
+      "freshLookupAttempted": false,
+      "basis": "Reviewed original preserved evidence without retrying the unsuccessful indexed-history request."
+    }
+  },
+  "expiryAssessment": {
+    "rule": "Reference-block height age must not exceed transaction_validity_period; strictly exceeding the conservative upper bound plus 86400 blocks is outside the inclusion window.",
+    "conservativeThresholdCalculation": "276929071 + 86400 + 1 = 277015472",
+    "requiredFinalHeight": 277015472,
+    "observedFinalHeight": 277066663,
+    "blocksBeyondCheckpoint": 51191,
+    "newlyIncludedEligibility": "Expired under the recorded implementation and conservative reference upper bound.",
+    "historicalExecution": "Not conclusively established. Both available RPC lookups returned UNKNOWN_TRANSACTION; no authentic execution outcome or MPC signature was recovered.",
+    "confirmedOnchainRejection": false,
+    "nonceAssessment": "FINAL Treasury access-key nonce remains 275945855000001, matching both preserved historical observations. This strongly supports non-inclusion but is not treated as a complete historical proof.",
+    "originalStateTransitionPerformed": false,
+    "source": "https://github.com/near/nearcore/issues/12142"
+  },
+  "scope": {
+    "freshNearRpcRequests": 4,
+    "transactionStatusLookups": 2,
+    "accessKeyQueries": 1,
+    "finalBlockQueries": 1,
+    "freshIndexedHistoryRequests": 0,
+    "automaticRetries": 0,
+    "credentialAccess": false,
+    "transactionPreparation": false,
+    "signingOrSubmission": false,
+    "evmRequests": 0,
+    "endpointConfigurationChanged": false
+  },
+  "readiness": {
+    "recommendation": "Proceed only after separate authorization for a new Treasury native-ETH read-only preflight and fresh unsigned preparation, retaining the original uncertain attempt unchanged.",
+    "candidatePrimaryRpc": "https://test.rpc.fastnear.com",
+    "candidateSecondaryRpc": "https://archival-rpc.testnet.near.org",
+    "configurationChangeApplied": false,
+    "reason": "One successful ordinary Investor NEAR submission and one successful Investor MPC diagnostic support a controlled next test, not a reliability guarantee.",
+    "remainingChecks": [
+      "Fresh Treasury NEAR authority, nonce and spendable funding",
+      "Fresh Sepolia confirmed/pending nonce, ETH balances, fee conditions and transfer simulation",
+      "Unused new native-test identifier and file; no active purchase reservation",
+      "New immutable intent/digest and separate signing and broadcast approvals"
+    ],
+    "residualUncertainty": "Historical non-execution remains unproved; the old near-uncertain record is not cleared or eligible for retry."
+  }
+}
