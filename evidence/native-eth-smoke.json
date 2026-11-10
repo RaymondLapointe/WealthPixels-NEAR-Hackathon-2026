@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "kind": "recorded-live-native-eth-smoke-summary",
+  "testId": "native-smoke-20261110-002",
+  "status": "confirmed",
+  "operatorModel": "single-operator-disposable-testnet-identities",
+  "intentHash": "0xe70f74bb4bc3b9eaa2720660614d984aa8ffb62b87906b1a9025250f61ebeeb4",
+  "roles": {
+    "treasury": {
+      "nearAccountId": "wealthpixels-treasury.testnet",
+      "evmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87"
+    },
+    "investor": {
+      "nearAccountId": "wealthpixels-investor.testnet",
+      "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
+    }
+  },
+  "ethereumTransaction": {
+    "network": "sepolia",
+    "chainId": "11155111",
+    "type": 2,
+    "hash": "0xa3bcc196bfdc3a47c51c720631521048ce3e5c35425a1a8fb4d0c91bf12bdc74",
+    "approvedUnsignedDigest": "0xd437c7166154d5785d6442caa6cec85fb0f6d2a682ea1e8b215f2c570c1ca9cb",
+    "from": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+    "to": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+    "valueWei": "1000000000000",
+    "valueEth": "0.000001",
+    "nonce": 1,
+    "gasLimit": "25200",
+    "maxFeePerGasWei": "2000000",
+    "maxPriorityFeePerGasWei": "1000000",
+    "maximumFeeWei": "50400000000",
+    "data": "0x",
+    "accessList": []
+  },
+  "nearSigningTransaction": {
+    "network": "testnet",
+    "hash": "EHMUuAN8z1ZpoN8SrUq9P98wRfKQDzoNFZTwRpkgAvqb",
+    "signerAccountId": "wealthpixels-treasury.testnet",
+    "receiverAccountId": "v1.signer-prod.testnet",
+    "signingPublicKey": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1",
+    "previousNonce": "275945855000001",
+    "nonce": "275945855000002",
+    "action": "FunctionCall",
+    "methodName": "sign",
+    "gas": "100000000000000",
+    "gasTgas": 100,
+    "depositYocto": "1",
+    "derivationPath": "wealthpixels/sepolia/v1",
+    "domainId": 0,
+    "referenceBlock": {
+      "hash": "iJs9H7zWNnEynjUZZ6TUAXZgUKVjKqRuG1XAMqVqDT8",
+      "height": 277075318
+    },
+    "execution": {
+      "transactionOutcomeBlockHash": "FehJY5P8tzBGShsmUE3NNKV4PE5Vwbr6zPZri2Jga7Sw",
+      "finalExecutionStatus": "FINAL",
+      "finalOutcomeStatus": "SuccessValue",
+      "success": true,
+      "transactionTokensBurntYocto": "31540279211000000000",
+      "receiptOutcomes": [
+        {
+          "id": "DWTsN7KGVUrXiXYX3rWURxRTfhahTZVDQsEkrDUJ1t5V",
+          "blockHash": "6BQHsFwbUTKVWb9TwZjPV9DspqxaNX3BqxVVr39jdNw3",
+          "executorAccountId": "v1.signer-prod.testnet",
+          "status": "SuccessReceiptId",
+          "successReceiptId": "2Hpj3GRjty7SLUaxjfBS9DqDaeUkHCr6wjuoRqQom1cv",
+          "tokensBurntYocto": "427623354419400000000"
+        },
+        {
+          "id": "2Hpj3GRjty7SLUaxjfBS9DqDaeUkHCr6wjuoRqQom1cv",
+          "blockHash": "2vVQA6GhWY8947dU4vXu9yVm1JYwXS7pHRycM65p6HVF",
+          "executorAccountId": "v1.signer-prod.testnet",
+          "status": "SuccessValue",
+          "valueKind": "Secp256k1-signature",
+          "tokensBurntYocto": "344882965417800000000"
+        },
+        {
+          "id": "CaiMwousgHZYHeAyWUCJqN42AJhGmH4PCN4bgWS7NTso",
+          "blockHash": "2cscaZETiyWDkYMS5Poid7hH1Hj9agHK9UXgvNgm8DW2",
+          "executorAccountId": "wealthpixels-treasury.testnet",
+          "status": "SuccessValue",
+          "valueKind": "empty",
+          "tokensBurntYocto": "0"
+        },
+        {
+          "id": "EMNp3ymBD9nx8vWcfQcGjM6ZVMjkdaJoxK7m3TFcU8tN",
+          "blockHash": "4XismA5wdBNHxDuhxwf65fwTYcQFWYriU12UQ5UrVdKc",
+          "executorAccountId": "wealthpixels-treasury.testnet",
+          "status": "SuccessValue",
+          "valueKind": "empty",
+          "tokensBurntYocto": "0"
+        }
+      ],
+      "observedFeeYocto": "804046599048200000000",
+      "observedFeeNear": "0.0008040465990482",
+      "feeAccounting": "Exact sum of transaction and all four receipt tokens_burnt. The attached 1-yoctoNEAR deposit is separate and excluded from this fee."
+    }
+  },
+  "mpcSignature": {
+    "scheme": "Secp256k1",
+    "big_r": {
+      "affine_point": "028f3ee2e7579a3a70bd1f2588f3b55ef3a55480e4d0c0801567f9f484b9a8950b"
+    },
+    "s": {
+      "scalar": "59fe7441570a5140021db2ad2665798a19b96df9a3763799dec73c486b3bc19e"
+    },
+    "recovery_id": 1,
+    "trustedRootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+    "derivedAndRecoveredPublicKeySec1": "0x046e4f75d0ffdd0561764c6606095231cf42f5633b7cfaa8b987dff2795ae46294ec33595e782ac5e4e1c478976623323ce8b9b227246d7a49bd230f4949c85386",
+    "recoveredAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87"
+  },
+  "ethereumExecution": {
+    "receiptStatus": "success",
+    "receiptStatusQuantity": "0x1",
+    "blockNumber": "12105109",
+    "blockHash": "0x34428d88716d983947d11ba2a3b6465d134b8bdcfbc7a45c492b4e3e757550c6",
+    "parentBlockNumber": "12105108",
+    "parentBlockHash": "0x9b50b567f477b60455258881c69e97a31f48061184971e04ecde94852136961e",
+    "observedHeadBlockNumber": "12105118",
+    "confirmations": "10",
+    "confirmationBasis": "Recorded head minus receipt block plus one; the production verifier requires at least two confirmations. This is not a consensus-finality proof.",
+    "gasUsed": "21000",
+    "baseFeePerGasWei": "17",
+    "effectiveGasPriceWei": "1000017",
+    "actualFeeWei": "21000357000",
+    "actualFeeEth": "0.000000021000357",
+    "balancesWei": {
+      "beforeAtParentBlock": {
+        "treasury": "99999999856304440",
+        "investor": "49999999956182840"
+      },
+      "afterAtReceiptBlock": {
+        "treasury": "99998978855947440",
+        "investor": "50000999956182840"
+      },
+      "deltas": {
+        "treasury": "-1021000357000",
+        "investor": "1000000000000"
+      },
+      "accounting": "Investor gained exactly valueWei; Treasury lost exactly valueWei plus actualFeeWei. These are historical block-boundary balances."
+    },
+    "roleCodeAtReceiptBlock": {
+      "treasury": "0x",
+      "investor": "0x"
+    }
+  },
+  "verification": {
+    "sources": {
+      "nearSubmissionEndpoint": "https://test.rpc.fastnear.com",
+      "nearSecondaryFinalOutcomeEndpoint": "https://archival-rpc.testnet.near.org",
+      "ethereumRecordedReadEndpoint": "https://rpc.sepolia.ethpandaops.io"
+    },
+    "checks": [
+      "production-standalone-execution-state-assertion",
+      "matching-saved-near-transactions-final-status-and-all-four-receipt-outcomes",
+      "exact-direct-mpc-role-digest-method-gas-deposit-path-and-domain",
+      "mpc-signature-recovers-full-trusted-derived-public-key-and-treasury-address",
+      "exact-ethereum-signed-hash-sender-value-nonce-fees-empty-data-and-access-list",
+      "successful-canonical-receipt-and-linked-parent-with-ten-recorded-confirmations",
+      "historical-code-free-roles-and-exact-native-balance-deltas",
+      "eip1559-effective-price-and-exact-actual-gas-cost",
+      "production-native-receipt-verifier-replay-consumes-all-thirteen-recorded-verification-reads"
+    ],
+    "basis": "Exports completed live observations. During packaging, the existing production execution-state decoder, MPC outcome normalizer against both saved NEAR outcomes, and native receipt verifier against the recorded Ethereum RPC responses passed offline. The receipt replay exactly reproduced the saved receipt. The successful four-receipt NEAR graph and its token-burn total were checked offline. No new RPC lookup, credential access, signing, broadcast or original-state write occurred during packaging.",
+    "retention": "The compact summary includes public parameters and outcomes, not the full recorded RPC trace or executable transaction serializations. The saved primary NEAR outcome matches the independently saved archival outcome; a separate timestamp and endpoint for the primary FINAL read were not retained here. No NEAR execution-block height or canonical-header proof is inferred from its outcome block hash."
+  },
+  "observationTimestamps": {
+    "intentPreparedAt": "2026-11-10T13:35:20.054Z",
+    "signingApprovalAndNearPreparationAt": "2026-11-10T13:45:37.805Z",
+    "nearSubmissionIntentRecordedAt": "2026-11-10T13:45:38.585Z",
+    "nearRpcAcknowledgmentRecordedAt": "2026-11-10T13:45:38.755Z",
+    "secondaryNearFinalOutcomeObservedAt": "2026-11-10T13:49:45.942Z",
+    "recoveryBroadcastAuditStartedAt": "2026-11-10T14:04:47.681Z",
+    "recoveryBroadcastAuditCompletedAt": "2026-11-10T14:04:50.231Z",
+    "ethereumBroadcastAttemptRecordedAt": "2026-11-10T14:04:50.272Z",
+    "ethereumReconciliationStartedAt": "2026-11-10T14:07:09.529Z",
+    "ethereumReconciliationCompletedAt": "2026-11-10T14:07:11.545Z",
+    "basis": "Original operator observation timestamps in UTC; these are not execution-block timestamps. The initial NEAR acknowledgment reported NONE, and FINAL success was established later. The completed one-time recovery broadcast used a separately recorded approval after the original preparation expired."
+  },
+  "limitations": [
+    "This is a compact public summary of one completed standalone native testnet transfer, not a fresh RPC verification, light-client proof or full proof archive; public RPC responses remain trust inputs.",
+    "Ten recorded Ethereum confirmations establish the implemented confirmation threshold at the observation time, not Ethereum consensus finality or immunity from a later reorganization.",
+    "This transfer is separate from the portfolio purchase. It establishes neither USDC payment nor LINK portfolio delivery, atomic settlement or independent human control of the roles.",
+    "A completed run does not guarantee future MPC success, public RPC availability, sufficient balances or production readiness. The LINK and portfolio purchase manifest verifiers do not accept this summary schema."
+  ]
+}

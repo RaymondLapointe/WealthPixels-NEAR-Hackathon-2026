@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 1,
+  "kind": "recorded-public-portfolio-purchase-readiness",
+  "date": "2026-11-10",
+  "timezone": "America/Toronto",
+  "purpose": "Readiness only; no purchase quote, reservation, transaction preparation, signing or submission.",
+  "target": {
+    "investmentUsdcBaseUnits": "10000000",
+    "allocationBps": {
+      "ETH": "5000",
+      "LINK": "5000"
+    },
+    "pricingMode": "explicitly-approved-demonstration",
+    "maximumExpectedFeeBps": "1000",
+    "maximumExpectedFeesUsdcBaseUnits": "1000000",
+    "pooledToken": false
+  },
+  "observations": {
+    "sampledAt": "2026-11-10T17:37:33.565Z",
+    "originalObservationExpiresAt": "2026-11-10T17:38:24.000Z",
+    "endpoints": {
+      "near": "https://test.rpc.fastnear.com",
+      "evm": "https://rpc.sepolia.ethpandaops.io"
+    },
+    "evm": {
+      "chainId": "11155111",
+      "blockNumber": "12106158",
+      "blockHash": "0xde8be61377de22009ab30255a7330bcf342f8413f4138e2ccc7e9e38424a6fbb",
+      "blockTimestamp": "2026-11-10T17:37:24.000Z",
+      "baseFeePerGasWei": "19",
+      "treasury": {
+        "address": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+        "ethWei": "99998978855947440",
+        "usdcBaseUnits": "0",
+        "linkBaseUnits": "24100000000000000000",
+        "confirmedNonce": 2,
+        "pendingNonce": 2
+      },
+      "investor": {
+        "address": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+        "ethWei": "50000999956182840",
+        "usdcBaseUnits": "20000000",
+        "linkBaseUnits": "900000000000000000",
+        "confirmedNonce": 1,
+        "pendingNonce": 1
+      }
+    },
+    "tokens": {
+      "USDC": {
+        "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+        "decimals": 6,
+        "proxyCodeHash": "0xcd3f29e2ea9c61dadd48bfeaf8b2884b6de9dfee7bf45329452c4c33d0868ceb",
+        "codeIdentityCheckPassed": true,
+        "paused": false,
+        "treasuryBlacklisted": false,
+        "investorBlacklisted": false,
+        "implementationAddress": "0xDa317C1d3E835dD5F1BE459006471aCAA1289068",
+        "implementationCodeHash": "0xf4898b096a273d86cda13cce6503404da4005565fae6026a94919b231229d85b",
+        "implementationApprovalGrantedByThisObservation": false,
+        "authoritativeAddressSource": "https://developers.circle.com/stablecoins/usdc-contract-addresses",
+        "allowanceRequired": false,
+        "paymentMethod": "Investor direct transfer(Treasury, 10000000)"
+      },
+      "LINK": {
+        "address": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+        "decimals": 18,
+        "codeHash": "0xcafbd9135200b24454a9ffcac5a8db40947a17f8a8a542062d0f1fb48bd8b269",
+        "codeIdentityCheckPassed": true
+      }
+    },
+    "near": {
+      "blockHeight": "277099029",
+      "blockHash": "6X7WUNVM37sn5CSachmFwhYeE3fpC2djw5tpzXHEDYoF",
+      "blockTimestamp": "2026-11-10T17:37:31.100Z",
+      "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+      "gasPriceYoctoNear": "100000000",
+      "storageAmountPerByteYocto": "10000000000000000000",
+      "roles": {
+        "treasury": {
+          "accountId": "wealthpixels-treasury.testnet",
+          "publicKey": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1",
+          "permission": "FullAccess",
+          "accessKeyNonce": "275945855000002",
+          "amountYocto": "9998391132443749799999998",
+          "lockedYocto": "0",
+          "storageBytes": "182",
+          "storageReserveYocto": "1820000000000000000000",
+          "spendableYocto": "9996571132443749799999998",
+          "mpcVersion": "3.18.0",
+          "minimumSigningGasTgas": 15,
+          "domain": {
+            "id": 0,
+            "protocol": "CaitSith",
+            "purpose": "Sign",
+            "reconstructionThreshold": 11,
+            "keyEpoch": 27,
+            "keyAttempt": 1
+          },
+          "derivation": {
+            "path": "wealthpixels/sepolia/v1",
+            "fullPublicKey": "0x046e4f75d0ffdd0561764c6606095231cf42f5633b7cfaa8b987dff2795ae46294ec33595e782ac5e4e1c478976623323ce8b9b227246d7a49bd230f4949c85386",
+            "evmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+            "localMatchesContract": true
+          }
+        },
+        "investor": {
+          "accountId": "wealthpixels-investor.testnet",
+          "publicKey": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc",
+          "permission": "FullAccess",
+          "accessKeyNonce": "275946428000003",
+          "amountYocto": "9998347430000445899999998",
+          "lockedYocto": "0",
+          "storageBytes": "182",
+          "storageReserveYocto": "1820000000000000000000",
+          "spendableYocto": "9996527430000445899999998",
+          "mpcVersion": "3.18.0",
+          "minimumSigningGasTgas": 15,
+          "domain": {
+            "id": 0,
+            "protocol": "CaitSith",
+            "purpose": "Sign",
+            "reconstructionThreshold": 11,
+            "keyEpoch": 27,
+            "keyAttempt": 1
+          },
+          "derivation": {
+            "path": "wealthpixels/sepolia/v1",
+            "fullPublicKey": "0x04a45b30f6c2681b41d588870a439068f39414ae8188d1c750291a3cac876f73d34be888379790fa941b66d136dea3ab7309a5843b0ed465c5ab115853c6f23f47",
+            "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+            "localMatchesContract": true
+          }
+        }
+      }
+    }
+  },
+  "paymentSimulation": {
+    "kind": "corrected-pinned-block-usdc-payment-readiness-simulation",
+    "observedAt": "2026-11-10T17:40:53.552Z",
+    "blockTag": "0xb8b9ae",
+    "blockNumber": "12106158",
+    "amountUsdcBaseUnits": "10000000",
+    "simulationSucceeded": true,
+    "estimatedGas": "154151",
+    "bufferedGas": "184982",
+    "protectiveGasCeiling": "180000",
+    "withinGasCeiling": false,
+    "allowanceRequired": false,
+    "transactionPrepared": false,
+    "submission": false,
+    "requests": 2,
+    "noRetries": true
+  },
+  "supersededSupplementalSimulation": {
+    "kind": "public-read-only-usdc-payment-readiness-simulation",
+    "observedAt": "2026-11-10T17:39:30.403Z",
+    "blockTag": "0xb8b7ae",
+    "amountUsdcBaseUnits": "10000000",
+    "simulationSucceeded": true,
+    "estimatedGas": "154151",
+    "bufferedGas": "184982",
+    "protectiveGasCeiling": "180000",
+    "withinGasCeiling": false,
+    "suggestedPriorityFeePerGasWei": "50",
+    "allowanceRequired": false,
+    "allowanceBasis": "Existing Investor direct ERC-20 transfer; no transferFrom spender.",
+    "transactionPrepared": false,
+    "submission": false,
+    "requests": 3,
+    "noRetries": true,
+    "excludedFromReadinessVerdict": true,
+    "reason": "Initial supplemental block tag was transcribed as 0xb8b7ae (12105646), rather than 0xb8b9ae (12106158). Corrected with two read-only calls; no transaction or source change. Correct pinned result is paymentSimulation."
+  },
+  "nearUpfrontFundingAssessment": {
+    "kind": "targeted-public-near-prefunding-gap-assessment",
+    "observedAt": "2026-11-10T17:47:14.476Z",
+    "blockHash": "6X7WUNVM37sn5CSachmFwhYeE3fpC2djw5tpzXHEDYoF",
+    "protocolVersion": 88,
+    "existingPurchaseReservePerCallYocto": "10100000000000000000001",
+    "diagnosticVerifiedFundingModel": {
+      "protocolVersion": 88,
+      "requestBytes": 154,
+      "receiptSendGas": "108059500000",
+      "receiptExecutionGas": "108059500000",
+      "functionCallSendGas": "200000000000",
+      "functionCallExecutionGas": "780000000000",
+      "functionCallByteSendGas": "47683715",
+      "functionCallByteExecutionGas": "2235934",
+      "blockGasPriceYocto": "100000000",
+      "receiptPurchaseFloorYocto": "1000000000",
+      "gasRefundPenalty": {
+        "numerator": "0",
+        "denominator": "100"
+      },
+      "minimumGasRefundPenalty": "0",
+      "pricingPolicy": "near-protocol-88-mpc-function-call-v1",
+      "attachedGas": "100000000000000",
+      "depositYocto": "1",
+      "priceGrowthNumerator": "2",
+      "priceGrowthDenominator": "1",
+      "sendGas": "315402792110",
+      "receiptGas": "100888403833836",
+      "assumedBlockGasPriceYocto": "200000000",
+      "receiptPurchasePriceYocto": "1000000000",
+      "receiptBurnPriceYocto": "200000000",
+      "estimatedFullAttachmentBurnYocto": "20240761325189200000000",
+      "upfrontGasYocto": "100951484392258000000000",
+      "requiredSpendableYocto": "100951484392258000000001",
+      "estimatedRefundFeeYocto": "0",
+      "refundScheduleSource": "nearcore-2.14.0-parameters-and-protocol-85-88-zero-penalty",
+      "refundPolicy": "near-protocol-88-explicit-zero-refund-penalty"
+    },
+    "investorRequiredForOneCallYocto": "100951484392258000000001",
+    "treasuryRequiredForTwoCallsYocto": "201902968784516000000002",
+    "requests": 1,
+    "noRetries": true,
+    "transactionPrepared": false,
+    "investorFundingCoversFullUpfront": true,
+    "treasuryFundingCoversTwoFullUpfront": true,
+    "codeDefect": "Purchase maximum-reserve calculations currently omit the protocol receipt purchase-price floor. Current balances cover the correct amount; the implementation needs a separately authorized correction."
+  },
+  "pricing": {
+    "validApprovedLivePriceSetFound": false,
+    "actualQuotedEthWei": null,
+    "actualQuotedLinkBaseUnits": null,
+    "sourceOfConclusion": "Offline inspection of public runtime artifacts and tracked historical observations; existing fixtures are synthetic and expired.",
+    "formula": {
+      "ETH": "floor(5 * 10^18 * ETH_USD.denominator / ETH_USD.numerator)",
+      "LINK": "floor(5 * 10^18 * LINK_USD.denominator / LINK_USD.numerator)"
+    },
+    "requires": [
+      "Purchase-scoped ETH/USD, LINK/USD and NEAR/USD exact rational rates",
+      "Public provenance and original observation timestamps",
+      "Explicit exact-proposal approval; maximum five-minute validity"
+    ]
+  },
+  "economicEligibility": {
+    "status": "NOT_ESTABLISHED",
+    "eligibleForPaymentAuthorization": false,
+    "expectedTotalFeesUsdcBaseUnits": null,
+    "expectedFeeBps": null,
+    "reason": "Missing approved conversion/allocation prices, quantity-specific full three-leg costs and fee selections. Additionally, observed USDC buffered gas exceeds current protective cap.",
+    "costsRequired": [
+      "Investor USDC EVM payment",
+      "Treasury LINK EVM delivery",
+      "Treasury native ETH EVM delivery",
+      "Investor NEAR MPC signing",
+      "Treasury NEAR MPC signing for LINK",
+      "Treasury NEAR MPC signing for ETH"
+    ],
+    "allPayersIncluded": true,
+    "estimatedFeeFreshnessSeconds": 60,
+    "standaloneNativeTestOrFixturesAreNotPurchaseEvidence": true
+  },
+  "implementationFindings": [
+    {
+      "id": "USDC_GAS_CEILING",
+      "severity": "current-execution-blocker",
+      "rawGas": "154151",
+      "bufferedGas": "184982",
+      "existingCeiling": "180000",
+      "codeChanged": false
+    },
+    {
+      "id": "EXPIRED_UNPREPARED_QUOTE_CLI",
+      "severity": "operator-recovery-gap",
+      "finding": "expireUnpaidPurchase exists as a guarded library function, but no CLI command releases an expired quote with no prepared leg. Current journal is absent; no reservation is presently stuck.",
+      "codeChanged": false
+    },
+    {
+      "id": "NEAR_PREFUNDING_FLOOR",
+      "severity": "latent-funding-safeguard-defect-current-balances-adequate",
+      "codeChanged": false
+    }
+  ],
+  "localExecution": {
+    "activePurchaseJournalPresent": false,
+    "activePurchase": false,
+    "nativeSmokeStatus": "confirmed",
+    "treasuryEthereumNonceAfterSmoke": "2",
+    "originalUncertainTreasuryAttempt": "Preserved as the explicitly accepted exception; not retried, retired or reclassified."
+  },
+  "validation": {
+    "typecheck": "passed",
+    "fixturePurchaseDryRun": "passed; three simulated NEAR submissions and three simulated EVM submissions, labelled fixtures",
+    "priorAcceptedFullOfflineSuite": 613,
+    "fullSuiteRerun": false,
+    "noSourceOrDependencyChanges": true
+  },
+  "scope": {
+    "networkInspectionInvocations": 1,
+    "supplementalRpcReads": 6,
+    "noAutomaticRetries": true,
+    "credentialsAccessed": false,
+    "priceApprovalCreated": false,
+    "purchaseQuoteCreated": false,
+    "transactionPrepared": false,
+    "signingOrSubmission": false,
+    "funding": false,
+    "productionEndpointDefaultsChanged": false,
+    "historicalBeaconArchiveInvestigationExpanded": false
+  },
+  "limitations": [
+    "This is an expired observation snapshot, not continuing readiness approval or a live executable purchase quote.",
+    "RPC responses are trust inputs; observing a USDC implementation does not approve an upgrade.",
+    "Full public verification after future payment depends on historical Ethereum Beacon data availability; that known dependency remains unresolved."
+  ]
+}
