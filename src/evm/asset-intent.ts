@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { keccak256 } from "ethers";
 import { VERIFIED_IDENTITIES, type requireRole } from "../near/identities.js";
-import { DEFAULT_EXECUTION_LIMITS, DEFAULT_GAS_BUFFER_BPS, SEPOLIA_ASSETS, BPS_DENOMINATOR } from "../purchase/config.js";
+import { DEFAULT_EXECUTION_LIMITS, DEFAULT_GAS_BUFFER_BPS, SEPOLIA_ASSETS, BPS_DENOMINATOR, purchaseExecutionPolicyForLeg } from "../purchase/config.js";
 import { requireUint256 } from "../purchase/amounts.js";
 import { assertPurchaseTerms, type PurchaseTerms } from "../purchase/terms.js";
 import { buildUnsignedErc20Transfer, validateTransferPreflight, type PreparedErc20Transfer, type TransferPreflightSnapshot } from "./erc20-transfer.js";
@@ -64,7 +64,7 @@ export function assertErc20AssetIntent(value: Erc20AssetIntent, terms: PurchaseT
 
 /** Pure builder for fixtures/future approved preflight. It never fetches, persists, signs or broadcasts. */
 export function buildErc20AssetTransfer(intent: Erc20AssetIntent, terms: PurchaseTerms,
-  input: AssetTransferParameters, limits: AssetExecutionPolicy = DEFAULT_EXECUTION_LIMITS): PreparedAssetTransfer {
+  input: AssetTransferParameters, limits: AssetExecutionPolicy = purchaseExecutionPolicyForLeg(DEFAULT_EXECUTION_LIMITS, intent.leg)): PreparedAssetTransfer {
   assertErc20AssetIntent(intent, terms, intent.termsHash);
   const caps = policy(limits), estimate = requireUint256(input.estimatedGas, "Gas estimate", true);
   const gasLimit = (estimate * (BPS_DENOMINATOR + caps.gasBufferBps) + BPS_DENOMINATOR - 1n) / BPS_DENOMINATOR;
@@ -78,7 +78,7 @@ export function buildErc20AssetTransfer(intent: Erc20AssetIntent, terms: Purchas
 }
 
 export function assertPreparedAssetTransfer(value: PreparedAssetTransfer, terms: PurchaseTerms, approvedTermsHash: string,
-  expectedPolicy: AssetExecutionPolicy = DEFAULT_EXECUTION_LIMITS): void {
+  expectedPolicy: AssetExecutionPolicy = purchaseExecutionPolicyForLeg(DEFAULT_EXECUTION_LIMITS, value.intent.leg)): void {
   check(value && value.kind === "prepared-erc20-asset-intent", "Unsupported prepared asset intent.");
   assertErc20AssetIntent(value.intent, terms, approvedTermsHash);
   const expected = buildErc20AssetTransfer(value.intent, terms, { nonce: value.prepared.nonce, estimatedGas: value.estimatedGas,
@@ -88,7 +88,7 @@ export function assertPreparedAssetTransfer(value: PreparedAssetTransfer, terms:
 
 /** Snapshot validation only. Live retrieval, receipt verification and payment acceptance remain Task 03D work. */
 export function validateAssetTransferPreflight(value: PreparedAssetTransfer, terms: PurchaseTerms,
-  snapshot: AssetPreflightSnapshot, expectedPolicy: AssetExecutionPolicy = DEFAULT_EXECUTION_LIMITS) {
+  snapshot: AssetPreflightSnapshot, expectedPolicy: AssetExecutionPolicy = purchaseExecutionPolicyForLeg(DEFAULT_EXECUTION_LIMITS, value.intent.leg)) {
   assertPreparedAssetTransfer(value, terms, value.intent.termsHash, expectedPolicy);
   const freshEstimate = requireUint256(snapshot.estimatedGas, "Fresh gas estimate", true);
   const freshBufferedGas = (freshEstimate * (BPS_DENOMINATOR + expectedPolicy.gasBufferBps) + BPS_DENOMINATOR - 1n) / BPS_DENOMINATOR;

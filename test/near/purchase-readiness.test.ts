@@ -20,6 +20,8 @@ test("readiness inspects real collector interfaces using labelled fixtures witho
   assert.notEqual(result.near.treasury.authority.accessPublicKey, result.near.investor.authority.accessPublicKey);
   assert.equal(result.near.treasury.storageReserveYocto, 10_000_000_000_000_000_000_000n);
   assert.equal(result.near.treasury.spendableYocto, 8_990_000_000_000_000_000_000_000n);
+  assert.equal(result.near.fundingInputs.receiptPurchaseFloorYocto, "1000000000");
+  assert.equal(result.near.fundingModel.requiredSpendableYocto, "102913918400603200000001");
   assert.equal(result.evm.usdcImplementationAddress, READINESS_IMPLEMENTATION);
   assert.equal(result.evm.usdcImplementationCodeHash, keccak256(READINESS_IMPLEMENTATION_CODE));
   assert.match(result.inventory.reference, /OFFLINE FIXTURES/);
@@ -66,6 +68,7 @@ for (const amount of ["1", "5", "10", "20", "100"]) test(`six-cost collector sup
   assert.equal(output.costs.near[0]!.accountId, VERIFIED_IDENTITIES.investor.accountId);
   assert.equal(output.costs.near[1]!.accountId, VERIFIED_IDENTITIES.treasury.accountId);
   assert.equal(output.costs.near[2]!.attachedGas, 100_000_000_000_000n);
+  assert.deepEqual(output.costs.nearObservation.fundingInputs, output.readiness.near.fundingInputs);
   assert.equal(output.costs.evm[2]!.estimatedGas, 21_000n);
   assert.equal(output.nativeSnapshot.confirmedNonce, 1); // Observation only, not predicted future ETH execution nonce.
   assert.equal(fixture.requests.filter(item => item.method === "eth_estimateGas").length, 3);

@@ -167,7 +167,8 @@ function tenPercentCosts(value: CompletePurchaseCosts): CompletePurchaseCosts {
   // 0.4323 nominal USDC. With NEAR=1, the following gas observations cost
   // 0.5677 NEAR plus three1yocto deposits. The explicitly synthetic rational
   // NEAR rate below includes those deposits and yields exactly0.5677USDC.
-  return { ...value, nearObservation: { ...value.nearObservation, gasPriceYoctoNear: 10_000_000_000n },
+  return { ...value, nearObservation: { ...value.nearObservation, gasPriceYoctoNear: 10_000_000_000n,
+    fundingInputs: { ...value.nearObservation.fundingInputs!, blockGasPriceYocto: "10000000000" } },
     near: value.near.map((leg, index) => index === 2 ? { ...leg, estimatedExecutionGas: 28_308_333_333_333n } : leg) };
 }
 test("fresh complete six-cost eligibility accepts below and exactly10%, and rejects even a rational increment above10%", async () => {
@@ -303,7 +304,8 @@ test("LINK completed with ETH pending survives restart and resumes only the outs
 
 test("postpayment quote expiry and increased expected fees preserve the accepted inventory obligation", async () => sandbox(async (f, c) => {
   const accepted = await paid(f, c), claim = accepted.active!.execution!.paymentClaim;
-  f.clock.advance(1_000_000); f.controls.costTransform = value => ({ ...value, nearObservation: { ...value.nearObservation, gasPriceYoctoNear: 10_000_000_000_000n } });
+  f.clock.advance(1_000_000); f.controls.costTransform = value => ({ ...value, nearObservation: { ...value.nearObservation, gasPriceYoctoNear: 10_000_000_000_000n,
+    fundingInputs: { ...value.nearObservation.fundingInputs!, blockGasPriceYocto: "10000000000000" } } });
   f.controls.recheckFailure = "link-delivery";
   await prepare(f, c, "link-delivery"); const before = await readFile(f.journalFile, "utf8");
   await assert.rejects(sign(f, c, "link-delivery"), /fresh nonce/); assert.equal(await readFile(f.journalFile, "utf8"), before);

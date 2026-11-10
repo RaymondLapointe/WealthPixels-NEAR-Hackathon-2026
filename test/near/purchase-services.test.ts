@@ -72,6 +72,7 @@ test("postpayment funding collection does not require the Investor to still own 
   const funding = await driver.funding(lowFeeQuote("10", 5000n, 1000n, pin));
   assert.equal(funding.inventory.investorUsdcBaseUnits, 0n); assert.equal(funding.inventory.mode, "offline");
   assert.equal(funding.gasPriceYoctoNear, 100_000_000n);
+  assert.equal(funding.fundingInputs.receiptPurchaseFloorYocto, "1000000000");
   assert.equal(funding.expiresAt, new Date(Date.parse(AT) + 50_000).toISOString());
   assert.equal(ready.requests.some(item => item.method === "eth_estimateGas"), false);
 });

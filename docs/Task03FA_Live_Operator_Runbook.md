@@ -110,6 +110,8 @@ npm run purchase -- quote --prices .local/transfers/purchase-prices-approved.jso
 
 The 10-USDC amount is configurable and is not a production minimum. The quote freezes 50/50 native ETH/LINK quantities and all six expected costs under the approved prices. Official Sepolia USDC is `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`, six decimals; LINK is `0x779877A7B0D9E8603169DdbD7836e478b4624789`, 18 decimals. Review current USDC proxy implementation rather than copying its old pin blindly. The quote requires fresh 20%-buffered gas, funding and expected total fees at most 1 USDC for a 10-USDC investment. Maximum reserves remain separate from expected fees; native delivery value is not a fee.
 
+November 10 readiness corrections: USDC payment has its own 200,000-gas ceiling; LINK/native delivery ceilings remain 180,000. Actual limits remain freshly buffered estimates, with unchanged 30-gwei and 0.0036-ETH protective fee ceilings. NEAR affordability reserves full protocol receipt purchase funding plus deposit for one Investor and two Treasury signing calls after account storage reserves; anticipated refunds cannot fund these checks. The 5,000/1,000-wei command above is illustrative, not a current fee recommendation: obtain separately reviewed fee selections for the actual attempt. See [correction checkpoint and short-window rehearsal](Portfolio_Purchase_Readiness_Corrections_20261110.md).
+
 ## 8. Authorize the exact Investor payment within the original 60 seconds
 
 Immediately review the printed quote/hash and effective deadline. The operator separately approves that exact quote, prepares its payment and reviews its new unsigned digest:
@@ -128,7 +130,7 @@ npm run purchase -- sign --quote-hash REVIEWED_QUOTE_HASH --leg usdc-payment --r
 
 Use only `wealthpixels-investor.testnet`'s distinct external file. All local reviews and the final MPC submission must fit the **original quote/price validity and the earliest fee-observation deadline**, at most 60 seconds. The deadline is forwarded into the MPC adapter and rechecked after its final public read, immediately before submission. Public RPC plus human latency has no measured guaranteed bound; do not start the quote and then wait for a lengthy chat review. Missing/stale inputs or fees above 10% stop the unpaid operation.
 
-If validity expires before a signing attempt, stop and preserve the unsigned state; use the existing explicit expired-unsigned retirement/new-quote process and new approvals. Do not reset dates or reprice an accepted quote. The current unsigned-retirement route waits for the preparation's original 15-minute expiry. If a signing/submission marker exists, reconcile it before any release/new attempt. The entire three-leg purchase need not finish within 60 seconds.
+If validity expires before any payment authorization or execution, explicitly release the expired quoted/approved reservation using `npm run purchase -- expire-unpaid --quote-hash REVIEWED_QUOTE_HASH --approve REVIEWED_QUOTE_HASH`. The local-only command refuses payment-authorized or any execution-bearing state. If an unsigned payment was already prepared, preserve it and use the existing explicit expired-unsigned retirement/new-quote process and new approvals; this route waits for the preparation's original 15-minute expiry. Do not reset dates or reprice an accepted quote. If a signing/submission marker exists, reconcile it before any release/new attempt. The entire three-leg purchase need not finish within 60 seconds.
 
 ## 9. Reconcile the authorized USDC payment to finality
 

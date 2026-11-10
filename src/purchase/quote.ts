@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import { VERIFIED_IDENTITIES } from "../near/identities.js";
-import { DEFAULT_EXECUTION_LIMITS, MAX_EXPECTED_FEE_BPS, SEPOLIA_ASSETS } from "./config.js";
+import { DEFAULT_EXECUTION_LIMITS, MAX_EXPECTED_FEE_BPS, SEPOLIA_ASSETS, USDC_PAYMENT_GAS_LIMIT_CAP, purchaseExecutionPolicyForLeg } from "./config.js";
 import { createPurchaseTerms, type PurchaseTerms } from "./terms.js";
 import { createPurchaseFeeEstimate, costObservationDeadline, type CompletePurchaseCosts } from "./costs.js";
 import { assertFeeEligible, revalidateFeeEligibilityBeforePayment, type FeeAssessment } from "./fee-eligibility.js";
@@ -10,13 +10,14 @@ import type { NativeDeliveryPolicy } from "../evm/sepolia-native.js";
 import { requireUint256 } from "./amounts.js";
 import { check, fingerprint, frozen, hexHash, label, purchaseId, utc } from "./integrity.js";
 
+export interface PurchaseExecutionPolicy extends NativeDeliveryPolicy { readonly usdcPaymentGasLimitCap: bigint }
 export interface PurchaseQuotePolicy {
   readonly maxExpectedFeeBps: bigint; readonly maxEstimateAgeMs: number; readonly nominalQuoteWindowMs: number;
-  readonly execution: NativeDeliveryPolicy;
+  readonly execution: PurchaseExecutionPolicy;
 }
 export const DEFAULT_PURCHASE_QUOTE_POLICY: PurchaseQuotePolicy = frozen({ maxExpectedFeeBps: MAX_EXPECTED_FEE_BPS,
   maxEstimateAgeMs: 60_000, nominalQuoteWindowMs: 30 * 60_000,
-  execution: { ...DEFAULT_EXECUTION_LIMITS, operatingReserveWei: 1_000_000_000_000_000n } });
+  execution: { ...DEFAULT_EXECUTION_LIMITS, operatingReserveWei: 1_000_000_000_000_000n, usdcPaymentGasLimitCap: USDC_PAYMENT_GAS_LIMIT_CAP } });
 export interface PlannedPurchaseTransaction {
   readonly leg: "investor-usdc-payment" | "treasury-link-delivery" | "treasury-eth-delivery";
   readonly role: "treasury" | "investor"; readonly nearAccountId: string; readonly senderAddress: string; readonly recipientAddress: string;
@@ -52,6 +53,8 @@ function checkedPolicy(value: PurchaseQuotePolicy): PurchaseQuotePolicy {
   check(Number.isSafeInteger(value.nominalQuoteWindowMs) && value.nominalQuoteWindowMs > 0 && value.nominalQuoteWindowMs <= 30 * 60_000, "Nominal quote window cannot exceed 30 minutes.");
   const e = value.execution;
   check(e && typeof e === "object", "Execution policy is required.");
+  requireUint256(e.usdcPaymentGasLimitCap, "USDC payment gas ceiling", true);
+  purchaseExecutionPolicyForLeg(e, "usdc-payment");
   for (const key of ["gasLimitCap", "maxFeePerGasCap", "maxTotalFeeWei", "operatingReserveWei"] as const) requireUint256(e[key], key, true);
   check(e.gasLimitCap <= DEFAULT_EXECUTION_LIMITS.gasLimitCap && e.maxFeePerGasCap <= DEFAULT_EXECUTION_LIMITS.maxFeePerGasCap &&
     e.maxTotalFeeWei <= DEFAULT_EXECUTION_LIMITS.maxTotalFeeWei && e.gasBufferBps >= 2000n && e.gasBufferBps <= 10000n,

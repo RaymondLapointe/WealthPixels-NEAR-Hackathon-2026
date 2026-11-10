@@ -11,7 +11,7 @@ import { assertTreasuryNativeSignedTransfer, type PreparedNativeTransfer } from 
 import { assertNativeDelivery, observeNativeDelivery, prepareNativeDelivery, recheckNativeDelivery, verifyNativeDeliveryReceipt,
   type NativeDeliveryPreflight, type NativeDeliverySnapshot } from "../evm/sepolia-native.js";
 import type { SepoliaReadMethod, SepoliaReadRpc } from "../evm/sepolia-link.js";
-import { SEPOLIA_ASSETS } from "./config.js";
+import { SEPOLIA_ASSETS, purchaseExecutionPolicyForLeg } from "./config.js";
 import type { PaymentClaim } from "./claims.js";
 import type { ActualEvmCost, PurchaseFeeLeg } from "./fee-eligibility.js";
 import { check, frozen, hexHash } from "./integrity.js";
@@ -187,8 +187,8 @@ function wrapErc20(quote: PurchaseQuote, leg: Erc20PurchaseLeg, fees: PurchaseLe
   snapshotIntegrity(observed);
   const intent = createErc20AssetIntent(quote.terms, leg, quote.terms.termsHash);
   const preflight = buildErc20AssetTransfer(intent, quote.terms, { nonce: observed.confirmedNonce, estimatedGas: observed.estimatedGas,
-    maxFeePerGas: fees.maxFeePerGas, maxPriorityFeePerGas: fees.maxPriorityFeePerGas }, quote.policy.execution);
-  validateAssetTransferPreflight(preflight, quote.terms, observed, quote.policy.execution);
+    maxFeePerGas: fees.maxFeePerGas, maxPriorityFeePerGas: fees.maxPriorityFeePerGas }, purchaseExecutionPolicyForLeg(quote.policy.execution, leg));
+  validateAssetTransferPreflight(preflight, quote.terms, observed, purchaseExecutionPolicyForLeg(quote.policy.execution, leg));
   const value: PreparedPurchaseErc20Leg = { kind: "prepared-purchase-leg", purchaseId: quote.purchaseId, quoteHash: quote.quoteHash,
     leg, role: intent.role, prepared: preflight.prepared, preflight, snapshot: observed,
     referenceBlockNumber: observed.blockNumber, referenceBlockHash: observed.blockHash };
@@ -218,7 +218,7 @@ export function assertPreparedPurchaseLeg(value: PreparedPurchaseLeg, quote: Pur
       referenceBlockNumber: value.preflight.snapshot.blockNumber, referenceBlockHash: value.preflight.snapshot.blockHash };
     check(isDeepStrictEqual(value, expected), "Native purchase leg binding changed."); return;
   }
-  assertPreparedAssetTransfer(value.preflight, quote.terms, quote.terms.termsHash, quote.policy.execution);
+  assertPreparedAssetTransfer(value.preflight, quote.terms, quote.terms.termsHash, purchaseExecutionPolicyForLeg(quote.policy.execution, value.leg));
   const expected = wrapErc20(quote, value.leg, value.prepared, value.snapshot);
   check(isDeepStrictEqual(value, expected), "ERC-20 purchase leg transaction, policy or observation changed.");
 }
@@ -230,7 +230,7 @@ export async function recheckPurchaseLeg(value: PreparedPurchaseLeg, quote: Purc
   const fresh = await observePurchaseErc20Leg(quote, approvedQuoteHash, value.leg, rpc, value.snapshot.usdcImplementation);
   check(fresh.blockNumber >= value.referenceBlockNumber && (fresh.blockNumber !== value.referenceBlockNumber || fresh.blockHash === value.referenceBlockHash),
     "Purchase recheck returned an older or conflicting block.");
-  validateAssetTransferPreflight(value.preflight, quote.terms, fresh, quote.policy.execution);
+  validateAssetTransferPreflight(value.preflight, quote.terms, fresh, purchaseExecutionPolicyForLeg(quote.policy.execution, value.leg));
   checkTreasuryReserve({ ...value, snapshot: fresh }, quote); return fresh;
 }
 

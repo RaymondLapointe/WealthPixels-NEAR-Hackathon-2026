@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import { assertNearSubmissionRecord, assertNearSubmissionSuccessor } from "../near/submission.js";
+import { purchaseMpcFundingModel } from "../near/mpc-funding.js";
 import { authorizeEvmBroadcast } from "../evm/broadcast.js";
 import { addPaymentClaim, paymentClaimId } from "./claims.js";
 import { assessAuthorizedPurchaseCosts, valueAuthorizedActualCosts } from "./authorized-costs.js";
@@ -125,9 +126,10 @@ export function createPurchaseCoordinator(driver: PurchaseExecutionDriver,
     const linkReserve = leg === "link-delivery" ? prepared?.prepared.maximumFeeWei ?? buffered(link.estimatedGas) * link.maxFeePerGasWei : 0n;
     check(f.treasuryEthWei >= q.terms.quantities.ethWei + nativeReserve + linkReserve + q.policy.execution.operatingReserveWei &&
       (leg !== "link-delivery" || f.treasuryLinkBaseUnits >= q.terms.quantities.linkBaseUnits), "Remaining Treasury inventory, both delivery fees or operating reserve is insufficient.");
+    const fundingModel = purchaseMpcFundingModel(result.fundingInputs, result.gasPriceYoctoNear);
     const nearReserve = q.costs.near.filter(item => item.payer === "treasury" &&
       !record.execution?.legs[item.leg === "treasury-link-delivery" ? "link-delivery" : "eth-delivery"]?.nearTransactionHash)
-      .reduce((total, item) => total + (item.attachedGas + item.transactionOverheadGas) * result.gasPriceYoctoNear + item.attachedDepositYoctoNear, 0n);
+      .reduce((total) => total + BigInt(fundingModel.requiredSpendableYocto), 0n);
     check(f.treasurySpendableNearYocto >= nearReserve, "Treasury NEAR signing funding is insufficient.");
     check(now() < utc(result.expiresAt), "Treasury funding observations expired during validation.");
     return result;

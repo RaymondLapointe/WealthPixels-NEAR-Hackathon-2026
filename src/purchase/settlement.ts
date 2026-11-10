@@ -4,6 +4,7 @@ import { baseDecode } from "near-api-js";
 import type { PreparedMpcSigning } from "../near/signing.js";
 import { assertNearSubmissionRecord, type NearSubmissionRecord } from "../near/submission.js";
 import type { AuthorityRole } from "../near/config.js";
+import type { MpcFundingInputs } from "../near/mpc-funding.js";
 import type { EvmBroadcastTransport } from "../evm/broadcast.js";
 import { VERIFIED_IDENTITIES } from "../near/identities.js";
 import type { FundingInventorySnapshot } from "./journal.js";
@@ -73,7 +74,7 @@ export interface PurchaseExecutionDriver {
   replayReceipt(quote: PurchaseQuote, prepared: PreparedPurchaseLeg, signed: PurchaseLegSigned, result: PurchaseLegReceiptResult): Promise<void>;
   lookup(prepared: PreparedPurchaseLeg, signed: PurchaseLegSigned): Promise<{ known: boolean; receipt: boolean; confirmedNonce: number; pendingNonce: number }>;
   collectCosts(quote: PurchaseQuote): Promise<{ costs: CompletePurchaseCosts; inventory: FundingInventorySnapshot }>;
-  funding(quote: PurchaseQuote): Promise<{ inventory: FundingInventorySnapshot; gasPriceYoctoNear: bigint; expiresAt: string }>;
+  funding(quote: PurchaseQuote): Promise<{ inventory: FundingInventorySnapshot; gasPriceYoctoNear: bigint; fundingInputs: MpcFundingInputs; expiresAt: string }>;
   nearCost(role: AuthorityRole, hash: string, outcome: unknown, leg: PurchaseLeg): ActualNearCost;
   readonly broadcast: EvmBroadcastTransport;
 }

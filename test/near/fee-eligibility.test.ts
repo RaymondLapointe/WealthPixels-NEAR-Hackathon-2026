@@ -4,6 +4,8 @@ import {
   PURCHASE_FEE_LEGS, assertFeeEligible, createFeeEstimate, recordActualExecutionFees,
   revalidateFeeEligibilityBeforePayment, type FeeEstimateInput, type ActualExecutionCostInput,
 } from "../../src/purchase/fee-eligibility.js";
+import { calculateMpcFundingModel } from "../../src/near/mpc-funding.js";
+import { fundingInputs } from "./fixtures/purchase-quote.js";
 
 // Fixed accounting fixtures, not observed blockchain fees, live prices or transaction evidence.
 const AT = "2026-11-05T20:00:00.000Z", EXPIRY = "2026-11-05T20:30:00.000Z";
@@ -22,7 +24,8 @@ function fixture(investmentUsdc = 10n, mode: "offline" | "live" = "offline"): Fe
       gasLimitCap: 180_000n, maxTotalFeeWei: 3_600_000_000_000_000n })),
     near: PURCHASE_FEE_LEGS.map(leg => ({ leg, payer: payer(leg), estimatedExecutionGas: 10_000_000_000_000n,
       transactionOverheadGas: 0n, assumedGasPriceYoctoNear: 10_000_000_000n,
-      attachedGas: 100_000_000_000_000n, attachedDepositYoctoNear: 0n })) };
+      attachedGas: 100_000_000_000_000n, attachedDepositYoctoNear: 0n,
+      fundingModel: calculateMpcFundingModel(fundingInputs(10_000_000_000n)) })) };
 }
 function withExtraDeposit(input: FeeEstimateInput, deposit: bigint): FeeEstimateInput {
   return { ...input, near: input.near.map((value, index) => index === 2 ? { ...value, attachedDepositYoctoNear: deposit } : value) };
@@ -56,7 +59,8 @@ test("expected assumptions, 20% buffered gas and maximum fee reserves remain dis
   assert.equal(result.expectedCosts[0]!.bufferedGas, 120_000n);
   assert.equal(result.expectedCosts[0]!.expectedNativeBaseUnits, 120_000_000_000_000n);
   assert.equal(result.expectedCosts[0]!.maximumNativeReserveBaseUnits, 600_000_000_000_000n);
-  assert.equal(result.totalMaximumReserveUsdcBaseUnitsCeil, 4_800_000n);
+  assert.equal(result.totalMaximumReserveUsdcBaseUnitsCeil, 8_091_392n);
+  assert.equal(result.expectedCosts[3]!.maximumNativeReserveBaseUnits, 2_097_130_613_353_440_000_000_001n);
   assert.equal(result.eligible, true); // Caps exceed 10%; expected execution costs do not.
 });
 for (const [amount, feeBps, eligible] of [[1n, 7200n, false], [5n, 1440n, false], [10n, 720n, true], [20n, 360n, true], [100n, 72n, true]] as const) {

@@ -72,7 +72,15 @@ export function readinessFixture(options: FakeReadinessOptions = {}) {
         case "status": return { chain_id: options.wrongNearNetwork ? "mainnet" : "testnet" };
         case "block": return { header };
         case "gas_price": return { gas_price: "100000000" };
-        case "EXPERIMENTAL_protocol_config": return { chain_id: "testnet", runtime_config: { storage_amount_per_byte: options.storagePrice ?? "10000000000000000000" } };
+        case "EXPERIMENTAL_protocol_config": return { chain_id: "testnet", protocol_version: 88,
+          runtime_config: { storage_amount_per_byte: options.storagePrice ?? "10000000000000000000", min_gas_purchase_price: "1000000000",
+            transaction_costs: {
+              action_receipt_creation_config: { send_sir: 108059500000, send_not_sir: 108059500000, execution: 108059500000 },
+              action_creation_config: {
+                function_call_cost: { send_sir: 2319861500000, send_not_sir: 2319861500000, execution: 2319861500000 },
+                function_call_cost_per_byte: { send_sir: 2235934, send_not_sir: 2235934, execution: 2235934 },
+              }, pessimistic_gas_price_inflation_ratio: [1, 1],
+            } } };
         case "query": {
           const role = params.account_id === VERIFIED_IDENTITIES.investor.accountId ? "investor" : "treasury";
           const shared = { block_hash: READINESS_NEAR_HASH, block_height: 1000 };

@@ -173,7 +173,7 @@ export function createPurchaseExecutionServices(options: PurchaseExecutionServic
     },
     async funding(quote) {
       checkedQuote(quote); const observed = await inspectReadiness(readinessOptions(quote), dependencies.readinessPorts);
-      return { inventory: observed.inventory, gasPriceYoctoNear: observed.near.gasPriceYoctoNear, expiresAt: observed.expiresAt };
+      return { inventory: observed.inventory, gasPriceYoctoNear: observed.near.gasPriceYoctoNear, fundingInputs: observed.near.fundingInputs, expiresAt: observed.expiresAt };
     },
     async collectCosts(quote) {
       checkedQuote(quote);

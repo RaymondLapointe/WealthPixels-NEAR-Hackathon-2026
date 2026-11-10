@@ -8,12 +8,21 @@ import { PURCHASE_FEE_LEGS } from "../../../src/purchase/fee-eligibility.js";
 import type { CompletePurchaseCosts } from "../../../src/purchase/costs.js";
 import type { FundingInventorySnapshot } from "../../../src/purchase/journal.js";
 import { SEPOLIA_ASSETS } from "../../../src/purchase/config.js";
+import { MPC_SIGN_REQUEST_BYTES, type MpcFundingInputs } from "../../../src/near/mpc-funding.js";
 
 // Fixed synthetic observations and simulated approvals ONLY. Even branches using
 // mode:'live' exercise validation with injected data; they make no network calls,
 // obtain no human approval and constitute no live readiness or execution proof.
 export const AT = "2026-11-06T03:00:00.000Z";
 export const seconds = (value: number) => new Date(Date.parse(AT) + value * 1000).toISOString();
+export function fundingInputs(gasPrice = 100_000_000n): MpcFundingInputs {
+  return { protocolVersion: 88, requestBytes: MPC_SIGN_REQUEST_BYTES,
+    receiptSendGas: "108059500000", receiptExecutionGas: "108059500000",
+    functionCallSendGas: "2319861500000", functionCallExecutionGas: "2319861500000",
+    functionCallByteSendGas: "2235934", functionCallByteExecutionGas: "2235934",
+    blockGasPriceYocto: gasPrice.toString(), receiptPurchaseFloorYocto: "1000000000",
+    gasRefundPenalty: { numerator: "0", denominator: "100" }, minimumGasRefundPenalty: "0" };
+}
 export function priceInput(id = "offline-purchase-10", providerId = "synthetic-provider-A"): DemonstrationPriceInput {
   const rates = { ETH: 2500n, LINK: 10n, NEAR: 1n };
   const prices = Object.fromEntries((["ETH", "LINK", "NEAR"] as const).map(asset => [asset, {
@@ -40,7 +49,8 @@ export function costs(value: PriceSet, amount = "10", mode: "offline" | "live" =
     evmObservation: { chainId: 11155111n, blockNumber: 100n, blockHash: `0x${"11".repeat(32)}`,
       sourceUrl: "https://example.invalid/offline-sepolia-rpc", reference: "Synthetic canonical-block fixture" },
     nearObservation: { networkId: "testnet", blockHeight: 1000n, blockHash: "1".repeat(32),
-      sourceUrl: "https://example.invalid/offline-near-rpc", reference: "Synthetic NEAR gas-price fixture", gasPriceYoctoNear: 100_000_000n },
+      sourceUrl: "https://example.invalid/offline-near-rpc", reference: "Synthetic NEAR gas-price fixture", gasPriceYoctoNear: 100_000_000n,
+      fundingInputs: fundingInputs() },
     evm: PURCHASE_FEE_LEGS.map((leg, index) => {
       const payer = index === 0 ? "investor" as const : "treasury" as const;
       const asset = index === 0 ? "USDC" as const : index === 1 ? "LINK" as const : "ETH" as const;

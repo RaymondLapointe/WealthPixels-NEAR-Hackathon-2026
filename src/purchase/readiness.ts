@@ -1,12 +1,13 @@
 import { Interface, getAddress, keccak256 } from "ethers";
 import { baseDecode } from "near-api-js";
 import { DERIVATION_PATH, ECDSA_DOMAIN_ID, MPC_CONTRACT_ID, type AuthorityRole } from "../near/config.js";
+import { mpcFundingInputsFromProtocolConfig, purchaseMpcFundingModel, type MpcFundingInputs, type MpcFundingModel } from "../near/mpc-funding.js";
 import { VERIFIED_IDENTITIES, VERIFIED_MPC_ROOT } from "../near/identities.js";
 import { MPC_READ_METHODS, ReadOnlyMpcClient, type MpcViewTransport } from "../near/mpc.js";
 import type { VerifiedRoleMpc } from "../near/signing.js";
 import { createSepoliaReadRpc, type SepoliaReadRpc } from "../evm/sepolia-link.js";
 import { DEFAULT_NATIVE_DELIVERY_POLICY, estimateNativeDeliveryFees, type NativeDeliveryPolicy, type NativeDeliverySnapshot } from "../evm/sepolia-native.js";
-import { SEPOLIA_ASSETS } from "./config.js";
+import { SEPOLIA_ASSETS, purchaseExecutionPolicyForLeg } from "./config.js";
 import { assertPurchaseTerms, type PurchaseTerms } from "./terms.js";
 import { PURCHASE_FEE_LEGS, type PurchaseFeeLeg } from "./fee-eligibility.js";
 import type { CompletePurchaseCosts, EvmLegCostObservation } from "./costs.js";
@@ -51,6 +52,7 @@ export interface PublicReadiness {
   readonly near: {
     readonly blockHeight: bigint; readonly blockHash: string; readonly blockTimestamp: string;
     readonly gasPriceYoctoNear: bigint; readonly storageAmountPerByteYocto: bigint;
+    readonly fundingInputs: MpcFundingInputs; readonly fundingModel: MpcFundingModel;
     readonly treasury: NearRoleReadiness; readonly investor: NearRoleReadiness;
   };
 }
@@ -59,7 +61,7 @@ export interface NearSigningAssumptions {
 }
 /** Conservative benchmark, not a signing guarantee: authentic 8Lf5... receipt gas < 10 Tgas;
  * reserve an additional 1 Tgas transaction overhead, then apply the normal >=20% estimate buffer.
- * The full 100 Tgas attachment remains a separate maximum funding reserve.
+ * Full protocol receipt purchase funding remains separate from this expected burn estimate.
  */
 export const RECORDED_MPC_SIGNING_ASSUMPTIONS: NearSigningAssumptions = Object.freeze({
   estimatedExecutionGas: 10_000_000_000_000n, transactionOverheadGas: 1_000_000_000_000n,
@@ -213,6 +215,11 @@ async function inspectNear(s: ReturnType<typeof services>, sampled: number) {
   ]);
   const p = object(protocol), gasPriceYoctoNear = decimal(object(gas).gas_price), storageAmountPerByteYocto = decimal(object(p.runtime_config).storage_amount_per_byte);
   check(p.chain_id === "testnet" && gasPriceYoctoNear > 0n && storageAmountPerByteYocto > 0n, "NEAR gas price, storage price or protocol identity is unavailable.");
+  let fundingInputs: MpcFundingInputs, fundingModel: MpcFundingModel;
+  try {
+    fundingInputs = mpcFundingInputsFromProtocolConfig(p, gasPriceYoctoNear);
+    fundingModel = purchaseMpcFundingModel(fundingInputs, gasPriceYoctoNear);
+  } catch { throw new ReadinessError("INVALID_OBSERVATION", "Complete supported protocol-88 MPC FunctionCall prefunding inputs are required."); }
   const rows = Object.fromEntries(roleRows.map(([role, value]) => {
     const storageReserveYocto = value.storageBytes * storageAmountPerByteYocto;
     // Conservative: locked validation stake is never treated as liquid signing funding.
@@ -220,7 +227,7 @@ async function inspectNear(s: ReturnType<typeof services>, sampled: number) {
   })) as Record<AuthorityRole, NearRoleReadiness>;
   const canonical = object(object(await nr("block", { block_id: blockHash })).header);
   check(nearHash(canonical.hash) === blockHash && BigInt(canonical.height) === blockHeight, "NEAR finalized observation block changed.");
-  return { blockHeight, blockHash, blockTimestamp, gasPriceYoctoNear, storageAmountPerByteYocto, ...rows };
+  return { blockHeight, blockHash, blockTimestamp, gasPriceYoctoNear, storageAmountPerByteYocto, fundingInputs, fundingModel, ...rows };
 }
 /** Public account/contract inspection only. No terms, transfer call, gas simulation or transaction is created. */
 export async function inspectReadiness(options: ReadinessOptions, ports?: ReadinessPorts): Promise<PublicReadiness> {
@@ -283,7 +290,7 @@ export async function collectPurchaseCosts(terms: PurchaseTerms, options: CostCo
     check(asset === "ETH" ? simulation === "0x" : result("transfer", simulation) === true, `${leg} transfer simulation failed.`);
     const estimatedGas = quantity(estimateRaw);
     estimateNativeDeliveryFees({ estimatedGas, baseFeePerGas: baseFee }, { maxFeePerGas: maxFee, maxPriorityFeePerGas: priority },
-      { assumedBaseFeePerGasWei: assumedBaseFee, assumedPriorityFeePerGasWei: priority }, limits);
+      { assumedBaseFeePerGasWei: assumedBaseFee, assumedPriorityFeePerGasWei: priority }, purchaseExecutionPolicyForLeg(limits, leg));
     evm.push({ leg, payer, senderAddress, recipientAddress, asset, tokenAddress: asset === "ETH" ? null : SEPOLIA_ASSETS[asset].address,
       decimals: asset === "USDC" ? 6 : 18, amountBaseUnits, estimatedGas, observedBaseFeePerGasWei: baseFee,
       assumedBaseFeePerGasWei: assumedBaseFee, maxFeePerGasWei: maxFee, maxPriorityFeePerGasWei: priority });
@@ -297,9 +304,9 @@ export async function collectPurchaseCosts(terms: PurchaseTerms, options: CostCo
     "Investor USDC or Treasury LINK inventory is insufficient.", "INSUFFICIENT_FUNDS");
   check(readiness.inventory.investorEthWei >= reserve(evm[0]!) && readiness.inventory.treasuryEthWei >= terms.quantities.ethWei + reserve(evm[1]!) + reserve(evm[2]!) + limits.operatingReserveWei,
     "ETH funding cannot cover purchase values, maximum buffered fees and Treasury operating reserve.", "INSUFFICIENT_FUNDS");
-  const nearReserve = (100_000_000_000_000n + assumptions.transactionOverheadGas) * readiness.near.gasPriceYoctoNear + 1n;
+  const nearReserve = BigInt(readiness.near.fundingModel.requiredSpendableYocto);
   check(readiness.inventory.investorSpendableNearYocto >= nearReserve && readiness.inventory.treasurySpendableNearYocto >= 2n * nearReserve,
-    "Storage-reserved NEAR funding cannot cover all role-specific signing attachments and overhead.", "INSUFFICIENT_FUNDS");
+    "Storage-reserved NEAR funding cannot cover one Investor and two Treasury full upfront MPC receipt purchases.", "INSUFFICIENT_FUNDS");
   const canonical = object(await read("cost canonical block", () => s.evm.request("eth_getBlockByNumber", [blockTag, false])));
   check(hexHash(canonical.hash) === readiness.evm.blockHash && quantity(canonical.number) === readiness.evm.blockNumber, "Cost observation block was reorganized.");
   for (const role of ROLES) check(nonce(await read(`${role} final pending nonce`, () => s.evm.request("eth_getTransactionCount", [VERIFIED_IDENTITIES[role].evmAddress, "pending"]))) === readiness.evm[role].confirmedNonce,
@@ -311,7 +318,8 @@ export async function collectPurchaseCosts(terms: PurchaseTerms, options: CostCo
     evmObservation: { chainId: 11155111n, blockNumber: readiness.evm.blockNumber, blockHash: readiness.evm.blockHash, sourceUrl: s.evmRpcUrl,
       reference: `Pinned canonical block ${readiness.evm.blockHash}; USDC implementation ${readiness.evm.usdcImplementationAddress} code ${readiness.evm.usdcImplementationCodeHash}` },
     nearObservation: { networkId: "testnet", blockHeight: readiness.near.blockHeight, blockHash: readiness.near.blockHash,
-      sourceUrl: s.nearRpcUrl, reference: `Finalized MPC, accounts, protocol storage and gas_price observations at ${readiness.near.blockHash}`, gasPriceYoctoNear: readiness.near.gasPriceYoctoNear },
+      sourceUrl: s.nearRpcUrl, reference: `Finalized MPC, accounts, protocol storage, FunctionCall receipt pricing and gas_price observations at ${readiness.near.blockHash}`, gasPriceYoctoNear: readiness.near.gasPriceYoctoNear,
+      fundingInputs: readiness.near.fundingInputs },
     assetIdentity: { usdcImplementation: { address: readiness.evm.usdcImplementationAddress, codeHash: readiness.evm.usdcImplementationCodeHash } },
     evm, near: PURCHASE_FEE_LEGS.map((leg, index) => ({ leg, payer: index === 0 ? "investor" : "treasury", accountId: VERIFIED_IDENTITIES[index === 0 ? "investor" : "treasury"].accountId,
       contractId: MPC_CONTRACT_ID, domainId: ECDSA_DOMAIN_ID, derivationPath: DERIVATION_PATH, ...assumptions, attachedGas: 100_000_000_000_000n, attachedDepositYoctoNear: 1n })) };

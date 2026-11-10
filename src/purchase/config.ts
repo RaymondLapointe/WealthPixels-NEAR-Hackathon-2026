@@ -21,6 +21,24 @@ export const DEFAULT_EXECUTION_LIMITS = Object.freeze({
   maxTotalFeeWei: 3_600_000_000_000_000n, gasBufferBps: DEFAULT_GAS_BUFFER_BPS,
 });
 
+export const USDC_PAYMENT_GAS_LIMIT_CAP = 200_000n;
+type ExecutionLeg = "usdc-payment" | "link-delivery" | "eth-delivery" |
+  "investor-usdc-payment" | "treasury-link-delivery" | "treasury-eth-delivery";
+/** Select an asset-specific ceiling without changing the shared delivery or fee limits. */
+export function purchaseExecutionPolicyForLeg<T extends { readonly gasLimitCap: bigint; readonly usdcPaymentGasLimitCap?: bigint }>(
+  limits: T, leg: ExecutionLeg,
+): Omit<T, "usdcPaymentGasLimitCap"> {
+  if (!["usdc-payment", "link-delivery", "eth-delivery", "investor-usdc-payment", "treasury-link-delivery", "treasury-eth-delivery"].includes(leg)) {
+    throw new Error("Unsupported purchase execution leg.");
+  }
+  const { usdcPaymentGasLimitCap = USDC_PAYMENT_GAS_LIMIT_CAP, ...base } = limits;
+  if (typeof base.gasLimitCap !== "bigint" || base.gasLimitCap <= 0n || base.gasLimitCap > DEFAULT_EXECUTION_LIMITS.gasLimitCap ||
+    typeof usdcPaymentGasLimitCap !== "bigint" || usdcPaymentGasLimitCap <= 0n || usdcPaymentGasLimitCap > USDC_PAYMENT_GAS_LIMIT_CAP) {
+    throw new Error("Purchase gas ceilings cannot exceed the approved asset-specific limits.");
+  }
+  return Object.freeze({ ...base, gasLimitCap: leg === "usdc-payment" || leg === "investor-usdc-payment" ? usdcPaymentGasLimitCap : base.gasLimitCap }) as Omit<T, "usdcPaymentGasLimitCap">;
+}
+
 /** Verified source discovery only. Freshness limits are proposals for 03D; no collector or live price defaults. */
 export const PRICING_CONFIGURATION = Object.freeze({
   quoteConvention: "1 test USDC = 1 nominal quote-dollar; no monetary backing or production viability claim",

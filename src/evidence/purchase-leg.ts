@@ -16,6 +16,7 @@ import { assertPurchaseQuote, type PurchaseQuote } from "../purchase/quote.js";
 import { observeNearExecutionCost } from "../purchase/services.js";
 import { frozen, hexHash } from "../purchase/integrity.js";
 import { requireUint256 } from "../purchase/amounts.js";
+import { purchaseExecutionPolicyForLeg } from "../purchase/config.js";
 import { normalizeEvmSignatureScalar } from "./verify.js";
 
 export interface PublicPurchaseTransaction {
@@ -78,7 +79,7 @@ export function reconstructPublicPurchaseTransaction(quote: PurchaseQuote, leg: 
   "Public transaction type, network, hash, sender or access list differs from the purchase.");
   const nonceValue = quantity(raw.nonce); check(nonceValue <= BigInt(Number.MAX_SAFE_INTEGER), "Public transaction nonce exceeds the supported range.");
   const gasLimit = quantity(raw.gas), maxFeePerGas = quantity(raw.maxFeePerGas), maxPriorityFeePerGas = quantity(raw.maxPriorityFeePerGas);
-  check(gasLimit >= 21_000n && gasLimit <= quote.policy.execution.gasLimitCap && maxFeePerGas === fee.maxFeePerGasWei &&
+  check(gasLimit >= 21_000n && gasLimit <= purchaseExecutionPolicyForLeg(quote.policy.execution, leg).gasLimitCap && maxFeePerGas === fee.maxFeePerGasWei &&
     maxPriorityFeePerGas === fee.maxPriorityFeePerGasWei && maxFeePerGas <= quote.policy.execution.maxFeePerGasCap &&
     gasLimit * maxFeePerGas <= quote.policy.execution.maxTotalFeeWei,
   "Public transaction fees differ from the approved selection or exceed protective limits.");

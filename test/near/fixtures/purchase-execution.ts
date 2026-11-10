@@ -249,6 +249,7 @@ export async function createPurchaseExecutionFixture(options: FixtureOptions = {
     async collectCosts(q) { record("collectCosts"); if (controls.collectDelayMs) clock.advance(controls.collectDelayMs);
       return { costs: freshCosts(q), inventory: fundingSnapshot() }; },
     async funding(q) { record("funding"); return { inventory: fundingSnapshot(), gasPriceYoctoNear: q.costs.nearObservation.gasPriceYoctoNear,
+      fundingInputs: q.costs.nearObservation.fundingInputs!,
       expiresAt: new Date(clockMs + 60_000).toISOString() }; },
     nearCost(role, hash, outcome, leg) { const entry = signing.get(hash); assert.ok(entry && isDeepStrictEqual(entry.outcome, outcome));
       return { leg: feeLeg[leg], payer: role, transactionHash: hash, transactionTokensBurntYoctoNear: 100_000_000_000_000_000_000n,

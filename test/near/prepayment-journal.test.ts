@@ -37,6 +37,8 @@ test("journal reserves exact portfolio inventory, both Treasury EVM fee ceilings
   assert.equal(journal.active!.reservation.linkBaseUnits, 500_000_000_000_000_000n);
   assert.equal(journal.active!.reservation.treasuryEthWei, 3_486_000_000_000_000n);
   assert.equal(journal.active!.reservation.investorMaxEvmFeeWei, 300_000_000_000_000n);
+  assert.equal(journal.active!.reservation.investorMaxNearYocto, 102_913_918_400_603_200_000_001n);
+  assert.equal(journal.active!.reservation.treasuryMaxNearYocto, 205_827_836_801_206_400_000_002n);
   assert.equal(journal.active!.quote.quoteHash, q.quoteHash); assert.equal(journal.paymentClaims.length, 0);
   assert.ok((await readFile(file, "utf8")).includes('"$bigint"'));
   const restarted = await readPurchaseJournal(root);

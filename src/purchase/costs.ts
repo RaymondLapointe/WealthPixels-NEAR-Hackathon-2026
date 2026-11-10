@@ -2,8 +2,9 @@ import { baseDecode } from "near-api-js";
 import { getAddress } from "ethers";
 import { VERIFIED_IDENTITIES } from "../near/identities.js";
 import { DERIVATION_PATH, ECDSA_DOMAIN_ID, MPC_CONTRACT_ID } from "../near/config.js";
+import { purchaseMpcFundingModel, type MpcFundingInputs } from "../near/mpc-funding.js";
 import { DEFAULT_NATIVE_DELIVERY_POLICY, estimateNativeDeliveryFees, type NativeDeliveryPolicy } from "../evm/sepolia-native.js";
-import { SEPOLIA_ASSETS } from "./config.js";
+import { SEPOLIA_ASSETS, purchaseExecutionPolicyForLeg } from "./config.js";
 import { requireUint256 } from "./amounts.js";
 import { assertPurchaseTerms, type PurchaseTerms } from "./terms.js";
 import { createFeeEstimate, PURCHASE_FEE_LEGS, type EvmFeeEstimate, type FeeAssessment, type NearFeeEstimate, type PurchaseFeeLeg } from "./fee-eligibility.js";
@@ -29,7 +30,8 @@ export interface CompletePurchaseCosts {
   readonly mode: "offline" | "live"; readonly sampledAt: string; readonly expiresAt: string; readonly reference: string;
   readonly evmObservation: { readonly chainId: bigint; readonly blockNumber: bigint; readonly blockHash: string; readonly sourceUrl: string; readonly reference: string };
   readonly nearObservation: { readonly networkId: "testnet"; readonly blockHeight: bigint; readonly blockHash: string;
-    readonly sourceUrl: string; readonly reference: string; readonly gasPriceYoctoNear: bigint };
+    readonly sourceUrl: string; readonly reference: string; readonly gasPriceYoctoNear: bigint;
+    readonly fundingInputs?: MpcFundingInputs };
   readonly evm: readonly EvmLegCostObservation[]; readonly near: readonly NearLegCostObservation[];
   readonly assetIdentity?: { readonly usdcImplementation: { readonly address: string; readonly codeHash: string } };
 }
@@ -73,13 +75,14 @@ export function normalizePurchaseCostObservations(terms: PurchaseTerms, costs: C
   check(costs.evmObservation.chainId === 11155111n, "Cost observations require Ethereum Sepolia.");
   requireUint256(costs.evmObservation.blockNumber, "EVM cost observation block", true); hexHash(costs.evmObservation.blockHash);
   publicSource(costs.evmObservation.sourceUrl); label(costs.evmObservation.reference, "EVM observation reference");
-  keys(costs.nearObservation, ["networkId", "blockHeight", "blockHash", "sourceUrl", "reference", "gasPriceYoctoNear"]);
+  keys(costs.nearObservation, ["networkId", "blockHeight", "blockHash", "sourceUrl", "reference", "gasPriceYoctoNear", "fundingInputs"]);
   check(costs.nearObservation.networkId === "testnet", "Signing cost observations require NEAR testnet.");
   requireUint256(costs.nearObservation.blockHeight, "NEAR cost observation block", true);
   check(typeof costs.nearObservation.blockHash === "string" && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(costs.nearObservation.blockHash) &&
     baseDecode(costs.nearObservation.blockHash).length === 32, "A complete public NEAR block hash is required.");
   publicSource(costs.nearObservation.sourceUrl); label(costs.nearObservation.reference, "NEAR gas-price observation reference");
   const nearGasPrice = requireUint256(costs.nearObservation.gasPriceYoctoNear, "Observed NEAR gas price", true);
+  const fundingModel = purchaseMpcFundingModel(costs.nearObservation.fundingInputs, nearGasPrice);
   check(Array.isArray(costs.evm) && costs.evm.length === 3 && Array.isArray(costs.near) && costs.near.length === 3, "All three EVM and three NEAR costs are mandatory.");
   const limits = options.executionPolicy ?? DEFAULT_NATIVE_DELIVERY_POLICY;
   const evm: EvmFeeEstimate[] = [], near: NearFeeEstimate[] = [];
@@ -100,7 +103,7 @@ export function normalizePurchaseCostObservations(terms: PurchaseTerms, costs: C
     check(item.estimatedGas >= 21_000n && item.assumedBaseFeePerGasWei >= item.observedBaseFeePerGasWei, "Gas/base-fee assumption is missing or below observed requirements.");
     const native = estimateNativeDeliveryFees({ estimatedGas: item.estimatedGas, baseFeePerGas: item.observedBaseFeePerGasWei },
       { maxFeePerGas: item.maxFeePerGasWei, maxPriorityFeePerGas: item.maxPriorityFeePerGasWei },
-      { assumedBaseFeePerGasWei: item.assumedBaseFeePerGasWei, assumedPriorityFeePerGasWei: item.maxPriorityFeePerGasWei }, limits);
+      { assumedBaseFeePerGasWei: item.assumedBaseFeePerGasWei, assumedPriorityFeePerGasWei: item.maxPriorityFeePerGasWei }, purchaseExecutionPolicyForLeg(limits, leg));
     evm.push({ ...native, leg, payer });
     keys(signing, ["leg", "payer", "accountId", "contractId", "domainId", "derivationPath", "estimatedExecutionGas", "transactionOverheadGas", "attachedGas", "attachedDepositYoctoNear", "executionAssumptionReference"]);
     check(signing.payer === payer && signing.accountId === VERIFIED_IDENTITIES[payer].accountId && signing.contractId === MPC_CONTRACT_ID &&
@@ -112,7 +115,7 @@ export function normalizePurchaseCostObservations(terms: PurchaseTerms, costs: C
       "NEAR signing execution/overhead assumptions exceed supported attachment bounds.");
     label(signing.executionAssumptionReference, "NEAR signing execution-cost assumption reference");
     near.push({ leg, payer, estimatedExecutionGas: signing.estimatedExecutionGas, transactionOverheadGas: signing.transactionOverheadGas,
-      gasBufferBps: limits.gasBufferBps, assumedGasPriceYoctoNear: nearGasPrice, attachedGas: signing.attachedGas, attachedDepositYoctoNear: signing.attachedDepositYoctoNear });
+      gasBufferBps: limits.gasBufferBps, assumedGasPriceYoctoNear: nearGasPrice, attachedGas: signing.attachedGas, attachedDepositYoctoNear: signing.attachedDepositYoctoNear, fundingModel });
   }
   return frozen({ evm, near, expiresAt: new Date(deadline).toISOString() });
 }

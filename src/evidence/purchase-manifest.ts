@@ -15,6 +15,7 @@ import { observeNearExecutionCost } from "../purchase/services.js";
 import { valueAuthorizedActualCosts, type AuthorizedActualCosts } from "../purchase/authorized-costs.js";
 import { paymentClaimId, type PaymentClaim } from "../purchase/claims.js";
 import { requireUint256 } from "../purchase/amounts.js";
+import { purchaseExecutionPolicyForLeg } from "../purchase/config.js";
 import type { ActualEvmCost, ActualNearCost } from "../purchase/fee-eligibility.js";
 import type { PrepaymentRecord } from "../purchase/journal.js";
 import { check, fingerprint, frozen, hexHash, label, utc } from "../purchase/integrity.js";
@@ -173,7 +174,7 @@ export function assertPurchaseEvidenceManifest(value: unknown): asserts value is
   const { manifestHash, ...body } = m;
   check(hexHash(manifestHash) === fingerprint("wealthpixels-portfolio-purchase-v1", body), "Purchase manifest integrity hash changed.");
   keys(m.quote.policy, ["maxExpectedFeeBps", "maxEstimateAgeMs", "nominalQuoteWindowMs", "execution"], "quote policy");
-  keys(m.quote.policy.execution, ["gasLimitCap", "maxFeePerGasCap", "maxTotalFeeWei", "gasBufferBps", "operatingReserveWei"], "execution policy");
+  keys(m.quote.policy.execution, ["gasLimitCap", "usdcPaymentGasLimitCap", "maxFeePerGasCap", "maxTotalFeeWei", "gasBufferBps", "operatingReserveWei"], "execution policy");
   assertPurchaseQuote(m.quote, m.quote.quoteHash, m.quote.policy); assertQuoteApproval(m.quote, m.quoteApproval, m.quote.policy);
   check(m.quote.purpose === "prepayment" && m.quote.prices.mode === "approved-demonstration", "Evidence requires the original approved demonstration quote.");
   const auth = m.paymentAuthorization;
@@ -198,7 +199,7 @@ export function assertPurchaseEvidenceManifest(value: unknown): asserts value is
     const fee = m.quote.costs.evm.find(item => item.leg === expected.leg)!;
     requireUint256(tx.gasLimit, "Signed gas limit", true); requireUint256(tx.maxFeePerGas, "Signed maximum fee", true);
     requireUint256(tx.maxPriorityFeePerGas, "Signed maximum priority fee");
-    check(tx.gasLimit >= 21_000n && tx.gasLimit <= m.quote.policy.execution.gasLimitCap &&
+    check(tx.gasLimit >= 21_000n && tx.gasLimit <= purchaseExecutionPolicyForLeg(m.quote.policy.execution, name).gasLimitCap &&
       tx.maxFeePerGas === fee.maxFeePerGasWei && tx.maxPriorityFeePerGas === fee.maxPriorityFeePerGasWei && tx.maxPriorityFeePerGas <= tx.maxFeePerGas &&
       tx.gasLimit * tx.maxFeePerGas <= m.quote.policy.execution.maxTotalFeeWei, "Transaction protective fee parameters changed.");
     check(Transaction.from({ ...tx, accessList: [] }).unsignedHash === leg.unsignedHash, "Unsigned transaction parameters do not reconstruct the approved digest.");

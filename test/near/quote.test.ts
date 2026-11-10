@@ -18,12 +18,12 @@ test("quote integrates all six system costs, with exact conversions, deposits an
   assert.equal(f.expectedCosts.filter(c => c.payer === "investor").length, 2);
   assert.equal(f.expectedCosts.filter(c => c.payer === "treasury").length, 4);
   assert.equal(f.totalExpectedUsdcBaseUnitsCeil, 435_541n);
-  assert.equal(f.expectedFeeBpsCeil, 436n); assert.equal(f.totalMaximumReserveUsdcBaseUnitsCeil, 1_995_301n);
+  assert.equal(f.expectedFeeBpsCeil, 436n); assert.equal(f.totalMaximumReserveUsdcBaseUnitsCeil, 2_273_742n);
   assert.equal(f.eligible, true); assert.equal(q.executionAuthorized, false);
   const near = f.expectedCosts.filter(c => c.asset === "NEAR");
   assert.equal(near[0]!.bufferedGas, 10_800_000_000_000n);
   assert.equal(near[0]!.expectedNativeBaseUnits, 1_080_000_000_000_000_000_001n);
-  assert.equal(near[0]!.maximumNativeReserveBaseUnits, 10_100_000_000_000_000_000_001n);
+  assert.equal(near[0]!.maximumNativeReserveBaseUnits, 102_913_918_400_603_200_000_001n);
 });
 
 for (const amount of ["1", "5", "10", "20", "100"]) {

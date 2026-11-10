@@ -2,7 +2,7 @@
 
 WealthPixels has demonstrated treasury-owned test LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
 
-**Current status, November 10, 2026:** both live LINK transfers remain confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes. Treasury also delivered exactly **0.000001 native ETH** through its NEAR authority; [public native smoke evidence](evidence/native-eth-smoke.json) records the successful receipt, exact balance movements and costs. The portfolio purchase coordinator and evidence verifier are tested offline; no live portfolio purchase has executed. [Current purchase readiness](docs/Native_ETH_Milestone_and_Portfolio_Readiness_20261110.md) identifies the USDC gas-ceiling blocker, missing approved price set and narrow recovery/funding corrections required before proceeding.
+**Current status, November 10, 2026:** both live LINK transfers remain confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes. Treasury also delivered exactly **0.000001 native ETH** through its NEAR authority; [public native smoke evidence](evidence/native-eth-smoke.json) records the successful receipt, exact balance movements and costs. The portfolio purchase coordinator and evidence verifier are tested offline; no live portfolio purchase has executed. The [readiness corrections](docs/Portfolio_Purchase_Readiness_Corrections_20261110.md) implement the USDC-only gas ceiling, guarded unpaid expiry and complete NEAR upfront funding reserves. An approved demonstration price set, fresh readiness checks and separate live approvals remain prerequisites. The earlier [readiness snapshot](docs/Native_ETH_Milestone_and_Portfolio_Readiness_20261110.md) remains preserved as historical evidence.
 
 The hackathon demonstrator may control both disposable testnet roles on one computer. Separate accounts and authorizations demonstrate protocol behavior, **not independent production custody**.
 
@@ -35,6 +35,17 @@ The provider-independent quote engine accepts exact ETH/USD, LINK/USD and NEAR/U
 Each quote freezes the configurable USDC amount, 50/50 allocation, individual asset quantities, prices/provenance/approval, all three EVM plus three NEAR costs, fee ratios, reserves, protective policies and planned role/asset destinations. Total expected system fees must be at most 1,000 bps (10%). Missing/stale costs fail closed. Effective quote expiry is bounded by every required price and cost expiry, including the 60-second fee-observation limit; a nominal 30-minute request cannot extend it.
 
 One locked ignored journal at `.local/transfers/purchase-journal.json` retains the active quote, inventory reservation, separate Investor quote approval and fresh payment-eligibility record. Treasury ETH reserves include delivery value, both delivery fee ceilings and the operating reserve; LINK is separately reserved. Payment eligibility checks Investor USDC/ETH and both NEAR authorities' spendable fee balances. A `payment-authorized` record is an eligibility checkpoint with `executionAuthorized: false`; it cannot sign or send. Its reservation remains held after expiry until Task 03D-2 reconciles any later payment activity. Clearly unpaid, unauthorized quotes can be explicitly expired without repricing or changing the original quote.
+
+The USDC payment alone allows a maximum buffered gas limit of 200,000; LINK/native delivery ceilings remain 180,000. Actual gas limits use fresh estimates plus at least 20%, and the 30-gwei/0.0036-ETH fee ceilings still apply independently. Complete NEAR protocol-88 receipt purchase funding is reserved for one Investor and two Treasury MPC calls, separately from expected execution burn and anticipated refunds. Unsupported or missing pricing inputs fail closed.
+
+To release an expired quoted/approved reservation with no payment authorization or execution, use the local-only guarded command after operator review:
+
+~~~text
+npm run purchase -- expire-unpaid --quote-hash REVIEWED_EXPIRED_QUOTE_HASH --approve REVIEWED_EXPIRED_QUOTE_HASH
+npm run test:purchase-corrections
+~~~
+
+The expiry command rejects payment-authorized or any execution-bearing state, including uncertain, paid and partially delivered purchases. It never signs, calls RPC or edits the original quote. Offline tests use temporary synthetic journals, not real purchases.
 
 Run the fixed, credential-free example:
 

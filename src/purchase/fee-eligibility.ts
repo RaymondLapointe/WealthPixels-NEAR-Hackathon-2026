@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
+import { assertMpcFundingModel, type MpcFundingModel } from "../near/mpc-funding.js";
 import { BPS_DENOMINATOR, DEFAULT_GAS_BUFFER_BPS, MAX_EXPECTED_FEE_BPS } from "./config.js";
 
 /** Cost accounting only: this module has no RPC, credential, signing or state-write ports. */
@@ -47,6 +48,8 @@ export interface NearFeeEstimate {
   readonly attachedGas: bigint;
   /** Conservatively assume the original attached deposit is spent; never count forwarded deposits twice. */
   readonly attachedDepositYoctoNear: bigint;
+  /** Full receipt purchase reserve; expected burn remains a separate estimate. */
+  readonly fundingModel?: MpcFundingModel;
 }
 export interface FeeEstimateInput {
   readonly chainId: bigint;
@@ -193,7 +196,11 @@ export function valueExecutionCosts(evmInput: readonly EvmFeeEstimate[], nearInp
   const rates = rationalRates(conversion), maxExpectedFeeBps = bps(maximumExpectedFeeBps, "Maximum expected fee BPS");
   requireAllLegs(evmInput, "EVM estimates", true); requireAllLegs(nearInput, "NEAR estimates", true);
   const evm = PURCHASE_FEE_LEGS.map(leg => Object.freeze({ ...evmInput.find(value => value.leg === leg)!, gasBufferBps: gasBufferBps(evmInput.find(value => value.leg === leg)!.gasBufferBps ?? DEFAULT_GAS_BUFFER_BPS, "EVM gas buffer BPS") }));
-  const near = PURCHASE_FEE_LEGS.map(leg => Object.freeze({ ...nearInput.find(value => value.leg === leg)!, gasBufferBps: gasBufferBps(nearInput.find(value => value.leg === leg)!.gasBufferBps ?? DEFAULT_GAS_BUFFER_BPS, "NEAR gas buffer BPS") }));
+  const near = PURCHASE_FEE_LEGS.map(leg => {
+    const item = nearInput.find(value => value.leg === leg)!;
+    return Object.freeze({ ...item, fundingModel: assertMpcFundingModel(item.fundingModel, item.assumedGasPriceYoctoNear),
+      gasBufferBps: gasBufferBps(item.gasBufferBps ?? DEFAULT_GAS_BUFFER_BPS, "NEAR gas buffer BPS") });
+  });
   const expectedCosts: EstimatedCost[] = [];
   for (const item of evm) {
     const gas = buffered(integer(item.estimatedGas, "Estimated EVM gas", true), item.gasBufferBps);
@@ -213,7 +220,11 @@ export function valueExecutionCosts(evmInput: readonly EvmFeeEstimate[], nearInp
     if (gas > maximumGas) throw new Error("Expected NEAR gas exceeds the signing gas attachment and overhead reserve");
     const gasPrice = integer(item.assumedGasPriceYoctoNear, "Assumed NEAR gas price", true);
     const deposit = integer(item.attachedDepositYoctoNear, "NEAR original attached deposit");
-    const expected = gas * gasPrice + deposit, maximum = maximumGas * gasPrice + deposit;
+    if (item.attachedGas !== BigInt(item.fundingModel.attachedGas)) throw new Error("NEAR attachment differs from the supported MPC prefunding model");
+    // Generic accounting can model other deposit costs; funding never credits a refund of the MPC's required deposit.
+    // Purchase observation normalization separately requires the exact one-yocto attached deposit.
+    const requiredDeposit = BigInt(item.fundingModel.depositYocto), reservedDeposit = deposit > requiredDeposit ? deposit : requiredDeposit;
+    const expected = gas * gasPrice + deposit, maximum = BigInt(item.fundingModel.upfrontGasYocto) + reservedDeposit;
     expectedCosts.push(Object.freeze({ leg: item.leg, payer: item.payer, asset: "NEAR", bufferedGas: gas, expectedNativeBaseUnits: expected, maximumNativeReserveBaseUnits: maximum, expectedUsdcExact: nativeToUsdc(expected, "NEAR", rates.NEAR), maximumReserveUsdcExact: nativeToUsdc(maximum, "NEAR", rates.NEAR) }));
   }
   const total = sum(expectedCosts.map(value => value.expectedUsdcExact));

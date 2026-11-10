@@ -9,7 +9,7 @@ import { prepareDemonstrationPrices, approveDemonstrationPrices, assertPriceSet,
   type PriceAsset, type PriceInput, type PricePacket, type PriceSet } from "../src/purchase/prices.js";
 import { createPurchaseTerms } from "../src/purchase/terms.js";
 import { createPurchaseQuote } from "../src/purchase/quote.js";
-import { approveReservedPurchase, reservePurchaseQuote, readPurchaseJournal, type PurchaseJournal } from "../src/purchase/journal.js";
+import { approveReservedPurchase, expireUnpaidPurchase, reservePurchaseQuote, readPurchaseJournal, type PurchaseJournal } from "../src/purchase/journal.js";
 import { check, hexHash } from "../src/purchase/integrity.js";
 import { requireRole } from "../src/near/identities.js";
 import { PURCHASE_LEGS } from "../src/purchase/settlement.js";
@@ -18,6 +18,7 @@ import type { PurchaseLeg } from "../src/purchase/legs.js";
 const help = `WealthPixels purchase operator CLI (no automatic transaction loops or retries)
 Read-only: inspect | inspect-networks | reconcile-signing | reconcile | audit-broadcast
 Local quotation: propose-prices | approve-prices | quote | approve-quote
+Local recovery: expire-unpaid (expired quoted/approved reservation only; no RPC or credentials)
 Separately approved future live steps: prepare | sign | broadcast | retire-unsigned
 Common: --near-rpc URL --evm-rpc URL --quote-hash HASH --leg usdc-payment|link-delivery|eth-delivery --role investor|treasury
 sign: --approve UNSIGNED_HASH --reference TEXT --credential EXTERNAL_ROLE_FILE
@@ -28,6 +29,7 @@ quote: --prices IGNORED_JSON --amount DECIMAL_USDC --selected-max-fee-wei INTEGE
 propose-prices: --input IGNORED_PUBLIC_JSON --out NEW_IGNORED_JSON
 approve-prices: --input PROPOSAL_JSON --out NEW_APPROVED_JSON --approve PROPOSAL_DIGEST --reference TEXT
 approve-quote: --quote-hash HASH --approve HASH --reference TEXT
+expire-unpaid: --quote-hash HASH --approve HASH (both must match; authorization/execution retains inventory)
 retire-unsigned: --approve UNSIGNED_HASH --ack-prepared-at ORIGINAL_TIMESTAMP --reference TEXT
 All JSON input/output files must be inside .local/transfers. No .env is read.
 For credential-free evaluation run npm test and npm run purchase:dry-run.
@@ -36,7 +38,8 @@ Commands that prepare, sign, broadcast or fund require separate operator authori
 const specifications: Record<string, readonly string[]> = {
   inspect: [], "inspect-networks": [], "propose-prices": ["input", "out"], "approve-prices": ["input", "out", "approve", "reference"],
   quote: ["prices", "amount", "selected-max-fee-wei", "selected-priority-wei", "usdc-implementation", "usdc-code-hash"],
-  "approve-quote": ["quote-hash", "approve", "reference"], prepare: ["quote-hash", "leg", "role", "reference"],
+  "approve-quote": ["quote-hash", "approve", "reference"], "expire-unpaid": ["quote-hash", "approve"],
+  prepare: ["quote-hash", "leg", "role", "reference"],
   sign: ["quote-hash", "leg", "role", "approve", "reference", "credential"],
   "reconcile-signing": ["quote-hash", "leg", "role"], reconcile: ["quote-hash", "leg", "role"],
   "audit-broadcast": ["quote-hash", "leg", "role", "approve", "ack-authorization", "recovery", "ack-prepared-at"],
@@ -74,7 +77,7 @@ async function main() {
   const args = process.argv.slice(2), command = args.shift();
   if (!command || command === "--help" || command === "help") { process.stdout.write(help); return; }
   check(command in specifications, "Unknown purchase command. Use --help.");
-  const allowed = new Set([...specifications[command]!, "near-rpc", "evm-rpc"]), flags = new Map<string, string>();
+  const allowed = new Set([...specifications[command]!, ...(command === "expire-unpaid" ? [] : ["near-rpc", "evm-rpc"])]), flags = new Map<string, string>();
   while (args.length) {
     const token = args.shift()!;
     check(token.startsWith("--") && allowed.has(token.slice(2)) && !flags.has(token.slice(2)), "Unknown, duplicate or prohibited purchase option.");
@@ -83,6 +86,11 @@ async function main() {
     else { const value = args.shift(); check(value !== undefined && !value.startsWith("--"), "Missing purchase option value."); flags.set(key, value); }
   }
   const need = (key: string) => { const value = flags.get(key); check(value !== undefined && value.length > 0, `Required option --${key} is missing.`); return value; };
+  if (command === "expire-unpaid") {
+    const expectedQuoteHash = hexHash(need("quote-hash")), approval = hexHash(need("approve"));
+    check(approval === expectedQuoteHash, "Unpaid expiry approval must exactly match --quote-hash.");
+    print(publicSummary(await expireUnpaidPurchase({ expectedQuoteHash, asOf: new Date().toISOString() }))); return;
+  }
   const networks = { nearRpcUrl: flags.get("near-rpc") ?? "https://archival-rpc.testnet.fastnear.com", evmRpcUrl: flags.get("evm-rpc") ?? "https://rpc.sepolia.ethpandaops.io" };
   if (command === "inspect-networks") { const r = await inspectReadiness(networks); print({ kind: "public-readiness-no-transaction-preparation", ...r }); return; }
   if (command === "inspect") { print(publicSummary(await readPurchaseJournal())); return; }
