@@ -81,9 +81,16 @@ export function publicExecutionSummary(state: ExecutionState): unknown {
     receipt: state.receipt, recovery: state.recovery,
   };
 }
-/** Shared bounded bigint codec; asset-specific validators must validate the returned object. */
-export function decodeEncodedState(text: string): unknown {
-  if (text.length > 2_000_000) throw new Error("Transfer state is too large.");
+/** Size uses JavaScript UTF-16 code units, matching the original decoder guard. */
+function assertEncodedSize(text: string, maxCharacters: number): void {
+  if (!Number.isSafeInteger(maxCharacters) || maxCharacters <= 0) throw new Error("Invalid runtime state size limit.");
+  if (text.length > maxCharacters) throw new Error("Transfer state is too large.");
+}
+/** Shared bounded bigint codec; only explicit internal callers select a different bound.
+ * Asset-specific validators must still validate the returned object.
+ */
+export function decodeEncodedState(text: string, maxCharacters = 2_000_000): unknown {
+  assertEncodedSize(text, maxCharacters);
   const value = JSON.parse(text, (_key, item: unknown) => {
     if (item && typeof item === "object" && "$bigint" in item) {
       const digits = (item as { $bigint: unknown }).$bigint;
@@ -117,10 +124,14 @@ export async function saveState(file: string, state: ExecutionState): Promise<vo
   await saveEncodedState(file, state);
 }
 /** Shared durable writer; callers retain the runtime-path checks, lock and asset-specific validation. */
-export async function saveEncodedState(file: string, state: unknown): Promise<void> {
+export async function saveEncodedState(file: string, state: unknown, maxCharacters?: number): Promise<void> {
+  const encoded = encodeState(state);
+  // Purchase journals supply their reader's bound. Reject before creating a temporary
+  // file so a failed size check leaves the previous committed journal readable.
+  if (maxCharacters !== undefined) assertEncodedSize(encoded, maxCharacters);
   const temporary = file + ".tmp";
   const handle = await open(temporary, "wx", 0o600);
-  try { await handle.writeFile(encodeState(state), "utf8"); await handle.sync(); }
+  try { await handle.writeFile(encoded, "utf8"); await handle.sync(); }
   finally { await handle.close(); }
   await rename(temporary, file);
 }

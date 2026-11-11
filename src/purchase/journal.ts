@@ -14,6 +14,13 @@ import { check, fingerprint, frozen, hexHash, label, publicSource, utc } from ".
 import { assertPurchaseExecution, executionPhase, PURCHASE_LEGS, type PurchaseExecution } from "./settlement.js";
 import { paymentClaimId } from "./claims.js";
 
+/** Full three-leg evidence and bounded monitoring history need more space than a
+ * standalone transfer. Both read and atomic commit enforce this UTF-16 character
+ * bound; unrelated runtime records keep their existing decoder limit. No pruning,
+ * migration or changes to the recorded journal representation are performed.
+ */
+export const PURCHASE_JOURNAL_MAX_CHARACTERS = 32_000_000;
+
 export interface FundingInventorySnapshot {
   readonly mode: "offline" | "live"; readonly observedAt: string; readonly chainId: bigint;
   readonly treasuryAddress: string; readonly investorAddress: string; readonly linkTokenAddress: string; readonly usdcTokenAddress: string;
@@ -172,7 +179,7 @@ async function locked<T>(root: string, policy: PurchaseQuotePolicy,
   const path = await journalPath(root);
   return withStateLock(path, async () => {
     let state: PurchaseJournal;
-    try { state = decodeEncodedState(await readFile(path, "utf8")) as PurchaseJournal; }
+    try { state = decodeEncodedState(await readFile(path, "utf8"), PURCHASE_JOURNAL_MAX_CHARACTERS) as PurchaseJournal; }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; state = empty(); }
     assertJournal(state, policy);
     const result = await action(frozen(state));
@@ -180,7 +187,7 @@ async function locked<T>(root: string, policy: PurchaseQuotePolicy,
       assertJournal(result.next, policy);
       const last = result.next.active ?? result.next.archive.at(-1);
       if (last) currentAction(last.updatedAt, last.quote, last.status === "expired-unpaid");
-      await saveEncodedState(path, result.next);
+      await saveEncodedState(path, result.next, PURCHASE_JOURNAL_MAX_CHARACTERS);
     }
     return frozen(result.value);
   });
@@ -253,7 +260,7 @@ export async function withPurchaseExecutionJournal<T>(root: string, policy: Purc
   const path = await journalPath(root);
   return withStateLock(path, async () => {
     let current: PurchaseJournal;
-    try { current = decodeEncodedState(await readFile(path, "utf8")) as PurchaseJournal; }
+    try { current = decodeEncodedState(await readFile(path, "utf8"), PURCHASE_JOURNAL_MAX_CHARACTERS) as PurchaseJournal; }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; current = empty(); }
     assertJournal(current, policy);
     return action({ current: () => frozen(current), async commit(next) {
@@ -292,7 +299,7 @@ export async function withPurchaseExecutionJournal<T>(root: string, policy: Purc
           }
         }
       }
-      await saveEncodedState(path, next); current = frozen(next);
+      await saveEncodedState(path, next, PURCHASE_JOURNAL_MAX_CHARACTERS); current = frozen(next);
     } });
   });
 }
