@@ -1,5 +1,58 @@
 # WealthPixels — NEAR Chain Signatures prototype
 
+**Diversification Without Pooling.**\
+**Ownership Without Blockchain Boundaries.**\
+**Investing Without Barriers.**
+
+WealthPixels is building a portfolio purchasing protocol designed to make diversified investing as convenient as buying units in a fund, while delivering eligible individual assets directly to the Investor from Treasury principal inventory. The broader many-asset, multiblockchain portfolio experience remains our product vision. The current prototype uses **NEAR Chain Signatures to authorize Ethereum Sepolia transactions**; both native ETH and LINK are delivered on Sepolia.
+
+**Verifiable Execution** is a supporting, enduring product principle: independently checkable evidence connecting approved purchase terms, payment, transaction authorizations, individual asset deliveries and settlement. Present verification relies on public RPC responses and disclosed local approval records; it is not fully trustless.
+
+## Getting Started — Choose Your Evaluation Path
+
+### Quick Evaluation — No Credentials Required
+
+**Recommended for NEAR Hackathon judges, technical reviewers and developers exploring the prototype.** Start with the [Guided Purchase Journey — Judge Story](docs/WealthPixels_Hackathon_Demo_Story.md) for the investment proposition and ten-chapter demonstration narrative.
+
+**No Investor or Treasury credential files, private keys, funded testnet accounts or transaction approvals are required for Quick Evaluation.**
+
+From a fresh checkout's root directory, use Node **22.23.4** (or a supported Node 22 patch **>=22.22.2 <23**) and npm:
+
+~~~text
+npm ci
+npm test
+npm run typecheck
+npm run purchase:dry-run
+~~~
+
+Installation needs internet or a populated npm cache. Tests and the fixture-based three-leg simulation run offline, without RPC calls or Windows-specific setup. The simulation uses an isolated temporary journal to model Investor USDC payment and Treasury LINK/native ETH delivery. Its simulated approvals, signatures and completed state are **not real blockchain execution or a completed live portfolio purchase**.
+
+Inspect the [public evidence documentation and verification limits](evidence/README.md), the completed [two-way LINK manifest](evidence/sepolia-link.json) and [native ETH smoke-test summary](evidence/native-eth-smoke.json). Verify the completed LINK transfers using public RPCs:
+
+~~~text
+npm run verify:evidence -- --manifest evidence/sepolia-link.json --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io
+~~~
+
+This reads public data without signing or broadcasting. Success exits **0**; invalid evidence, failed checks or unavailable RPC data exit **1**. The native ETH summary is available for inspection but is not an input schema accepted by either manifest verifier.
+
+A completed live portfolio purchase manifest is not yet published. Check the explicitly pending placeholder offline:
+
+~~~text
+npm run verify:purchase -- --manifest evidence/portfolio-purchase.pending.json
+~~~
+
+Expected result: **incomplete / PENDING**, exit **2**, with no RPC requests. Public verification depends on RPC connectivity and historical data availability; future completed-purchase verification also requires historical Ethereum Beacon data whose availability remains unresolved. Missing evidence must remain incomplete. See the [purchase evidence section below](#public-portfolio-purchase-evidence-task-03e) for the eventual completed-manifest interface.
+
+### Advanced Live Reproduction — Optional
+
+Developers executing a new live testnet purchase need their **own independently controlled, funded disposable testnet identities and protected signing credentials**, never the WealthPixels demonstration credentials. The current live adapter pins the reviewed demonstration identities; using other identities requires a separately reviewed public configuration adaptation and derivation checks.
+
+Follow the [Guided Purchase Operator Story](docs/WealthPixels_Guided_Purchase_Operator_Story.md) and [live operator runbook](docs/Task03FA_Live_Operator_Runbook.md). The [account setup guide](docs/Task02B1_Account_Setup_and_Derivation.md) and [Windows operator guide](docs/Task02B1_Windows_Operator_Instructions.md) provide historical setup references; use the current purchase workflow for execution.
+
+Configure credential references privately, keep credential files outside the repository and select only the intended role for each invocation. Price approval, quote creation/reservation, exact quote approval and payment preparation remain separate checkpoints; each live signing request and each broadcast requires its own explicit approval of the exact digest or transaction hash.
+
+## Demonstration status
+
 WealthPixels has demonstrated treasury-owned test LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
 
 **Current status, November 10, 2026:** both live LINK transfers remain confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes. Treasury also delivered exactly **0.000001 native ETH** through its NEAR authority; [public native smoke evidence](evidence/native-eth-smoke.json) records the successful receipt, exact balance movements and costs. The portfolio purchase coordinator and evidence verifier are tested offline; no live portfolio purchase has executed. The [readiness corrections](docs/Portfolio_Purchase_Readiness_Corrections_20261110.md) implement the USDC-only gas ceiling, guarded unpaid expiry and complete NEAR upfront funding reserves. An approved demonstration price set, fresh readiness checks and separate live approvals remain prerequisites. The earlier [readiness snapshot](docs/Native_ETH_Milestone_and_Portfolio_Readiness_20261110.md) remains preserved as historical evidence.
@@ -100,13 +153,13 @@ npm run test:purchase-evidence
 npm run verify:purchase -- --manifest evidence/portfolio-purchase.pending.json
 ~~~
 
-The final command currently reports **incomplete / PENDING**, makes no network requests and exits **2**; it is not a passing purchase proof. Tests and the dry-run use explicitly labelled fixtures and do not execute a live purchase. Once a real completed manifest has been exported and published after approval, reviewers can place it in `evidence/portfolio-purchase.json` and run:
+The final command currently reports **incomplete / PENDING**, makes no network requests and exits **2**; it is not a passing purchase proof. Tests and the dry-run use explicitly labelled fixtures and do not execute a live purchase. Once a real completed manifest has been exported and published after approval, keep it inside this checkout's `evidence/` directory and use its actual purchase-specific filename. Replace both placeholders below with that file and the separately preserved approved quote hash:
 
 ~~~text
-npm run verify:purchase -- --manifest evidence/portfolio-purchase.json --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io --beacon-rpc https://ethereum-sepolia-beacon-api.publicnode.com
+npm run verify:purchase -- --manifest evidence/ACTUAL_COMPLETED_PURCHASE_MANIFEST.json --expected-quote-hash ACTUAL_APPROVED_QUOTE_HASH --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io --beacon-rpc https://ethereum-sepolia-beacon-api.publicnode.com
 ~~~
 
-Use `--expected-quote-hash` to pin a separately preserved approved quote hash. Optional `--report evidence/NEW_REPORT.json` preserves success, failure or partial checks without overwriting prior evidence. Exit **0** means every implemented public check passed, **2** means incomplete/unavailable history, and **1** means contradictory/invalid evidence. No signing identity, funding or operator journal is required. `npm run purchase:export-evidence -- --help` describes the separate operator-only extraction of public fields after completion.
+The `--expected-quote-hash` option pins the independently retained approval; omit it only when that hash is unavailable. Optional `--report evidence/NEW_REPORT.json` preserves success, failure or partial checks without overwriting prior evidence. Exit **0** means every implemented public check passed, **2** means incomplete/unavailable history, and **1** means contradictory/invalid evidence. No signing identity, funding or operator journal is required. `npm run purchase:export-evidence -- --help` describes the separate operator-only extraction of public fields after completion.
 
 Verification reconstructs exact signed bytes from public transactions, matches all three direct NEAR MPC signatures against the full trusted derived keys, and checks official token contracts, USDC six-decimal payment, LINK events, native value/gas, canonical historical balances, finality, order, nonces and actual fees. Historical finalized payment **before** LINK release is checked through Ethereum consensus state anchored by the LINK execution block's parent Beacon root. Beacon REST access is another interface to Ethereum, not another blockchain integration. Missing archive data produces incomplete verification; cached fixtures and today's finalized tag cannot replace it.
 
@@ -211,12 +264,7 @@ Read the [Task 02B-2A implementation report and execution runbook](docs/Task02B2
 
 The [Treasury recovery report](docs/Task02B2B_Phase3F_Controlled_Broadcast_Recovery.md) and [Investor recovery report](docs/Task02B2B_Phase3H_Investor_Recovery_Readiness.md) describe `recovery-audit` and `broadcast-recovered`. Recovery is restricted to those two exact recorded transactions and requires the signed hash, acknowledgment of the original expired timestamp and a new durable audit. Both transactions are now confirmed; their saved state and attempt markers block another broadcast. Inspection audits cannot authorize a later send, and the normal preparation-age rule remains enforced.
 
-Existing operator credential locations (plaintext private keys; keep the protected store outside the repository):
-
-~~~text
-%LOCALAPPDATA%\WealthPixels\testnet-credentials\treasury.json
-%LOCALAPPDATA%\WealthPixels\testnet-credentials\investor.json
-~~~
+Keep the two protected credential files outside the repository and configure their references privately. Do not publish credential paths, private keys, file contents or local environment settings.
 
 A same-user process could technically read both files. This is operator-controlled demo separation, not an operating-system or production custody boundary. Separate OS users/devices remain an optional enhancement.
 
