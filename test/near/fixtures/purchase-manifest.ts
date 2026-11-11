@@ -3,8 +3,9 @@ import { createPurchaseExecutionFixture } from "./purchase-execution.js";
 
 /** Entirely simulated purchase, including signature/transport/receipt ports.
  * No private key generation, credential access, public RPC, real MPC request or EVM execution occurs. */
-export async function completedPurchaseManifestFixture(amount = "10", recoverSigned = false) {
-  const f = await createPurchaseExecutionFixture({ amount, investorUsdc: 200_000_000n });
+export async function completedPurchaseManifestFixture(amount = "10", recoverSigned = false, quoteSchemaVersion: 1 | 2 = 1) {
+  const f = await createPurchaseExecutionFixture({ amount, investorUsdc: 200_000_000n, quoteSchemaVersion,
+    ...(quoteSchemaVersion === 2 ? { approvalDelayMs: 90_000 } : {}) });
   try {
     await f.setup(); const c = createPurchaseCoordinator(f.driver, { root: f.root });
     for (const leg of ["usdc-payment", "link-delivery", "eth-delivery"] as const) {
@@ -19,7 +20,7 @@ export async function completedPurchaseManifestFixture(amount = "10", recoverSig
       await c.broadcast({ ...input, approval: e.legs[leg]!.signed!.hash, paymentAuthorizationHash: e.paymentAuthorization!.authorizationHash,
         ...(recoverSigned ? { recovery: true, expiredPreparationAcknowledgment: e.legs[leg]!.preparedAt } : {}) });
       await c.reconcile(input);
-      if (leg === "usdc-payment") f.clock.advance(120_000);
+      if (leg === "usdc-payment") f.clock.advance(quoteSchemaVersion === 2 ? 300_000 : 120_000);
     }
     const journal = await c.inspect();
     return { record: structuredClone(journal.archive.at(-1)!), recordedAt: new Date(f.clock.now() + 1000).toISOString() };

@@ -91,12 +91,14 @@ test("gas and fee observations enforce protective caps and cannot underestimate 
   assert.throws(() => build(p, "10", { ...c, nearObservation: { ...c.nearObservation, blockHash: "invalid" } }));
 });
 
-test("fee validity is limited to 60 seconds and shorter price/observation expirations take precedence", () => {
+test("legacy acceptance and current execution observations retain their original 60-second limits", () => {
   const q = fixtureQuote(); assert.equal(q.expiresAt, seconds(60)); assert.equal(q.requestedExpiresAt, seconds(1800));
   const p = prices(false, { ...priceInput(), expiresAt: seconds(20) });
   assert.equal(build(p).expiresAt, seconds(20));
   const c = costs(prices());
-  assert.equal(build(prices(), "10", { ...c, expiresAt: seconds(10) }).expiresAt, seconds(10));
+  const current = build(prices(), "10", { ...c, expiresAt: seconds(10) });
+  assert.equal(current.schemaVersion, 2); assert.equal(current.expiresAt, seconds(300));
+  assert.equal(current.feeAssessment.expiresAt, seconds(10));
   assert.throws(() => createPurchaseQuote({ purchaseId: p.purchaseId, purpose: "offline", investmentUsdcBaseUnits: 10_000_000n,
     prices: p, costs: c, createdAt: seconds(20) }));
   assert.throws(() => createPurchaseFeeEstimate(q.terms, q.prices, q.costs, { asOf: seconds(60), purpose: "offline", maxExpectedFeeBps: 1000n, maxEstimateAgeMs: 60_000 }));
@@ -197,4 +199,77 @@ test("quote computation has no transaction serialization, credential or submissi
     assert.equal(q.transactions.length, 3);
     for (const t of q.transactions) { assert.equal(t.transactionPreparationRequired, true); assert.equal("nonce" in t, false); }
   } finally { globalThis.fetch = previous; }
+});
+
+
+test("V2 defaults to immutable price-bounded acceptance while retaining the short initial fee snapshot", () => {
+  const p = prices(true), c = costs(p, "10", "live"), q = build(p, "10", c, "prepayment");
+  assert.equal(q.schemaVersion, 2); assert.equal(q.expiresAt, p.expiresAt);
+  assert.equal(q.feeAssessment.expiresAt, seconds(60)); assert.equal(q.executionAuthorized, false);
+  const requested = createPurchaseQuote({ purchaseId: p.purchaseId, purpose: "prepayment", investmentUsdcBaseUnits: 10_000_000n,
+    prices: p, costs: c, createdAt: AT, requestedExpiresAt: seconds(90) });
+  assert.equal(requested.expiresAt, seconds(90)); assert.equal(requested.feeAssessment.expiresAt, seconds(60));
+  const policy = { ...DEFAULT_PURCHASE_QUOTE_POLICY, nominalQuoteWindowMs: 30_000 };
+  const short = createPurchaseQuote({ purchaseId: p.purchaseId, purpose: "prepayment", investmentUsdcBaseUnits: 10_000_000n,
+    prices: p, costs: c, createdAt: AT, policy });
+  assert.equal(short.expiresAt, seconds(30)); assertPurchaseQuote(short, short.quoteHash, policy);
+});
+
+test("V2 human approval after the initial 60 seconds requires fresh economics without changing approved terms", () => {
+  const q = fixtureQuote("10", true, "offline-delayed-human-approval", 2), original = structuredClone(q);
+  const a = approvePurchaseQuote(q, { role: "investor", approval: q.quoteHash,
+    reference: "SIMULATED delayed human review only", approvedAt: seconds(90) });
+  const freshCosts = { ...q.costs, sampledAt: seconds(100), expiresAt: seconds(160) };
+  const eligible = assertPaymentAuthorizationEligible(q, a, { role: "investor", approval: q.quoteHash,
+    asOf: seconds(100), freshCosts });
+  assert.equal(eligible.checkedAt, seconds(100)); assert.equal(eligible.expiresAt, seconds(160));
+  assert.equal(eligible.quoteHash, q.quoteHash); assert.equal(eligible.priceSetHash, q.prices.setHash);
+  assert.equal(eligible.feeAssessment.expectedCosts.length, 6); assert.equal(eligible.executionAuthorized, false);
+  assert.deepEqual(q, original); assert.equal(q.feeAssessment.expiresAt, seconds(60));
+  assert.throws(() => assertPaymentAuthorizationEligible(q, a, { role: "investor", approval: q.quoteHash,
+    asOf: seconds(100), freshCosts: q.costs }), /expired|stale/i);
+});
+
+test("V2 execution freshness and original price expiry remain hard boundaries", () => {
+  const q = fixtureQuote("10", true, "offline-v2-freshness", 2), a = approval(q);
+  for (const freshCosts of [
+    { ...q.costs, sampledAt: seconds(40), expiresAt: seconds(160) },
+    { ...q.costs, sampledAt: seconds(90), expiresAt: seconds(100) },
+  ]) assert.throws(() => assertPaymentAuthorizationEligible(q, a,
+    { role: "investor", approval: q.quoteHash, asOf: seconds(100), freshCosts }), /expired|stale/i);
+  const latest = assertPaymentAuthorizationEligible(q, a, { role: "investor", approval: q.quoteHash,
+    asOf: seconds(299), freshCosts: { ...q.costs, sampledAt: seconds(299), expiresAt: seconds(359) } });
+  assert.equal(latest.expiresAt, q.prices.expiresAt);
+  assert.throws(() => approvePurchaseQuote(q, { role: "investor", approval: q.quoteHash,
+    reference: "SIMULATED expired approval", approvedAt: seconds(300) }), /expired/i);
+  assert.throws(() => assertPaymentAuthorizationEligible(q, a, { role: "investor", approval: q.quoteHash,
+    asOf: seconds(300), freshCosts: { ...q.costs, sampledAt: seconds(300), expiresAt: seconds(360) } }), /expired/i);
+});
+
+test("V2 fresh observations cannot silently change fee selections or exceed the expected fee ceiling", () => {
+  const q = fixtureQuote("10", true, "offline-v2-fixed-economics", 2), a = approval(q);
+  const fresh = { ...q.costs, sampledAt: seconds(100), expiresAt: seconds(160) };
+  for (const change of [{ maxFeePerGasWei: 4_000_000_000n }, { maxPriorityFeePerGasWei: 200_000_000n }]) {
+    assert.throws(() => assertPaymentAuthorizationEligible(q, a, { role: "investor", approval: q.quoteHash,
+      asOf: seconds(100), freshCosts: { ...fresh, evm: fresh.evm.map(item => ({ ...item, ...change })) } }), /selection|changed/i);
+  }
+  assert.throws(() => assertPaymentAuthorizationEligible(q, a, { role: "investor", approval: q.quoteHash,
+    asOf: seconds(100), freshCosts: { ...fresh, evm: fresh.evm.map(item => ({ ...item,
+      observedBaseFeePerGasWei: 3_000_000_000n, assumedBaseFeePerGasWei: 3_000_000_000n })) } }), /exceed/i);
+});
+
+test("V1 historical timing and versioned integrity cannot be silently upgraded or reinterpreted", () => {
+  const legacy = fixtureQuote("10", true), current = fixtureQuote("10", true, legacy.purchaseId, 2);
+  assert.equal(legacy.schemaVersion, 1); assert.equal(legacy.expiresAt, seconds(60));
+  // Golden captured independently from the pre-V2 Git HEAD constructor with these synthetic inputs.
+  assert.equal(legacy.quoteHash, "0xa8dc055141dcbe095e66d5119b95fd3e96f714d417f88f07b69b2bbaacdfde85");
+  assert.notEqual(legacy.quoteHash, current.quoteHash);
+  assertPurchaseQuote(structuredClone(legacy), legacy.quoteHash); assertPurchaseQuote(structuredClone(current), current.quoteHash);
+  for (const schemaVersion of [undefined, 0, 3, "2"]) {
+    assert.throws(() => assertPurchaseQuote({ ...current, schemaVersion } as unknown as PurchaseQuote, current.quoteHash), /version/i);
+  }
+  assert.throws(() => assertPurchaseQuote({ ...legacy, schemaVersion: 2 }, legacy.quoteHash));
+  assert.throws(() => assertPurchaseQuote({ ...current, schemaVersion: 1 }, current.quoteHash));
+  assert.throws(() => approvePurchaseQuote(legacy, { role: "investor", approval: legacy.quoteHash,
+    reference: "SIMULATED late legacy approval", approvedAt: seconds(90) }), /expired/i);
 });

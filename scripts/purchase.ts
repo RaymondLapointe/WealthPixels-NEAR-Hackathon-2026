@@ -14,6 +14,7 @@ import { check, hexHash } from "../src/purchase/integrity.js";
 import { requireRole } from "../src/near/identities.js";
 import { PURCHASE_LEGS } from "../src/purchase/settlement.js";
 import type { PurchaseLeg } from "../src/purchase/legs.js";
+import { compactPurchaseOutput, priceCommandOutput, commandTiming, commandFailure } from "../src/purchase/operator-output.js";
 
 const help = `WealthPixels purchase operator CLI (no automatic transaction loops or retries)
 Read-only: inspect | inspect-networks | reconcile-signing | reconcile | audit-broadcast
@@ -34,6 +35,8 @@ retire-unsigned: --approve UNSIGNED_HASH --ack-prepared-at ORIGINAL_TIMESTAMP --
 All JSON input/output files must be inside .local/transfers. No .env is read.
 For credential-free evaluation run npm test and npm run purchase:dry-run.
 Commands that prepare, sign, broadcast or fund require separate operator authorization; help performs none.
+Action output is compact JSON with application start/output timestamps and remaining validity at output.
+Use inspect for sanitized details. Output time is not operator presentation/response time.
 `;
 const specifications: Record<string, readonly string[]> = {
   inspect: [], "inspect-networks": [], "propose-prices": ["input", "out"], "approve-prices": ["input", "out", "approve", "reference"],
@@ -73,6 +76,8 @@ async function writeNew(file: string, value: unknown): Promise<void> {
   const path = await runtimeStatePath(file, process.cwd(), true), handle = await open(path, "wx", 0o600);
   try { await handle.writeFile(encodeState(value)); await handle.sync(); } finally { await handle.close(); }
 }
+const commandStartedAt = new Date().toISOString();
+const commandName = process.argv[2] ?? "help";
 async function main() {
   const args = process.argv.slice(2), command = args.shift();
   if (!command || command === "--help" || command === "help") { process.stdout.write(help); return; }
@@ -86,10 +91,13 @@ async function main() {
     else { const value = args.shift(); check(value !== undefined && !value.startsWith("--"), "Missing purchase option value."); flags.set(key, value); }
   }
   const need = (key: string) => { const value = flags.get(key); check(value !== undefined && value.length > 0, `Required option --${key} is missing.`); return value; };
+  const context = () => ({ command, startedAt: commandStartedAt, outputAt: new Date().toISOString(),
+    ...(flags.has("leg") ? { leg: flags.get("leg") as PurchaseLeg } : {}), ...(flags.has("quote-hash") ? { quoteHash: flags.get("quote-hash")! } : {}) });
+  const printPurchase = (journal: PurchaseJournal) => print(compactPurchaseOutput(journal, context()));
   if (command === "expire-unpaid") {
     const expectedQuoteHash = hexHash(need("quote-hash")), approval = hexHash(need("approve"));
     check(approval === expectedQuoteHash, "Unpaid expiry approval must exactly match --quote-hash.");
-    print(publicSummary(await expireUnpaidPurchase({ expectedQuoteHash, asOf: new Date().toISOString() }))); return;
+    printPurchase(await expireUnpaidPurchase({ expectedQuoteHash, asOf: new Date().toISOString() })); return;
   }
   const networks = { nearRpcUrl: flags.get("near-rpc") ?? "https://archival-rpc.testnet.fastnear.com", evmRpcUrl: flags.get("evm-rpc") ?? "https://rpc.sepolia.ethpandaops.io" };
   if (command === "inspect-networks") { const r = await inspectReadiness(networks); print({ kind: "public-readiness-no-transaction-preparation", ...r }); return; }
@@ -101,12 +109,12 @@ async function main() {
       return [asset, { asset, quoteCurrency: "USD", ...parseExactPriceDecimal(p.priceUsd), sourceUrl: p.sourceUrl, sourceReference: p.sourceReference, originalObservedAt: p.originalObservedAt }];
     })) as Record<PriceAsset, PriceInput>;
     const packet = prepareDemonstrationPrices({ purchaseId: input.purchaseId, providerId: input.providerId, validFrom: input.validFrom, expiresAt: input.expiresAt, prices });
-    await writeNew(need("out"), packet); print(packet); return;
+    await writeNew(need("out"), packet); print(priceCommandOutput(packet, context())); return;
   }
   if (command === "approve-prices") {
     const packet = await load(need("input")) as PricePacket;
     const set = approveDemonstrationPrices(packet, { approvedDigest: need("approve"), reference: need("reference"), approvedAt: new Date().toISOString() });
-    await writeNew(need("out"), set); print(set); return;
+    await writeNew(need("out"), set); print(priceCommandOutput(set, context())); return;
   }
   if (command === "quote") {
     const prices = await load(need("prices")) as PriceSet, initialTime = new Date().toISOString();
@@ -120,23 +128,25 @@ async function main() {
       nearSigningAssumptions: RECORDED_MPC_SIGNING_ASSUMPTIONS });
     const time = new Date().toISOString(), quote = createPurchaseQuote({ purchaseId: prices.purchaseId, purpose: "prepayment", investmentUsdcBaseUnits: amount,
       prices, costs: collected.costs, createdAt: time });
-    print(publicSummary(await reservePurchaseQuote({ quote, expectedQuoteHash: quote.quoteHash, inventory: collected.readiness.inventory, asOf: time }))); return;
+    printPurchase(await reservePurchaseQuote({ quote, expectedQuoteHash: quote.quoteHash, inventory: collected.readiness.inventory, asOf: time })); return;
   }
-  if (command === "approve-quote") { print(publicSummary(await approveReservedPurchase({ expectedQuoteHash: need("quote-hash"), role: "investor",
-    approval: need("approve"), reference: need("reference"), approvedAt: new Date().toISOString() }))); return; }
+  if (command === "approve-quote") { printPurchase(await approveReservedPurchase({ expectedQuoteHash: need("quote-hash"), role: "investor",
+    approval: need("approve"), reference: need("reference"), approvedAt: new Date().toISOString() })); return; }
   const leg = need("leg") as PurchaseLeg; check(PURCHASE_LEGS.includes(leg), "Invalid purchase leg.");
   const role = requireRole(need("role")), input = { quoteHash: need("quote-hash"), leg, role };
   const coordinator = createPurchaseCoordinator(createPurchaseExecutionServices(networks));
-  if (command === "prepare") print(publicSummary(await coordinator.prepare({ ...input, reference: need("reference") })));
-  else if (command === "sign") print(publicSummary(await coordinator.sign({ ...input, approval: need("approve"), reference: need("reference"), credentialPath: need("credential") })));
-  else if (command === "reconcile-signing") print(publicSummary(await coordinator.reconcileSigning(input)));
-  else if (command === "reconcile") print(publicSummary(await coordinator.reconcile(input)));
-  else if (command === "retire-unsigned") print(publicSummary(await coordinator.retireUnsigned({ ...input, approval: need("approve"), originalPreparedAt: need("ack-prepared-at"), reference: need("reference") })));
+  if (command === "prepare") printPurchase(await coordinator.prepare({ ...input, reference: need("reference") }));
+  else if (command === "sign") printPurchase(await coordinator.sign({ ...input, approval: need("approve"), reference: need("reference"), credentialPath: need("credential") }));
+  else if (command === "reconcile-signing") printPurchase(await coordinator.reconcileSigning(input));
+  else if (command === "reconcile") printPurchase(await coordinator.reconcile(input));
+  else if (command === "retire-unsigned") printPurchase(await coordinator.retireUnsigned({ ...input, approval: need("approve"), originalPreparedAt: need("ack-prepared-at"), reference: need("reference") }));
   else {
     const approval = { ...input, approval: need("approve"), paymentAuthorizationHash: need("ack-authorization"),
       ...(flags.has("recovery") ? { recovery: true } : {}), ...(flags.has("ack-prepared-at") ? { expiredPreparationAcknowledgment: need("ack-prepared-at") } : {}) };
-    if (command === "audit-broadcast") print(await coordinator.auditBroadcast(approval));
-    else print(publicSummary(await coordinator.broadcast(approval)));
+    if (command === "audit-broadcast") { const audit = await coordinator.auditBroadcast(approval);
+      // This optional inspection audit is not journaled; retain all its public evidence in output.
+      print({ ...audit, ...commandTiming(context()) }); }
+    else printPurchase(await coordinator.broadcast(approval));
   }
 }
-main().catch(error => { process.stderr.write((error instanceof Error ? error.message : "Purchase command failed; preserve state and reconcile.") + "\n"); process.exitCode = 1; });
+main().catch(error => { process.stderr.write(JSON.stringify(commandFailure(error, commandName, commandStartedAt, new Date().toISOString()), null, 2) + "\n"); process.exitCode = 1; });

@@ -194,3 +194,35 @@ test("offline journal computations require no network, credentials, signing or b
     assert.equal(result.active!.eligibility!.executionAuthorized, false);
   } finally { globalThis.fetch = previous; }
 }));
+
+
+test("V2 unpaid release waits for original quote expiry and preserves quoted or approved history", async () => {
+  for (const status of ["quoted", "approved"] as const) await sandbox(async (root, file) => {
+    clock(0);
+    const q = fixtureQuote("10", true, `offline-v2-unpaid-${status}`, 2);
+    await reservePurchaseQuote({ quote: q, expectedQuoteHash: q.quoteHash, inventory: inventory(), asOf: AT }, root);
+    if (status === "approved") {
+      clock(90);
+      await approveReservedPurchase({ expectedQuoteHash: q.quoteHash, role: "investor", approval: q.quoteHash,
+        reference: "SIMULATED delayed approval for unpaid V2 release", approvedAt: seconds(90) }, root);
+    }
+    const original = await readPurchaseJournal(root), active = original.active!, before = await readFile(file, "utf8");
+    assert.equal(active.status, status); assert.equal(active.quote.schemaVersion, 2);
+    assert.equal(active.eligibility, null); assert.equal(active.execution, undefined);
+    clock(120); // Only the initial fee observation is expired; the approved price window remains open.
+    assert.ok(Date.now() > Date.parse(q.feeAssessment.expiresAt)); assert.ok(Date.now() < Date.parse(q.expiresAt));
+    await assert.rejects(expireUnpaidPurchase({ expectedQuoteHash: q.quoteHash, asOf: seconds(120) }, root), /Current clock/i);
+    assert.equal(await readFile(file, "utf8"), before);
+    clock(300);
+    await assert.rejects(expireUnpaidPurchase({ expectedQuoteHash: `0x${"00".repeat(32)}`, asOf: seconds(300) }, root), /matching active/i);
+    assert.equal(await readFile(file, "utf8"), before);
+    const released = await expireUnpaidPurchase({ expectedQuoteHash: q.quoteHash, asOf: seconds(300) }, root);
+    assert.equal(released.active, null); assert.equal(released.revision, original.revision + 1);
+    assert.deepEqual(released.archive, [{ ...active, status: "expired-unpaid", updatedAt: seconds(300), releasedAt: seconds(300) }]);
+    assert.deepEqual(released.paymentClaims, []); assert.deepEqual(released.archive[0]!.quote, q);
+    assert.equal(released.archive[0]!.quote.createdAt, AT); assert.equal(released.archive[0]!.quote.expiresAt, seconds(300));
+    assert.equal(released.archive[0]!.quote.feeAssessment.expiresAt, seconds(60));
+    assert.equal(released.archive[0]!.execution, undefined); assert.equal(released.archive[0]!.eligibility, null);
+    assert.deepEqual(await readPurchaseJournal(root), released);
+  });
+});

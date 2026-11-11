@@ -263,13 +263,33 @@ export function assertFeeEligible(assessment: FeeAssessment): void {
   if (!verifiedAssessment(assessment).eligible) throw new Error("Total expected system execution fees exceed the configured investment fee ratio");
 }
 /** 03D must collect fresh verified public inputs and preserve this record before authorizing payment. */
-export function revalidateFeeEligibilityBeforePayment(approved: FeeAssessment, freshInput: FeeEstimateInput): FeeAssessment {
+export function revalidateFeeEligibilityBeforePayment(approved: FeeAssessment, freshInput: FeeEstimateInput,
+  acceptance?: { readonly schemaVersion: 2; readonly expiresAt: string }): FeeAssessment {
   const original = verifiedAssessment(approved);
   if (original.snapshot.mode !== "live" || freshInput.mode !== "live") throw new Error("Offline assessments cannot authorize live payment");
   const fresh = createFeeEstimate(freshInput);
   if (fresh.snapshot.quoteTermsHash !== original.snapshot.quoteTermsHash || fresh.snapshot.investmentUsdcBaseUnits !== original.snapshot.investmentUsdcBaseUnits || fresh.maxExpectedFeeBps !== original.maxExpectedFeeBps) throw new Error("Immutable quote terms, investment or fee policy changed");
-  if (Date.parse(original.expiresAt) <= Date.parse(fresh.snapshot.asOf) || Date.parse(fresh.snapshot.sampledAt) < Date.parse(original.snapshot.sampledAt) || Date.parse(fresh.snapshot.asOf) < Date.parse(original.snapshot.asOf)) throw new Error("Approved quote expired or fee observations moved backwards");
-  if (fresh.snapshot.maxEstimateAgeMs! > original.snapshot.maxEstimateAgeMs! || Date.parse(fresh.expiresAt) > Date.parse(original.expiresAt)) throw new Error("Revalidation cannot extend the approved freshness policy or expiration");
+  const acceptanceDeadline = acceptance === undefined ? Date.parse(original.expiresAt) : timestamp(acceptance.expiresAt, "Purchase acceptance expiration");
+  if (acceptance !== undefined) {
+    if (acceptance.schemaVersion !== 2 || acceptanceDeadline > Math.min(Date.parse(original.snapshot.rates.ETH.expiresAt), Date.parse(original.snapshot.rates.NEAR.expiresAt)))
+      throw new Error("Purchase acceptance cannot extend original approved price validity");
+    if (!isDeepStrictEqual(original.snapshot.rates, fresh.snapshot.rates)) throw new Error("Approved price assumptions changed during execution revalidation");
+    for (const before of original.snapshot.evm) {
+      const after = fresh.snapshot.evm.find(item => item.leg === before.leg)!;
+      for (const key of ["maxFeePerGasWei", "maxPriorityFeePerGasWei", "gasLimitCap", "maxTotalFeeWei", "gasBufferBps"] as const) {
+        if (after[key] !== before[key]) throw new Error("Approved EVM fee selections or protective limits changed");
+      }
+    }
+    for (const before of original.snapshot.near) {
+      const after = fresh.snapshot.near.find(item => item.leg === before.leg)!;
+      if (after.attachedGas !== before.attachedGas || after.attachedDepositYoctoNear !== before.attachedDepositYoctoNear || after.gasBufferBps !== before.gasBufferBps)
+        throw new Error("Approved NEAR attachment, deposit or buffer changed");
+    }
+    if (fresh.snapshot.maxEstimateAgeMs! > 60_000 || Date.parse(fresh.expiresAt) > Date.parse(fresh.snapshot.sampledAt) + fresh.snapshot.maxEstimateAgeMs!)
+      throw new Error("Fresh execution observations cannot outlive their original freshness deadline");
+  }
+  if (acceptanceDeadline <= Date.parse(fresh.snapshot.asOf) || Date.parse(fresh.snapshot.sampledAt) < Date.parse(original.snapshot.sampledAt) || Date.parse(fresh.snapshot.asOf) < Date.parse(original.snapshot.asOf)) throw new Error("Approved quote expired or fee observations moved backwards");
+  if (fresh.snapshot.maxEstimateAgeMs! > original.snapshot.maxEstimateAgeMs! || Date.parse(fresh.expiresAt) > acceptanceDeadline) throw new Error("Revalidation cannot extend the approved freshness policy or expiration");
   assertFeeEligible(original); assertFeeEligible(fresh);
   return fresh;
 }

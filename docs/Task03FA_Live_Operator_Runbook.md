@@ -4,6 +4,8 @@
 
 Use one laptop and two disposable NEAR testnet identities. Each signing command starts a fresh Node process and selects only its own external credential file. The demonstrator may control both roles; this is not independent production custody. Native testing is separate from a portfolio purchase and never fabricates a USDC payment.
 
+**November 11 timing update:** new purchase quotes use `schemaVersion: 2`, separating the fixed purchase-acceptance deadline from independently expiring execution observations. Version-1 historical quotes retain their original rules and hashes; no old quote is extended or recreated.
+
 ## Before starting
 
 Use Node 22.23.4 (or a supported Node 22 patch >=22.22.2) and the existing lockfile. Standard commands below are platform-independent. Replace uppercase hash/path placeholders with the freshly reviewed public values; a placeholder is not an approval. The protected credential **path**, not its contents, is passed to a separately approved signing command. Carry chosen RPC overrides onto subsequent commands; omitted URLs use the documented FastNEAR/ethPandaOps defaults.
@@ -100,7 +102,7 @@ npm run purchase -- propose-prices --input .local/transfers/purchase-prices-inpu
 npm run purchase -- approve-prices --input .local/transfers/purchase-prices-proposal.json --out .local/transfers/purchase-prices-approved.json --approve REVIEWED_PRICE_PROPOSAL_DIGEST --reference OPERATOR_PRICE_APPROVAL_REFERENCE
 ```
 
-`approve-prices` requires separate explicit approval of that proposal; source timestamps and rates cannot be silently refreshed. Before the short quote window begins, have the human operator, public RPCs, reviewed USDC implementation, command forms and the Investor credential location ready. Use new filenames for another attempt.
+`approve-prices` requires separate explicit approval of that proposal; source timestamps and rates cannot be silently refreshed. Before opening the price window, have the human operator, public RPCs, reviewed USDC implementation, command forms and private Investor credential selection ready. Use new filenames for another attempt. A version-2 quote fixes acceptance expiry at creation to the earliest of the original approved-price expiry and any shorter requested/nominal quote limit. Its initial fee snapshot expires independently; a new command never restarts the approved-price window or extends purchase acceptance.
 
 After separate authorization to prepare the live purchase:
 
@@ -108,13 +110,15 @@ After separate authorization to prepare the live purchase:
 npm run purchase -- quote --prices .local/transfers/purchase-prices-approved.json --amount 10 --selected-max-fee-wei 5000 --selected-priority-wei 1000 --usdc-implementation REVIEWED_USDC_IMPLEMENTATION_ADDRESS --usdc-code-hash REVIEWED_USDC_IMPLEMENTATION_CODE_HASH
 ```
 
-The 10-USDC amount is configurable and is not a production minimum. The quote freezes 50/50 native ETH/LINK quantities and all six expected costs under the approved prices. Official Sepolia USDC is `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`, six decimals; LINK is `0x779877A7B0D9E8603169DdbD7836e478b4624789`, 18 decimals. Review current USDC proxy implementation rather than copying its old pin blindly. The quote requires fresh 20%-buffered gas, funding and expected total fees at most 1 USDC for a 10-USDC investment. Maximum reserves remain separate from expected fees; native delivery value is not a fee.
+The 10-USDC amount is configurable and is not a production minimum. The quote freezes 50/50 native ETH/LINK quantities and all six expected costs under the approved prices. Official Sepolia USDC is `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`, six decimals; LINK is `0x779877A7B0D9E8603169DdbD7836e478b4624789`, 18 decimals. Review current USDC proxy implementation rather than copying its old pin blindly. The quote requires fresh 20%-buffered gas, funding and expected total fees at most 1 USDC for a 10-USDC investment. Maximum reserves remain separate from expected fees; native delivery value is not a fee. The 10% expected execution-cost threshold is an economic eligibility safeguard, not a WealthPixels charge to the Investor.
 
 November 10 readiness corrections: USDC payment has its own 200,000-gas ceiling; LINK/native delivery ceilings remain 180,000. Actual limits remain freshly buffered estimates, with unchanged 30-gwei and 0.0036-ETH protective fee ceilings. NEAR affordability reserves full protocol receipt purchase funding plus deposit for one Investor and two Treasury signing calls after account storage reserves; anticipated refunds cannot fund these checks. The 5,000/1,000-wei command above is illustrative, not a current fee recommendation: obtain separately reviewed fee selections for the actual attempt. See [correction checkpoint and short-window rehearsal](Portfolio_Purchase_Readiness_Corrections_20261110.md).
 
-## 8. Authorize the exact Investor payment within the original 60 seconds
+## 8. Authorize the exact Investor payment within the fixed purchase window
 
-Immediately review the printed quote/hash and effective deadline. The operator separately approves that exact quote, prepares its payment and reviews its new unsigned digest:
+Immediately review the compact purchase ID, amount, quantities, expected fees, quote hash, policy version and fixed purchase deadline. `remainingPurchaseValiditySecondsAtOutput` measures time at `commandOutputAt`, not operator message receipt. Preserve `commandStartedAt`, `commandCompletedAt` and failure/guard timestamps; application start is after module imports, and unavailable operator presentation/response timestamps remain null. Put **OPERATOR ACTION REQUIRED — [ACTION]** and **COPY THIS APPROVAL INTO CODEX CHAT** with the exact full authorization text/hash before supplementary narration. Detailed terms and cost evidence remain preserved in the journal and sanitized `inspect` output. Signing commands use npm `--silent` to avoid printing the privately selected credential path in npm's banner.
+
+The operator separately approves that exact quote, authorizes payment preparation and reviews the resulting unsigned digest:
 
 ```text
 npm run purchase -- approve-quote --quote-hash REVIEWED_QUOTE_HASH --approve REVIEWED_QUOTE_HASH --reference OPERATOR_QUOTE_APPROVAL_REFERENCE
@@ -125,12 +129,12 @@ npm run purchase -- inspect
 After explicit approval of the displayed payment digest:
 
 ```text
-npm run purchase -- sign --quote-hash REVIEWED_QUOTE_HASH --leg usdc-payment --role investor --approve REVIEWED_PAYMENT_UNSIGNED_HASH --reference OPERATOR_PAYMENT_SIGNING_REFERENCE --credential ABSOLUTE_EXTERNAL_INVESTOR_JSON
+npm --silent run purchase -- sign --quote-hash REVIEWED_QUOTE_HASH --leg usdc-payment --role investor --approve REVIEWED_PAYMENT_UNSIGNED_HASH --reference OPERATOR_PAYMENT_SIGNING_REFERENCE --credential ABSOLUTE_EXTERNAL_INVESTOR_JSON
 ```
 
-Use only `wealthpixels-investor.testnet`'s distinct external file. All local reviews and the final MPC submission must fit the **original quote/price validity and the earliest fee-observation deadline**, at most 60 seconds. The deadline is forwarded into the MPC adapter and rechecked after its final public read, immediately before submission. Public RPC plus human latency has no measured guaranteed bound; do not start the quote and then wait for a lengthy chat review. Missing/stale inputs or fees above 10% stop the unpaid operation.
+Use only `wealthpixels-investor.testnet`'s distinct external file. All local reviews and the first MPC submission must fit the **fixed original purchase-acceptance deadline**, which cannot exceed approved-price expiry. Preparation and signing each obtain fresh execution observations under the unchanged **60-second** maximum age and underlying-block freshness limits. Preparation rechecks its current eligibility deadline after preparing the transaction. Signing retains the earlier of fixed purchase expiry, fresh execution eligibility and the original 15-minute preparation deadline, including checks after durable attempt recording and after the final public authority read immediately before submission. Fresh observations cannot change approved prices, quantities, fee selections, immutable reservation limits or the exact approved transaction digest. Missing/stale inputs or fees above 10% stop the unpaid operation; public RPC plus human latency has no guaranteed bound.
 
-If validity expires before any payment authorization or execution, explicitly release the expired quoted/approved reservation using `npm run purchase -- expire-unpaid --quote-hash REVIEWED_QUOTE_HASH --approve REVIEWED_QUOTE_HASH`. The local-only command refuses payment-authorized or any execution-bearing state. If an unsigned payment was already prepared, preserve it and use the existing explicit expired-unsigned retirement/new-quote process and new approvals; this route waits for the preparation's original 15-minute expiry. Do not reset dates or reprice an accepted quote. If a signing/submission marker exists, reconcile it before any release/new attempt. The entire three-leg purchase need not finish within 60 seconds.
+If validity expires before any payment authorization or execution, explicitly release the expired quoted/approved reservation using `npm run purchase -- expire-unpaid --quote-hash REVIEWED_QUOTE_HASH --approve REVIEWED_QUOTE_HASH`. The local-only command refuses payment-authorized or any execution-bearing state. If an unsigned payment was already prepared, preserve it and use the existing explicit expired-unsigned retirement/new-quote process and new approvals; this route waits for the preparation's original 15-minute expiry. Do not reset dates or reprice an accepted quote. If a signing/submission marker exists, reconcile it before any release/new attempt. After timely initial payment authorization and submission, the three-leg purchase may complete beyond the original price window using the existing reconciliation, fresh broadcast checks and delivery-obligation rules.
 
 ## 9. Reconcile the authorized USDC payment to finality
 
@@ -156,7 +160,7 @@ npm run purchase -- prepare --quote-hash REVIEWED_QUOTE_HASH --leg link-delivery
 Inspect the printed parameters/digest; separately approve signing:
 
 ```text
-npm run purchase -- sign --quote-hash REVIEWED_QUOTE_HASH --leg link-delivery --role treasury --approve REVIEWED_LINK_UNSIGNED_HASH --reference OPERATOR_LINK_SIGNING_REFERENCE --credential ABSOLUTE_EXTERNAL_TREASURY_JSON
+npm --silent run purchase -- sign --quote-hash REVIEWED_QUOTE_HASH --leg link-delivery --role treasury --approve REVIEWED_LINK_UNSIGNED_HASH --reference OPERATOR_LINK_SIGNING_REFERENCE --credential ABSOLUTE_EXTERNAL_TREASURY_JSON
 npm run purchase -- reconcile-signing --quote-hash REVIEWED_QUOTE_HASH --leg link-delivery --role treasury
 ```
 
@@ -180,7 +184,7 @@ npm run purchase -- prepare --quote-hash REVIEWED_QUOTE_HASH --leg eth-delivery 
 Review the new ETH value/digest/gas and independently approve signing:
 
 ```text
-npm run purchase -- sign --quote-hash REVIEWED_QUOTE_HASH --leg eth-delivery --role treasury --approve REVIEWED_ETH_UNSIGNED_HASH --reference OPERATOR_ETH_SIGNING_REFERENCE --credential ABSOLUTE_EXTERNAL_TREASURY_JSON
+npm --silent run purchase -- sign --quote-hash REVIEWED_QUOTE_HASH --leg eth-delivery --role treasury --approve REVIEWED_ETH_UNSIGNED_HASH --reference OPERATOR_ETH_SIGNING_REFERENCE --credential ABSOLUTE_EXTERNAL_TREASURY_JSON
 npm run purchase -- reconcile-signing --quote-hash REVIEWED_QUOTE_HASH --leg eth-delivery --role treasury
 ```
 

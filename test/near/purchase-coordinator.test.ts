@@ -526,3 +526,120 @@ test("short Treasury funding validity after the durable EVM marker prevents send
   assert.deepEqual(reconciled.active!.execution!.legs["link-delivery"]!.evmAttempt, entry.evmAttempt);
   assert.equal(f.count("nearSubmit", "link-delivery"), 1); assert.equal(f.count("evmSubmit", "link-delivery"), 0);
 }));
+
+
+test("V2 delayed exact quote approval can prepare and sign with fresh costs and unchanged transaction identity", async () => sandbox(async (f, c) => {
+  const approved = (await c.inspect()).active!, originalQuote = structuredClone(approved.quote), reservation = structuredClone(approved.reservation);
+  assert.equal(f.quote.schemaVersion, 2);
+  assert.ok(Date.parse(approved.approval!.approvedAt) > Date.parse(f.quote.feeAssessment.expiresAt));
+  assert.equal(approved.approval!.quoteHash, f.quote.quoteHash);
+  const prepared = (await prepare(f, c, "usdc-payment")).active!.execution!.legs["usdc-payment"]!;
+  const originalPrepared = structuredClone(prepared.prepared), preparedAt = prepared.preparedAt;
+  f.clock.advance(20_000);
+  const signed = (await sign(f, c, "usdc-payment")).active!, entry = signed.execution!.legs["usdc-payment"]!;
+  assert.equal(entry.status, "near-submitted"); assert.equal(entry.signingApproval!.digest, originalPrepared.prepared.unsignedHash);
+  assert.equal(entry.preparedAt, preparedAt); assert.deepEqual(entry.prepared, originalPrepared);
+  assert.deepEqual(signed.quote, originalQuote); assert.deepEqual(signed.reservation, reservation);
+  assert.equal(signed.execution!.paymentAuthorization!.unsignedHash, originalPrepared.prepared.unsignedHash);
+  assert.equal(signed.execution!.paymentAuthorization!.eligibility.checkedAt, f.clock.iso());
+  assert.equal(Date.parse(signed.execution!.paymentAuthorization!.eligibility.expiresAt) - f.clock.now(), 60_000);
+  assert.equal(f.count("prepare", "usdc-payment"), 1); assert.equal(f.count("nearSubmit", "usdc-payment"), 1);
+}, { quoteSchemaVersion: 2, approvalDelayMs: 90_000 }));
+
+test("V2 stale six-cost observations fail at both preparation and initial signing without a submission", async () => {
+  for (const phase of ["prepare", "sign"] as const) await sandbox(async (f, c) => {
+    if (phase === "sign") await prepare(f, c, "usdc-payment");
+    f.controls.costTransform = value => ({ ...value, sampledAt: new Date(f.clock.now() - 60_000).toISOString() });
+    const before = await readFile(f.journalFile, "utf8");
+    await assert.rejects(phase === "prepare" ? prepare(f, c, "usdc-payment") : sign(f, c, "usdc-payment"), /stale|expired/i);
+    assert.equal(await readFile(f.journalFile, "utf8"), before); assert.equal(f.count("nearSubmit"), 0);
+    assert.equal(f.count("prepareSigning"), 0); assert.equal(f.count("evmSubmit"), 0);
+  }, { quoteSchemaVersion: 2, approvalDelayMs: 90_000 });
+});
+
+test("V2 payment preparation must finish strictly before its fresh economic snapshot expires", async () => {
+  for (const delay of [999, 1000]) await sandbox(async (f, c) => {
+    f.controls.costTransform = value => ({ ...value, expiresAt: new Date(f.clock.now() + 1000).toISOString() });
+    const before = await readFile(f.journalFile, "utf8");
+    const delayed = createPurchaseCoordinator({ ...f.driver, async prepare(q, leg) {
+      const result = await f.driver.prepare(q, leg); f.clock.advance(delay); return result;
+    } }, { root: f.root });
+    if (delay < 1000) {
+      assert.equal((await prepare(f, delayed, "usdc-payment")).active!.execution!.legs["usdc-payment"]!.status, "prepared");
+    } else {
+      await assert.rejects(prepare(f, delayed, "usdc-payment"), /eligibility expired during payment preparation/i);
+      assert.equal(await readFile(f.journalFile, "utf8"), before);
+      assert.equal((await c.inspect()).active!.execution, undefined);
+    }
+    assert.ok(f.clock.now() < Date.parse(f.quote.expiresAt));
+    assert.equal(f.count("prepare", "usdc-payment"), 1); assert.equal(f.count("nearSubmit"), 0);
+  }, { quoteSchemaVersion: 2, approvalDelayMs: 90_000 });
+});
+
+test("V2 signing preparation cannot consume an expired fresh snapshot even while the human quote is valid", async () => sandbox(async (f, c) => {
+  await prepare(f, c, "usdc-payment");
+  f.controls.costTransform = value => ({ ...value, expiresAt: new Date(f.clock.now() + 1000).toISOString() });
+  f.controls.prepareSigningDelayMs = 1000;
+  const before = await readFile(f.journalFile, "utf8");
+  await assert.rejects(sign(f, c, "usdc-payment"), /eligibility expired/i);
+  assert.ok(f.clock.now() < Date.parse(f.quote.expiresAt));
+  assert.equal(await readFile(f.journalFile, "utf8"), before);
+  assert.equal(f.count("prepareSigning"), 1); assert.equal(f.count("nearSubmit"), 0);
+}, { quoteSchemaVersion: 2, approvalDelayMs: 90_000 }));
+
+test("V2 original approved-price expiry blocks new payment preparation and signing", async () => {
+  for (const phase of ["prepare", "sign"] as const) await sandbox(async (f, c) => {
+    if (phase === "sign") await prepare(f, c, "usdc-payment");
+    f.clock.set(f.quote.prices.expiresAt);
+    const before = await readFile(f.journalFile, "utf8");
+    await assert.rejects(phase === "prepare" ? prepare(f, c, "usdc-payment") : sign(f, c, "usdc-payment"), /expired|NEW payment/i);
+    assert.equal(await readFile(f.journalFile, "utf8"), before);
+    assert.equal(f.count("nearSubmit"), 0); assert.equal(f.count("prepareSigning"), 0);
+  }, { quoteSchemaVersion: 2, approvalDelayMs: 90_000 });
+});
+
+test("V2 fresh fee-ratio and immutable reservation violations stop both preparation and signing", async () => {
+  for (const phase of ["prepare", "sign"] as const) for (const violation of ["fee-ratio", "reservation"] as const) {
+    await sandbox(async (f, c) => {
+      if (phase === "sign") await prepare(f, c, "usdc-payment");
+      f.controls.costTransform = value => ({ ...value, evm: value.evm.map(item => violation === "fee-ratio" ?
+        { ...item, observedBaseFeePerGasWei: 3_000_000_000n, assumedBaseFeePerGasWei: 3_000_000_000n } :
+        { ...item, estimatedGas: item.estimatedGas + 1n }) });
+      const before = await readFile(f.journalFile, "utf8");
+      await assert.rejects(phase === "prepare" ? prepare(f, c, "usdc-payment") : sign(f, c, "usdc-payment"), /exceed|reservation/i);
+      assert.equal(await readFile(f.journalFile, "utf8"), before);
+      assert.equal(f.count("nearSubmit"), 0); assert.equal(f.count("prepareSigning"), 0);
+    }, { quoteSchemaVersion: 2, approvalDelayMs: 90_000, baseFeePerGas: 1_000_000_000n,
+      maxFeePerGas: 5_000_000_000n, maxPriorityFeePerGas: 100_000_000n });
+  }
+});
+
+test("V2 fresh preflight rejects a changed nonce without regenerating the approved unsigned transaction", async () => sandbox(async (f, c) => {
+  const prepared = (await prepare(f, c, "usdc-payment")).active!.execution!.legs["usdc-payment"]!;
+  f.clock.advance(70_000); f.ledger.investorNonce++;
+  const before = await readFile(f.journalFile, "utf8");
+  await assert.rejects(sign(f, c, "usdc-payment"), /stale confirmed nonce/i);
+  assert.equal(await readFile(f.journalFile, "utf8"), before);
+  const preserved = (await c.inspect()).active!.execution!.legs["usdc-payment"]!;
+  assert.deepEqual(preserved.prepared, prepared.prepared); assert.equal(preserved.preparedAt, prepared.preparedAt);
+  assert.equal(f.count("prepare", "usdc-payment"), 1); assert.equal(f.count("nearSubmit"), 0);
+}, { quoteSchemaVersion: 2, approvalDelayMs: 90_000 }));
+
+test("V2 uncertain submission preserves its identity and accepted settlement obligation beyond price expiry", async () => sandbox(async (f, c) => {
+  await prepare(f, c, "usdc-payment"); f.controls.nearSubmit["usdc-payment"] = "timeout-after";
+  const uncertain = (await sign(f, c, "usdc-payment")).active!, original = uncertain.execution!.legs["usdc-payment"]!;
+  assert.equal(original.status, "near-uncertain"); assert.equal(f.count("nearSubmit"), 1);
+  f.clock.advance(300_000);
+  await assert.rejects(sign(f, c, "usdc-payment"), /fresh unattempted/);
+  await c.reconcileSigning(step(f, "usdc-payment"));
+  await c.broadcast(await broadcastInput(f, c, "usdc-payment")); await c.reconcile(step(f, "usdc-payment"));
+  const paidRecord = (await c.inspect()).active!;
+  assert.deepEqual(paidRecord.reservation, uncertain.reservation);
+  assert.deepEqual(paidRecord.execution!.paymentAuthorization, uncertain.execution!.paymentAuthorization);
+  await deliver(f, c, "link-delivery"); const result = await deliver(f, c, "eth-delivery");
+  const completed = result.archive.at(-1)!, payment = completed.execution!.legs["usdc-payment"]!;
+  assert.equal(completed.status, "completed"); assert.ok(f.clock.now() > Date.parse(f.quote.prices.expiresAt));
+  assert.equal(payment.nearTransactionHash, original.nearTransactionHash);
+  assert.equal(payment.preparedAt, original.preparedAt); assert.deepEqual(payment.prepared, original.prepared);
+  assert.equal(f.count("nearSubmit", "usdc-payment"), 1); assert.equal(f.count("evmSubmit", "usdc-payment"), 1);
+}, { quoteSchemaVersion: 2, approvalDelayMs: 90_000 }));

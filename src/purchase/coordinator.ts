@@ -189,6 +189,7 @@ export function createPurchaseCoordinator(driver: PurchaseExecutionDriver,
     async prepare(input: PurchaseStep & { reference: string }) {
       return locked(input, async (store, original) => {
         let r = original, e = r.execution ?? initialExecution(r.quote, driver.mode, at());
+        let preparationEligibilityDeadline: string | undefined;
         check(!e.legs[input.leg], "This leg already has a preparation or attempt; reconcile it instead of duplicating delivery.");
         if (input.leg === "usdc-payment") {
           check(!r.execution && (r.status === "approved" || r.status === "payment-authorized") && r.approval, "An approved, unpaid quote is required for the first payment preparation.");
@@ -196,6 +197,7 @@ export function createPurchaseCoordinator(driver: PurchaseExecutionDriver,
           const observed = await driver.collectCosts(r.quote), eligibility = assertPaymentAuthorizationEligible(r.quote, r.approval,
             { role: "investor", approval: r.quote.quoteHash, asOf: at(), freshCosts: observed.costs }, policy);
           assertPrepaymentFunding(observed.inventory, at(), r.quote, r.reservation, eligibility.feeAssessment, observed.costs);
+          preparationEligibilityDeadline = eligibility.expiresAt;
           if (!r.eligibility) r = { ...r, eligibility, authorizationInventory: observed.inventory };
         } else {
           await paidProof(r);
@@ -203,8 +205,10 @@ export function createPurchaseCoordinator(driver: PurchaseExecutionDriver,
           await remainingFunding(r, input.leg);
         }
         const prepared = await driver.prepare(r.quote, input.leg); driver.assertPrepared(r.quote, prepared);
-        if (input.leg === "usdc-payment") newPayment(r);
-        else await remainingFunding(r, input.leg, prepared);
+        if (input.leg === "usdc-payment") {
+          newPayment(r);
+          check(now() < utc(preparationEligibilityDeadline), "Fresh economic eligibility expired during payment preparation; nothing was submitted.");
+        } else await remainingFunding(r, input.leg, prepared);
         const entry: PurchaseLegExecution = { prepared, preparedAt: at(), status: "prepared", signingApproval: null,
           nearTransactionHash: null, nearOutcome: null, signed: null, audit: null, evmAttempt: null, proof: null, receiptHistory: [], nearCost: null };
         e = changed(e, { legs: withLeg(e, input.leg, entry), attention: null }, "prepared", input.leg, input.reference);

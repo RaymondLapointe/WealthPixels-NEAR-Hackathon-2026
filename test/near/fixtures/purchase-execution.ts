@@ -45,6 +45,8 @@ export interface FixtureControls {
   claimOverride?: { transactionHash: string; logIndex: bigint };
 }
 export interface FixtureOptions {
+  /** Existing scenarios retain V1 timing; new timing tests explicitly select V2. */
+  readonly quoteSchemaVersion?: 1 | 2; readonly approvalDelayMs?: number;
   readonly amount?: string; readonly id?: string; readonly investorUsdc?: bigint; readonly at?: string;
   readonly baseFeePerGas?: bigint; readonly maxFeePerGas?: bigint; readonly maxPriorityFeePerGas?: bigint;
   readonly nearUsd?: { readonly numerator: bigint; readonly denominator: bigint };
@@ -112,7 +114,7 @@ export async function createPurchaseExecutionFixture(options: FixtureOptions = {
       evm: c.evm.map(item => ({ ...item, observedBaseFeePerGasWei: baseFee, assumedBaseFeePerGasWei: baseFee,
         maxFeePerGasWei: maximumFee, maxPriorityFeePerGasWei: priorityFee })) };
     if (options.initialCostTransform) observations = options.initialCostTransform(observations);
-    return createPurchaseQuote({ purchaseId: id, purpose: "prepayment", investmentUsdcBaseUnits,
+    return createPurchaseQuote({ schemaVersion: options.quoteSchemaVersion ?? 1, purchaseId: id, purpose: "prepayment", investmentUsdcBaseUnits,
       prices: p, costs: observations, createdAt: at });
   }
   let quote: PurchaseQuote;
@@ -268,6 +270,7 @@ export async function createPurchaseExecutionFixture(options: FixtureOptions = {
   };
   async function setup(q = quote) {
     await reservePurchaseQuote({ quote: q, expectedQuoteHash: q.quoteHash, inventory: fundingSnapshot(), asOf: q.createdAt }, root);
+    if (options.approvalDelayMs) clock.advance(options.approvalDelayMs);
     return approveReservedPurchase({ expectedQuoteHash: q.quoteHash, role: "investor", approval: q.quoteHash,
       reference: "SIMULATED offline Investor quote approval; no human/live authorization", approvedAt: clock.iso() }, root);
   }

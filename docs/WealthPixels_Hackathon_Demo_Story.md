@@ -80,7 +80,7 @@ Approved prices and fresh public network observations can support a quote, subje
 
 **THE STORY:**
 
-The investor should see the exact bargain before committing funds. The planned 10-USDC quote assigns five nominal quote-dollars to each asset and freezes the resulting quantities, reference prices, destinations, costs and expiry together.
+The investor should see the exact bargain before committing funds. The planned 10-USDC quote assigns five nominal quote-dollars to each asset and freezes the resulting quantities, reference prices, destinations, initial cost evidence and purchase expiry together. New quotes allow review within the remaining approved-price window while shorter-lived network-fee observations are checked independently before execution.
 
 **THE ACTION:**
 
@@ -88,15 +88,15 @@ Use fresh cost and inventory observations to construct the immutable quote and r
 
 **YOUR APPROVAL:**
 
-Review the exact quote hash, quantities, assumptions, fees and expiry before approving it. Total expected costs for all three Ethereum transactions and all three NEAR signing operations, regardless of payer, must be at most 10% of the investment: at most one nominal USDC for this target.
+Review the exact quote hash, quantities, assumptions, fees and expiry before approving it. Total expected costs for all three Ethereum transactions and all three NEAR signing operations, regardless of payer, must be at most 10% of the investment: at most one nominal USDC for this target. This is an economic eligibility safeguard, not a WealthPixels fee charged to the Investor.
 
 **THE EVIDENCE:**
 
-The [quote engine](../src/purchase/quote.ts) binds the terms and safeguards. The [November 10 corrections](Portfolio_Purchase_Readiness_Corrections_20261110.md) implement the USDC-specific gas ceiling, complete NEAR upfront funding reserves and guarded unpaid expiry; expected execution costs and maximum reserves remain distinct.
+The [quote engine](../src/purchase/quote.ts) binds the terms and safeguards. Version-2 quotes preserve a fixed purchase deadline capped by the original approved-price expiry; historical version-1 quotes retain their original fee-bound expiry and hash. Fee observations remain independently limited to 60 seconds, and refreshing them cannot alter approved portfolio terms. The [November 10 corrections](Portfolio_Purchase_Readiness_Corrections_20261110.md) implement the USDC-specific gas ceiling, complete NEAR upfront funding reserves and guarded unpaid expiry; expected execution costs and maximum reserves remain distinct.
 
 **WHAT HAPPENS NEXT:**
 
-The Investor reviews the payment intent while the original quote remains eligible. Price validity and fee observations bound that window; a new command does not restart it.
+The Investor reviews the payment intent while the original quote remains eligible. Its acceptance deadline never restarts; fresh execution checks have their own shorter validity.
 
 ## Chapter 4 — The Investor Authorizes Payment
 
@@ -128,7 +128,7 @@ The Investor's NEAR Testnet account can authorize an Ethereum Sepolia transactio
 
 **THE ACTION:**
 
-Submit the separately approved digest through the Investor's NEAR role, then reconcile the exact NEAR outcome and verify the returned signature against the full trusted derived Investor public key. The quote approval, payment preparation, digest approval and first MPC submission must fit the earliest original price/fee expiry; fee observations can be at most 60 seconds old. CLI actions: `sign` and `reconcile-signing` with `--leg usdc-payment --role investor`; see the [operator commands and separate approval gates](WealthPixels_Guided_Purchase_Operator_Story.md).
+Submit the separately approved digest through the Investor's NEAR role, then reconcile the exact NEAR outcome and verify the returned signature against the full trusted derived Investor public key. The quote approval, payment preparation, digest approval and first MPC submission must fit the fixed original purchase deadline, capped by approved-price expiry. Execution observations are refreshed independently, remain at most 60 seconds old and are rechecked after preparation and immediately before submission; they never extend the purchase deadline. CLI actions: `sign` and `reconcile-signing` with `--leg usdc-payment --role investor`; see the [operator commands and separate approval gates](WealthPixels_Guided_Purchase_Operator_Story.md).
 
 **YOUR APPROVAL:**
 

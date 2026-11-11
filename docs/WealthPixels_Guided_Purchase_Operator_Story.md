@@ -18,7 +18,9 @@ The broader vision includes portfolios of many eligible onchain assets across bl
 
 After reviewing both documents, say **“Begin the WealthPixels Guided Purchase Journey.”** Codex should open Chapter 1, give the five short sections below and stop at its next required approval. This instruction starts narration; it does not approve unknown prices, a quote, credential access, MPC signing or broadcasting. A command succeeding never authorizes the next checkpoint. Stay within the current chapter when its result needs another approval.
 
-Codex should show each fully populated proposed command through the normal VS Code command-permission process. Clicking **Allow** permits that tool command; it does not replace explicit price/quote/digest/signed-hash authorization. Show the public approval-critical fields first, obtain approval of the exact identifier, then run only that authorized operation. Never combine live stages into a script or approve a hash automatically from command output. Report `planned`, `simulated`, `prepared`, `submitted`, `uncertain`, `confirmed` and `completed` accurately; do not convert an unknown outcome into success or failure.
+Codex should show each fully populated proposed command through the normal VS Code command-permission process. Clicking **Allow** permits that tool command; it does not replace explicit price/quote/digest/signed-hash authorization. Put **OPERATOR ACTION REQUIRED — [ACTION]** first, followed by essential purchase/transaction terms and **COPY THIS APPROVAL INTO CODEX CHAT** with the complete exact authorization text and digest/hash. Put the five-part narration after that approval block. Once authorized, execute only that operation; never combine live stages or approve a hash automatically from command output. Report `planned`, `simulated`, `prepared`, `submitted`, `uncertain`, `confirmed` and `completed` accurately.
+
+Action commands return compact JSON; detailed underlying terms and evidence remain in the journal and sanitized `inspect` output. Preserve `commandStartedAt` (application entry after imports), `commandCompletedAt`, `commandOutputAt` and, on failure, `commandFailedAt` plus any freshness/expiry `guardRejectedAt`. `remainingPurchaseValiditySecondsAtOutput` and `remainingPriceValiditySecondsAtOutput` describe command-output time. `operatorPresentedAt` and `operatorApprovalReceivedAt` remain null when unavailable; never infer human response latency. The `operatorActionRequired`, `approvalInstruction` and `copyApproval` fields supply the next review prompt, not permission to execute it.
 
 Both disposable testnet roles may be operated by one human on one laptop. They have different NEAR signing credentials and Ethereum addresses; this demonstrates separate account authorization, not independent production custody. Each signing process loads only the selected role's file. Never paste keys, credential contents or protected file paths into the story or public evidence.
 
@@ -31,7 +33,7 @@ Sepolia chain ID is **11155111**. USDC: `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7
 
 ## Command card — templates, not current approvals
 
-Use VS Code's PowerShell terminal at the repository root. Each later code block is a separate operator action. The argument arrays preserve npm's **`--` separator**. Platform-independent equivalents use `npm run purchase -- ...` with the same flags.
+Use VS Code's PowerShell terminal at the repository root. Each later code block is a separate operator action. The argument arrays preserve npm's **`--` separator**. Platform-independent equivalents use `npm run purchase -- ...` with the same flags. Signing templates add npm's `--silent` option to suppress its command banner, which could otherwise echo the privately resolved credential path; application results and errors remain visible.
 
 These public names are **proposed, not allocated or verified unused**. Before a separately authorized live stage, check the journal, purchase-ID history and output paths without overwriting anything. If occupied, stop and agree new names.
 
@@ -62,7 +64,9 @@ The purchase CLI uses its existing ignored `.local/transfers/purchase-journal.js
 
 ## Timing and stop card
 
-Rehearse offline **before** opening a live quote. Price approval lasts no more than five minutes. Initial quote approval, USDC preparation, digest review and first MPC submission must fit the earliest **original** price/fee deadline; fee observations are at most **60 seconds** old, not a new minute per command. Read the actual printed expiry; collection time consumes that window. Use a present operator and pre-staged command forms. No advance authorization of unknown hashes and no deadline extension is permitted to make the story fit. The entire settlement need not finish in that minute after timely initial authorization/submission.
+Rehearse offline **before** opening a live quote. For new quotes (`schemaVersion: 2`), the purchase-acceptance expiry is fixed at creation: the earliest of the original approved-price expiry and any shorter requested/nominal quote limit. The approved-price window remains at most **five minutes**, beginning at its original `validFrom`, not at quote presentation. Initial fee observations retain their own expiry but no longer shorten that acceptance window. Historical version-1 quotes retain their original fee-bound deadlines and hashes; Attempts 001 and 002 remain archived as `expired-unpaid`.
+
+Quote approval, USDC preparation, digest review and first MPC submission must fit the fixed purchase-acceptance deadline. Preparation and signing obtain fresh execution observations, each subject to the unchanged **60-second** maximum age and underlying-block freshness. Recheck the relevant fresh deadline after preparation and immediately before first MPC submission. Refreshing execution observations cannot change approved prices, quantities, recipients, fee limits, reservation limits or transaction bytes, and cannot extend the quote. Broadcast retains its own fresh economic audit and separate approval. After timely initial payment authorization and submission, reconciliation and delivery obligations can continue beyond price expiry under the existing safeguards. No unknown hash is approved in advance.
 
 Every transaction retains its original **15-minute** preparation limit. USDC's ceiling is **200000 gas**, LINK/native delivery ceilings **180000**; use fresh estimates with at least **20%** buffer, never the ceiling automatically. Preserve **30 gwei**, **0.0036 ETH/transaction**, positive Treasury operating reserve and **1000-bps** expected system-fee limits. NEAR storage-safe funding must cover full receipt-gas purchase requirements for one Investor and two Treasury calls, separately from expected burn and refunds.
 
@@ -116,7 +120,7 @@ Display the exact three decimal/rational rates, original timestamps and public r
 
 ## Chapter 3 — WealthPixels Constructs the Portfolio Quote
 
-**THE STORY:** The application calculates exact ETH and LINK quantities with integer arithmetic, checks Treasury inventory and screens the whole purchase's expected execution cost. Three Ethereum fees plus three NEAR signing costs, regardless of payer, must total **at most 1 nominal USDC for this 10-USDC investment**; maximum funding reserves are disclosed separately.
+**THE STORY:** The application calculates exact ETH and LINK quantities with integer arithmetic, checks Treasury inventory and screens the whole purchase's expected execution cost. Three Ethereum fees plus three NEAR signing costs, regardless of payer, must total **at most 1 nominal USDC for this 10-USDC investment**; maximum funding reserves are disclosed separately. This 10% economic eligibility safeguard is not a WealthPixels fee charged to the Investor.
 
 **THE ACTION:** After separate live-quote/reservation authorization, use fresh reviewed fees and USDC implementation pins:
 
@@ -124,7 +128,7 @@ Display the exact three decimal/rational rates, original timestamps and public r
 .\scripts\with-node22.ps1 -Tool npm -ToolArguments (@('run','purchase','--','quote','--prices',$ApprovedPrices,'--amount','10','--selected-max-fee-wei',$MaxFeeWei,'--selected-priority-wei',$TipWei,'--usdc-implementation',$UsdcImplementation,'--usdc-code-hash',$UsdcImplementationCodeHash) + $NetworkArgs)
 ```
 
-Display the full quote: purchase ID/hash, **10000000 USDC base units**, **5000/5000 bps**, exact ETH wei and LINK base units, prices/provenance, six expected cost components, total/percentage, separate reserves/caps and effective expiry. Stop for exact quote-hash approval, then:
+Display the compact quote summary: purchase ID/hash and policy version, **10000000 USDC base units**, **5000/5000 bps**, exact ETH wei and LINK base units, total expected costs/percentage, separate maximum reserves, fixed purchase expiry and remaining validity at command output. Keep approved prices/provenance, all six cost components and protective caps in the preserved journal; inspect details when needed without flooding the approval request. Distinguish the independently expiring fee snapshot from purchase acceptance. Stop for exact quote-hash approval, then:
 
 ```powershell
 .\scripts\with-node22.ps1 -Tool npm -ToolArguments @('run','purchase','--','approve-quote','--quote-hash',$QuoteHash,'--approve',$QuoteHash,'--reference','guided-investor-quote-approval')
@@ -159,7 +163,7 @@ Display the full quote: purchase ID/hash, **10000000 USDC base units**, **5000/5
 **THE ACTION:** After explicit authorization for exactly one Investor signing/submission attempt:
 
 ```powershell
-.\scripts\with-node22.ps1 -Tool npm -ToolArguments (@('run','purchase','--','sign','--quote-hash',$QuoteHash,'--leg','usdc-payment','--role','investor','--approve',$PaymentUnsignedHash,'--reference','guided-investor-mpc-approval','--credential',$InvestorCredentialFile) + $NetworkArgs)
+.\scripts\with-node22.ps1 -Tool npm -ToolArguments (@('--silent','run','purchase','--','sign','--quote-hash',$QuoteHash,'--leg','usdc-payment','--role','investor','--approve',$PaymentUnsignedHash,'--reference','guided-investor-mpc-approval','--credential',$InvestorCredentialFile) + $NetworkArgs)
 ```
 
 After that attempt, use the separately covered bounded read-only reconciliation; do not repeat `sign`:
@@ -168,7 +172,7 @@ After that attempt, use the separately covered bounded read-only reconciliation;
 .\scripts\with-node22.ps1 -Tool npm -ToolArguments (@('run','purchase','--','reconcile-signing','--quote-hash',$QuoteHash,'--leg','usdc-payment','--role','investor') + $NetworkArgs)
 ```
 
-**YOUR APPROVAL:** Bind approval to the exact purchase/quote and `$PaymentUnsignedHash`, selected Investor credential and **one** request from `wealthpixels-investor.testnet` to `v1.signer-prod.testnet`, domain **0**, path `wealthpixels/sepolia/v1`, **100 Tgas + 1 yoctoNEAR**. Fresh authority/funding/nonce/fee/simulation checks and the final original deadline check must pass before submission. No Treasury file and no Ethereum broadcast are authorized.
+**YOUR APPROVAL:** Bind approval to the exact purchase/quote and `$PaymentUnsignedHash`, selected Investor credential and **one** request from `wealthpixels-investor.testnet` to `v1.signer-prod.testnet`, domain **0**, path `wealthpixels/sepolia/v1`, **100 Tgas + 1 yoctoNEAR**. Fresh authority/funding/nonce/fee/simulation checks, the fixed purchase-acceptance deadline and the current execution-observation deadline must pass immediately before submission. No Treasury file and no Ethereum broadcast are authorized.
 
 **THE EVIDENCE:** Report the actual durable NEAR hash/stage, FINAL outcome, full trusted-key signature validation, recovered Investor address, `$PaymentSignedHash` and `$PaymentAuthorizationHash`. All are **pending** for this purchase. Preserve hashes/attempt markers on timeout; an unavailable lookup is not proof of non-submission.
 
@@ -207,7 +211,7 @@ Then perform the authorized bounded read-only reconciliation:
 ```
 
 ```powershell
-.\scripts\with-node22.ps1 -Tool npm -ToolArguments (@('run','purchase','--','sign','--quote-hash',$QuoteHash,'--leg','link-delivery','--role','treasury','--approve',$LinkUnsignedHash,'--reference','guided-link-mpc-approval','--credential',$TreasuryCredentialFile) + $NetworkArgs)
+.\scripts\with-node22.ps1 -Tool npm -ToolArguments (@('--silent','run','purchase','--','sign','--quote-hash',$QuoteHash,'--leg','link-delivery','--role','treasury','--approve',$LinkUnsignedHash,'--reference','guided-link-mpc-approval','--credential',$TreasuryCredentialFile) + $NetworkArgs)
 ```
 
 ```powershell
@@ -239,7 +243,7 @@ Then perform the authorized bounded read-only reconciliation:
 ```
 
 ```powershell
-.\scripts\with-node22.ps1 -Tool npm -ToolArguments (@('run','purchase','--','sign','--quote-hash',$QuoteHash,'--leg','eth-delivery','--role','treasury','--approve',$EthUnsignedHash,'--reference','guided-eth-mpc-approval','--credential',$TreasuryCredentialFile) + $NetworkArgs)
+.\scripts\with-node22.ps1 -Tool npm -ToolArguments (@('--silent','run','purchase','--','sign','--quote-hash',$QuoteHash,'--leg','eth-delivery','--role','treasury','--approve',$EthUnsignedHash,'--reference','guided-eth-mpc-approval','--credential',$TreasuryCredentialFile) + $NetworkArgs)
 ```
 
 ```powershell
@@ -318,7 +322,7 @@ These existing commands are safe rehearsal/evaluation entry points; they do not 
 .\scripts\with-node22.ps1 -Tool npm -ToolArguments @('run','typecheck')
 ```
 
-The dry-run uses isolated temporary state and labelled synthetic prices, approvals, signatures, balances and network ports. It demonstrates the three intended legs and `settling` → `partially-delivered` → `completed` flow; it does not measure a guaranteed 60-second human/public-RPC operating cadence. The offline suite covers original deadlines, exact approvals, fee/inventory gates, finality, uncertainty, restart and recovery behavior. No source change is required for this narrative; the chapter-by-chapter guide is documentation for Codex, not a new executable wizard.
+The dry-run uses isolated temporary state and labelled synthetic prices, approvals, signatures, balances and network ports. It demonstrates the three intended legs and `settling` → `partially-delivered` → `completed` flow; it does not establish a guaranteed human/public-RPC operating cadence within either validity window. The offline suite covers original deadlines, exact approvals, fee/inventory gates, finality, uncertainty, restart and recovery behavior. No source change is required for this narrative; the chapter-by-chapter guide is documentation for Codex, not a new executable wizard.
 
 **Observed offline rehearsal result, November 10:** the existing dry-run passed through `settling` → `partially-delivered` → `completed`, with three simulated NEAR submissions, three simulated Ethereum submissions and no outstanding fixture obligations. The full existing suite passed **635/635** and TypeScript validation passed. No live price staging, quote/reservation, credential access, NEAR submission or Ethereum broadcast was performed. Only these two Guided Journey Markdown documents change; original runtime and historical evidence remain preserved. This rehearsal does not establish live execution or measured human/RPC timing.
 

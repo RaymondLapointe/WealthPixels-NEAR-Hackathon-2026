@@ -69,9 +69,10 @@ export function costs(value: PriceSet, amount = "10", mode: "offline" | "live" =
         executionAssumptionReference: "Synthetic conservative signing gas; explicit offline fixture, no live MPC request" };
     }) };
 }
-export function fixtureQuote(amount = "10", prepayment = false, id = "offline-purchase-10") {
+// Existing fixture consumers intentionally retain historical V1 deadlines and hashes.
+export function fixtureQuote(amount = "10", prepayment = false, id = "offline-purchase-10", schemaVersion: 1 | 2 = 1) {
   const p = prices(prepayment, priceInput(id)), c = costs(p, amount, prepayment ? "live" : "offline");
-  return createPurchaseQuote({ purchaseId: id, purpose: prepayment ? "prepayment" : "offline",
+  return createPurchaseQuote({ schemaVersion, purchaseId: id, purpose: prepayment ? "prepayment" : "offline",
     investmentUsdcBaseUnits: parseUsdcAmount(amount), prices: p, costs: c, createdAt: AT });
 }
 export function inventory(): FundingInventorySnapshot {

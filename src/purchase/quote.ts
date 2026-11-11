@@ -26,13 +26,15 @@ export interface PlannedPurchaseTransaction {
   readonly transactionPreparationRequired: true;
 }
 export interface PurchaseQuote {
-  readonly schemaVersion: 1; readonly kind: "purchase-quote"; readonly purchaseId: string; readonly purpose: PricingPurpose;
+  readonly schemaVersion: 1 | 2; readonly kind: "purchase-quote"; readonly purchaseId: string; readonly purpose: PricingPurpose;
   readonly createdAt: string; readonly requestedExpiresAt: string; readonly expiresAt: string;
   readonly policy: PurchaseQuotePolicy; readonly prices: PriceSet; readonly terms: PurchaseTerms;
   readonly costs: CompletePurchaseCosts; readonly feeAssessment: FeeAssessment;
   readonly transactions: readonly PlannedPurchaseTransaction[]; readonly executionAuthorized: false; readonly quoteHash: string;
 }
 export interface PurchaseQuoteInput {
+  /** Version 1 is retained only for historical reconstruction; new quotes default to version 2. */
+  readonly schemaVersion?: 1 | 2;
   readonly purchaseId: string; readonly purpose: PricingPurpose; readonly investmentUsdcBaseUnits: bigint;
   readonly prices: PriceSet; readonly costs: CompletePurchaseCosts; readonly createdAt: string;
   readonly requestedExpiresAt?: string; readonly policy?: PurchaseQuotePolicy;
@@ -75,22 +77,25 @@ function planned(terms: PurchaseTerms): readonly PlannedPurchaseTransaction[] {
 /** Calculation only. It prepares no unsigned/signed blockchain transaction and grants no execution permission. */
 export function createPurchaseQuote(input: PurchaseQuoteInput): PurchaseQuote {
   purchaseId(input.purchaseId);
+  const schemaVersion = input.schemaVersion ?? 2;
+  check(schemaVersion === 1 || schemaVersion === 2, "Unsupported purchase quote timing version.");
   const policy = checkedPolicy(input.policy ?? DEFAULT_PURCHASE_QUOTE_POLICY), created = utc(input.createdAt);
   assertPriceSet(input.prices, { purchaseId: input.purchaseId, asOf: input.createdAt, purpose: input.purpose });
   const terms = createPurchaseTerms({ investmentUsdcBaseUnits: input.investmentUsdcBaseUnits,
     ...toAllocationPrices(input.prices, { purchaseId: input.purchaseId, asOf: input.createdAt, purpose: input.purpose }) });
   const requestedExpiresAt = input.requestedExpiresAt ?? new Date(created + policy.nominalQuoteWindowMs).toISOString();
+  // V1 retains its original fee-bound acceptance deadline. V2 keeps observation freshness separate.
   const deadline = Math.min(utc(requestedExpiresAt), created + policy.nominalQuoteWindowMs, utc(input.prices.expiresAt),
-    utc(costObservationDeadline(input.costs, policy.maxEstimateAgeMs)));
+    schemaVersion === 1 ? utc(costObservationDeadline(input.costs, policy.maxEstimateAgeMs)) : Infinity);
   check(deadline > created, "Quote has no remaining price or fee validity.");
   const feeAssessment = createPurchaseFeeEstimate(terms, input.prices, input.costs, { asOf: input.createdAt, purpose: input.purpose,
     maxExpectedFeeBps: policy.maxExpectedFeeBps, maxEstimateAgeMs: policy.maxEstimateAgeMs,
     expiresAt: new Date(deadline).toISOString(), executionPolicy: policy.execution });
   assertFeeEligible(feeAssessment);
-  const body = { schemaVersion: 1 as const, kind: "purchase-quote" as const, purchaseId: input.purchaseId, purpose: input.purpose,
-    createdAt: input.createdAt, requestedExpiresAt, expiresAt: feeAssessment.expiresAt,
+  const body = { schemaVersion, kind: "purchase-quote" as const, purchaseId: input.purchaseId, purpose: input.purpose,
+    createdAt: input.createdAt, requestedExpiresAt, expiresAt: schemaVersion === 1 ? feeAssessment.expiresAt : new Date(deadline).toISOString(),
     policy, prices: input.prices, terms, costs: input.costs, feeAssessment, transactions: planned(terms), executionAuthorized: false as const };
-  return frozen({ ...body, quoteHash: fingerprint("purchase-quote-v1", body) });
+  return frozen({ ...body, quoteHash: fingerprint(schemaVersion === 1 ? "purchase-quote-v1" : "purchase-quote-v2", body) });
 }
 export async function quoteFromProvider(input: Omit<PurchaseQuoteInput, "prices"> & { readonly expectedPriceSetHash?: string }, provider: PriceProvider): Promise<PurchaseQuote> {
   const prices = await provider.getPrices({ purchaseId: input.purchaseId, asOf: input.createdAt, purpose: input.purpose,
@@ -100,7 +105,8 @@ export async function quoteFromProvider(input: Omit<PurchaseQuoteInput, "prices"
 }
 /** Historical integrity remains inspectable after expiry; action methods enforce the current clock separately. */
 export function assertPurchaseQuote(value: PurchaseQuote, expectedQuoteHash: string, expectedPolicy = DEFAULT_PURCHASE_QUOTE_POLICY): void {
-  const rebuilt = createPurchaseQuote({ purchaseId: value.purchaseId, purpose: value.purpose, investmentUsdcBaseUnits: value.terms.investmentUsdcBaseUnits,
+  check(value && (value.schemaVersion === 1 || value.schemaVersion === 2), "Unsupported purchase quote timing version.");
+  const rebuilt = createPurchaseQuote({ schemaVersion: value.schemaVersion, purchaseId: value.purchaseId, purpose: value.purpose, investmentUsdcBaseUnits: value.terms.investmentUsdcBaseUnits,
     prices: value.prices, costs: value.costs, createdAt: value.createdAt, requestedExpiresAt: value.requestedExpiresAt, policy: expectedPolicy });
   check(isDeepStrictEqual(value, rebuilt) && hexHash(expectedQuoteHash) === rebuilt.quoteHash, "Immutable quote, fee assessment or trusted policy changed.");
 }
@@ -125,7 +131,10 @@ export function assertPaymentAuthorizationEligible(quote: PurchaseQuote, approva
   assertPriceSet(quote.prices, { purchaseId: quote.purchaseId, asOf: input.asOf, purpose: "prepayment", expectedPriceSetHash: quote.prices.setHash });
   const fresh = createPurchaseFeeEstimate(quote.terms, quote.prices, input.freshCosts, { asOf: input.asOf, purpose: "prepayment",
     maxExpectedFeeBps: policy.maxExpectedFeeBps, maxEstimateAgeMs: policy.maxEstimateAgeMs, expiresAt: quote.expiresAt, executionPolicy: policy.execution });
-  const feeAssessment = revalidateFeeEligibilityBeforePayment(quote.feeAssessment, fresh.snapshot);
+  if (quote.schemaVersion === 2) check(isDeepStrictEqual(quote.costs.assetIdentity, input.freshCosts.assetIdentity),
+    "USDC implementation identity changed from the approved quote.");
+  const feeAssessment = revalidateFeeEligibilityBeforePayment(quote.feeAssessment, fresh.snapshot,
+    quote.schemaVersion === 2 ? { schemaVersion: 2, expiresAt: quote.expiresAt } : undefined);
   const body = { kind: "prepayment-eligibility" as const, quoteHash: quote.quoteHash, priceSetHash: quote.prices.setHash,
     checkedAt: input.asOf, expiresAt: feeAssessment.expiresAt, freshCosts: input.freshCosts, feeAssessment, executionAuthorized: false as const };
   return frozen({ ...body, eligibilityHash: fingerprint("prepayment-eligibility-v1", body) });

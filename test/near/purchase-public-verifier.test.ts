@@ -3,7 +3,8 @@ import test, { before } from "node:test";
 import { Interface } from "ethers";
 import { reconcilePurchasePublicObservations } from "../../src/evidence/purchase-reconcile.js";
 import { verifyPurchaseEvidence } from "../../src/evidence/purchase-verify.js";
-import { exportCompletedPurchaseEvidence, type PurchaseEvidenceManifest } from "../../src/evidence/purchase-manifest.js";
+import { exportCompletedPurchaseEvidence, assertPurchaseEvidenceManifest, encodePurchaseEvidenceManifest, decodePurchaseEvidenceManifest,
+  type PurchaseEvidenceManifest } from "../../src/evidence/purchase-manifest.js";
 import type { PublicPurchaseLegVerification } from "../../src/evidence/purchase-leg.js";
 import { PURCHASE_LEGS } from "../../src/purchase/settlement.js";
 import { fingerprint } from "../../src/purchase/integrity.js";
@@ -137,5 +138,34 @@ test("fixture relabeling and contradictory or incomplete production declarations
     let requests = 0;
     const result = await verifyPurchaseEvidence(candidate, { transport: { async request() { requests++; throw new Error("No network allowed"); } } });
     assert.equal(result.status, "failed"); assert.equal(result.code, "INVALID_EVIDENCE"); assert.equal(result.stage, "manifest"); assert.equal(requests, 0);
+  }
+});
+
+
+test("V2 completed evidence remains historically inspectable after price expiry, including explicit signed recovery", async () => {
+  for (const recoverSigned of [false, true]) {
+    const sample = await completedPurchaseManifestFixture("10", recoverSigned, 2);
+    const historical = exportCompletedPurchaseEvidence(sample.record, sample.recordedAt);
+    const original = structuredClone(historical);
+    assert.equal(historical.quote.schemaVersion, 2);
+    assert.ok(Date.parse(historical.quoteApproval.approvedAt) > Date.parse(historical.quote.feeAssessment.expiresAt));
+    assert.ok(Date.parse(historical.recordedAt) > Date.parse(historical.quote.prices.expiresAt));
+    assert.ok(Date.parse(historical.paymentAuthorization.checkedAt) < Date.parse(historical.quote.prices.expiresAt));
+    assertPurchaseEvidenceManifest(historical);
+    assert.deepEqual(decodePurchaseEvidenceManifest(encodePurchaseEvidenceManifest(historical)), historical);
+    const supplied = PURCHASE_LEGS.map(leg => {
+      const entry = sample.record.execution!.legs[leg]!;
+      return { transaction: { prepared: entry.prepared.prepared, signed: entry.signed! },
+        proof: entry.proof, nearCost: entry.nearCost! } as PublicPurchaseLegVerification;
+    });
+    const result = reconcilePurchasePublicObservations(historical, supplied);
+    assert.equal(result.status, "consistent-observations"); assert.equal(result.mode, "offline-fixture");
+    assert.equal(result.executionProof, "none-caller-supplied-observations-only");
+    assert.equal(result.settlement.status, "completed"); assert.deepEqual(historical, original);
+    let requests = 0;
+    const production = await verifyPurchaseEvidence(historical, { transport: {
+      async request() { requests++; throw new Error("No network permitted for synthetic historical evidence"); },
+    } });
+    assert.equal(production.status, "failed"); assert.equal(production.stage, "manifest"); assert.equal(requests, 0);
   }
 });
