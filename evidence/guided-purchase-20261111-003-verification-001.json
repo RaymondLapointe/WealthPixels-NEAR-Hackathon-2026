@@ -1,0 +1,449 @@
+{
+  "status": "verified",
+  "stage": "complete",
+  "code": "VERIFIED",
+  "message": "All required public purchase checks passed under the disclosed RPC trust model.",
+  "checkedAt": "2026-11-11T21:51:31.505Z",
+  "completedChecks": [
+    "immutable-quote-approvals-all-six-costs-and-local-manifest-integrity",
+    "public-network-identities",
+    "usdc-payment-full-key-mpc-signed-bytes-canonical-receipt-movements-nonce-and-costs",
+    "link-delivery-full-key-mpc-signed-bytes-canonical-receipt-movements-nonce-and-costs",
+    "eth-delivery-full-key-mpc-signed-bytes-canonical-receipt-movements-nonce-and-costs",
+    "historical-finalized-payment-before-link-delivery-under-public-rpc-trust",
+    "authenticated-actual-fees-realized-ratio-and-all-three-deliveries"
+  ],
+  "manifestHash": "0xc75b2734a25a4dc8d5c5f851ab6633389d244ed2a668294d03b27405f5d5c320",
+  "publicFacts": {
+    "investmentUsdcBaseUnits": "10000000",
+    "quantities": {
+      "ethWei": "2400960384153661",
+      "linkBaseUnits": "478697941598851124"
+    },
+    "legs": [
+      {
+        "leg": "usdc-payment",
+        "nearTransactionHash": "Ay4eMaZPUqThzG5gxDTn4ep41sMqcmC47sJeFxr3FMsa",
+        "evmTransactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+        "blockNumber": "12114259",
+        "blockHash": "0x6081bb9bf75fe6864407ef2be6b30450250a9db5898bbe0dbb0af7c74da956dd",
+        "actualEvmFeeWei": "154359243"
+      },
+      {
+        "leg": "link-delivery",
+        "nearTransactionHash": "AjYP9rD5hkBdeupHBp99fPhXCq6GQbR5Sv5GZg37Ja86",
+        "evmTransactionHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+        "blockNumber": "12114445",
+        "blockHash": "0x5b441385d88fef7ac81b7ba2ca5e5e6d390cfc3e2b6d86de0699174014256162",
+        "actualEvmFeeWei": "43755676"
+      },
+      {
+        "leg": "eth-delivery",
+        "nearTransactionHash": "8YGwnW3XrKuybU1a3c26RDjbAPCFf6zG2bo784JnDbMp",
+        "evmTransactionHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+        "blockNumber": "12114479",
+        "blockHash": "0x12a3152324aa033687695732a467439b91c568ab119471c623185e73a899315d",
+        "actualEvmFeeWei": "21357000"
+      }
+    ],
+    "historicalPaymentFinality": {
+      "paymentBlockNumber": "12114259",
+      "paymentBlockHash": "0x6081bb9bf75fe6864407ef2be6b30450250a9db5898bbe0dbb0af7c74da956dd",
+      "linkBlockNumber": "12114445",
+      "linkBlockHash": "0x5b441385d88fef7ac81b7ba2ca5e5e6d390cfc3e2b6d86de0699174014256162",
+      "kind": "historical-payment-finality",
+      "chainId": "11155111",
+      "trustModel": "public-execution-and-beacon-rpc",
+      "consensusProofVerified": false,
+      "parentHeaderRootVerified": true,
+      "linkTimestamp": "1794433116",
+      "parentBeaconBlockRoot": "0x15b9202f03672bec89bdd07dca9e991f538cb6922be6382e6b5892f4b88668de",
+      "parentBeaconSlot": "11558292",
+      "parentBeaconStateRoot": "0x789a75d6f53d94c148596460f8be5cf7ebd296b14ece288354d9773735797a97",
+      "checkpointRoot": "0xa5680b72cfc07989b998f024da5fc02957d1ffeb95fb257831a7cbd9936f21b0",
+      "checkpointEpoch": "361194",
+      "checkpointSlot": "11558208",
+      "checkpointFork": "gloas",
+      "finalizedThroughExecutionBlockNumber": "12114359",
+      "finalizedThroughExecutionBlockHash": "0xcdc28e9b6db7069ce5f7ce772c932b0981370a6eaa80d9184315b5d79a7f718c",
+      "checkpointExecutionPayloadBlockNumber": "12114360",
+      "checkpointExecutionPayloadBlockHash": "0xbc5c523dc241023f334c441616ada52a055c9c5d35e01c53cdba8cf19e6616a0",
+      "finalityBoundary": "gloas-checkpoint-execution-parent",
+      "limitation": "Execution and Beacon archival RPC responses are trusted. Header SSZ hashes are checked; BeaconState/body Merkle proofs and BLS consensus signatures are not verified. This verifies historical parent-state finality, never a current-finalized-tag substitute."
+    },
+    "actualCosts": {
+      "evm": [
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "transactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+          "executionStatus": "success",
+          "gasUsed": "151779",
+          "effectiveGasPriceWei": "1017"
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "transactionHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+          "executionStatus": "success",
+          "gasUsed": "42982",
+          "effectiveGasPriceWei": "1018"
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "transactionHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+          "executionStatus": "success",
+          "gasUsed": "21000",
+          "effectiveGasPriceWei": "1017"
+        }
+      ],
+      "near": [
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "transactionHash": "Ay4eMaZPUqThzG5gxDTn4ep41sMqcmC47sJeFxr3FMsa",
+          "transactionTokensBurntYoctoNear": "31540279211000000000",
+          "receiptOutcomes": [
+            {
+              "receiptId": "Bc7J3j7UeLaeH774ynYkcuT3iaCLD7ncq1KCXGv3Fk2U",
+              "tokensBurntYoctoNear": "463144771437900000000"
+            },
+            {
+              "receiptId": "ArBEzNTNjmhA3m5ukH7FgtqWmgkXPDpDa8fSm1ayQmsZ",
+              "tokensBurntYoctoNear": "380455617640200000000"
+            },
+            {
+              "receiptId": "EQFVz4uHbS5dcFfGqvBBiYb7337M8nw91xbYXke9CKbK",
+              "tokensBurntYoctoNear": "0"
+            },
+            {
+              "receiptId": "F4sTYeVJk1MfhndbZM8ekrEGWWFsi41q8e899zzRFJS1",
+              "tokensBurntYoctoNear": "0"
+            }
+          ],
+          "originalAttachedDepositYoctoNear": "1",
+          "refundedDepositYoctoNear": "0",
+          "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "transactionHash": "AjYP9rD5hkBdeupHBp99fPhXCq6GQbR5Sv5GZg37Ja86",
+          "transactionTokensBurntYoctoNear": "31540279211000000000",
+          "receiptOutcomes": [
+            {
+              "receiptId": "4oWLygmjcES4n8mGEngHAFFJ8osaxL6TF9UHDj9bDvQU",
+              "tokensBurntYoctoNear": "463375262969700000000"
+            },
+            {
+              "receiptId": "9rVMBthng2D9e4oEDm1YXEVWZDhHiwRHhH1NxXRyGbfG",
+              "tokensBurntYoctoNear": "380466349987800000000"
+            },
+            {
+              "receiptId": "GiQjZNvtZero2Jn5jfFFMNEvoL4B2zczg4jRqarWQVSf",
+              "tokensBurntYoctoNear": "0"
+            },
+            {
+              "receiptId": "429DbpukC8gmJAX6B69phBrdpTX3wxmaVbm2Qn7DVdfu",
+              "tokensBurntYoctoNear": "0"
+            }
+          ],
+          "originalAttachedDepositYoctoNear": "1",
+          "refundedDepositYoctoNear": "0",
+          "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "transactionHash": "8YGwnW3XrKuybU1a3c26RDjbAPCFf6zG2bo784JnDbMp",
+          "transactionTokensBurntYoctoNear": "31540279211000000000",
+          "receiptOutcomes": [
+            {
+              "receiptId": "FWQyYZ78ic5LK23YeQPDPgjWgngNvtcHp42S1k6GMr1c",
+              "tokensBurntYoctoNear": "463061252177100000000"
+            },
+            {
+              "receiptId": "EjWL2uRBYuYC1sbRD34C9qhWkn1MD2DbonoAbm45PVQ9",
+              "tokensBurntYoctoNear": "375688223059800000000"
+            },
+            {
+              "receiptId": "Fg9MDCbU29HhggakiRyZhymv4S9JUzLTnRcmegg6R1C2",
+              "tokensBurntYoctoNear": "0"
+            },
+            {
+              "receiptId": "NKkg3jkHhjaerSbCVvMqDCoFpJNdEcuds7UJr3zq5zn",
+              "tokensBurntYoctoNear": "0"
+            }
+          ],
+          "originalAttachedDepositYoctoNear": "1",
+          "refundedDepositYoctoNear": "0",
+          "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+        }
+      ]
+    },
+    "realizedCosts": {
+      "schemaVersion": 1,
+      "kind": "authorized-purchase-actual-costs",
+      "context": "locked-approved-order-assumptions",
+      "purchaseId": "guided-purchase-20261111-003",
+      "chainId": "11155111",
+      "quoteTermsHash": "0x7997b6c6d3678c6b2acdc84beea9ec2a6ada348343b03f01f0124c6b070b188c",
+      "investmentUsdcBaseUnits": "10000000",
+      "authorization": {
+        "quoteHash": "0x12f47956df63129eeb2ae6a8f388f2274e777ee5d62f0eb395f0cc21bfeda4a1",
+        "priceSetHash": "0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd",
+        "checkedAt": "2026-11-11T20:59:49.252Z",
+        "authorizationHash": "0x0c84c34e8ed5f0fdc309dd3b63658fa706d38f960fb079b41e306bb0553dd12b"
+      },
+      "originalPrices": {
+        "schemaVersion": 1,
+        "kind": "normalized-price-set",
+        "purchaseId": "guided-purchase-20261111-003",
+        "providerId": "coinbase-exchange-last-trade-demonstration",
+        "mode": "approved-demonstration",
+        "validFrom": "2026-11-11T20:56:35.900Z",
+        "expiresAt": "2026-11-11T21:01:35.900Z",
+        "prices": {
+          "ETH": {
+            "asset": "ETH",
+            "quoteCurrency": "USD",
+            "numerator": "20825",
+            "denominator": "10",
+            "sourceUrl": "https://api.exchange.coinbase.com/products/ETH-USD/ticker",
+            "sourceReference": "Coinbase Exchange ETH-USD last trade 854099912 at 2026-11-11T20:56:35.366300640Z",
+            "originalObservedAt": "2026-11-11T20:56:35.366Z",
+            "effectiveAt": "2026-11-11T20:57:09.826Z",
+            "expiresAt": "2026-11-11T21:01:35.900Z"
+          },
+          "LINK": {
+            "asset": "LINK",
+            "quoteCurrency": "USD",
+            "numerator": "10445",
+            "denominator": "1000",
+            "sourceUrl": "https://api.exchange.coinbase.com/products/LINK-USD/ticker",
+            "sourceReference": "Coinbase Exchange LINK-USD last trade 145256947 at 2026-11-11T20:56:34.434301320Z",
+            "originalObservedAt": "2026-11-11T20:56:34.434Z",
+            "effectiveAt": "2026-11-11T20:57:09.826Z",
+            "expiresAt": "2026-11-11T21:01:35.900Z"
+          },
+          "NEAR": {
+            "asset": "NEAR",
+            "quoteCurrency": "USD",
+            "numerator": "37154",
+            "denominator": "10000",
+            "sourceUrl": "https://api.exchange.coinbase.com/products/NEAR-USD/ticker",
+            "sourceReference": "Coinbase Exchange NEAR-USD last trade 36473764 at 2026-11-11T20:56:27.551829128Z",
+            "originalObservedAt": "2026-11-11T20:56:27.551Z",
+            "effectiveAt": "2026-11-11T20:57:09.826Z",
+            "expiresAt": "2026-11-11T21:01:35.900Z"
+          }
+        },
+        "approval": {
+          "approvedDigest": "0x95b8b8b6d269d03ee7885d28f3c3b92430bf94b1a1eecd9666b1ae106ec7d52d",
+          "reference": "guided-price-human-approval",
+          "approvedAt": "2026-11-11T20:57:09.826Z"
+        },
+        "setHash": "0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd"
+      },
+      "asOf": "2026-11-11T21:46:08.630Z",
+      "evm": [
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "transactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+          "executionStatus": "success",
+          "gasUsed": "151779",
+          "effectiveGasPriceWei": "1017"
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "transactionHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+          "executionStatus": "success",
+          "gasUsed": "42982",
+          "effectiveGasPriceWei": "1018"
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "transactionHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+          "executionStatus": "success",
+          "gasUsed": "21000",
+          "effectiveGasPriceWei": "1017"
+        }
+      ],
+      "near": [
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "transactionHash": "Ay4eMaZPUqThzG5gxDTn4ep41sMqcmC47sJeFxr3FMsa",
+          "transactionTokensBurntYoctoNear": "31540279211000000000",
+          "receiptOutcomes": [
+            {
+              "receiptId": "Bc7J3j7UeLaeH774ynYkcuT3iaCLD7ncq1KCXGv3Fk2U",
+              "tokensBurntYoctoNear": "463144771437900000000"
+            },
+            {
+              "receiptId": "ArBEzNTNjmhA3m5ukH7FgtqWmgkXPDpDa8fSm1ayQmsZ",
+              "tokensBurntYoctoNear": "380455617640200000000"
+            },
+            {
+              "receiptId": "EQFVz4uHbS5dcFfGqvBBiYb7337M8nw91xbYXke9CKbK",
+              "tokensBurntYoctoNear": "0"
+            },
+            {
+              "receiptId": "F4sTYeVJk1MfhndbZM8ekrEGWWFsi41q8e899zzRFJS1",
+              "tokensBurntYoctoNear": "0"
+            }
+          ],
+          "originalAttachedDepositYoctoNear": "1",
+          "refundedDepositYoctoNear": "0",
+          "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "transactionHash": "AjYP9rD5hkBdeupHBp99fPhXCq6GQbR5Sv5GZg37Ja86",
+          "transactionTokensBurntYoctoNear": "31540279211000000000",
+          "receiptOutcomes": [
+            {
+              "receiptId": "4oWLygmjcES4n8mGEngHAFFJ8osaxL6TF9UHDj9bDvQU",
+              "tokensBurntYoctoNear": "463375262969700000000"
+            },
+            {
+              "receiptId": "9rVMBthng2D9e4oEDm1YXEVWZDhHiwRHhH1NxXRyGbfG",
+              "tokensBurntYoctoNear": "380466349987800000000"
+            },
+            {
+              "receiptId": "GiQjZNvtZero2Jn5jfFFMNEvoL4B2zczg4jRqarWQVSf",
+              "tokensBurntYoctoNear": "0"
+            },
+            {
+              "receiptId": "429DbpukC8gmJAX6B69phBrdpTX3wxmaVbm2Qn7DVdfu",
+              "tokensBurntYoctoNear": "0"
+            }
+          ],
+          "originalAttachedDepositYoctoNear": "1",
+          "refundedDepositYoctoNear": "0",
+          "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "transactionHash": "8YGwnW3XrKuybU1a3c26RDjbAPCFf6zG2bo784JnDbMp",
+          "transactionTokensBurntYoctoNear": "31540279211000000000",
+          "receiptOutcomes": [
+            {
+              "receiptId": "FWQyYZ78ic5LK23YeQPDPgjWgngNvtcHp42S1k6GMr1c",
+              "tokensBurntYoctoNear": "463061252177100000000"
+            },
+            {
+              "receiptId": "EjWL2uRBYuYC1sbRD34C9qhWkn1MD2DbonoAbm45PVQ9",
+              "tokensBurntYoctoNear": "375688223059800000000"
+            },
+            {
+              "receiptId": "Fg9MDCbU29HhggakiRyZhymv4S9JUzLTnRcmegg6R1C2",
+              "tokensBurntYoctoNear": "0"
+            },
+            {
+              "receiptId": "NKkg3jkHhjaerSbCVvMqDCoFpJNdEcuds7UJr3zq5zn",
+              "tokensBurntYoctoNear": "0"
+            }
+          ],
+          "originalAttachedDepositYoctoNear": "1",
+          "refundedDepositYoctoNear": "0",
+          "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+        }
+      ],
+      "costs": [
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "asset": "ETH",
+          "transactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+          "nativeBaseUnits": "154359243",
+          "usdcExact": {
+            "numerator": "128581249419",
+            "denominator": "400000000000"
+          }
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "asset": "ETH",
+          "transactionHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+          "nativeBaseUnits": "43755676",
+          "usdcExact": {
+            "numerator": "9112119527",
+            "denominator": "100000000000"
+          }
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "asset": "ETH",
+          "transactionHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+          "nativeBaseUnits": "21357000",
+          "usdcExact": {
+            "numerator": "17790381",
+            "denominator": "400000000"
+          }
+        },
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "asset": "NEAR",
+          "transactionHash": "Ay4eMaZPUqThzG5gxDTn4ep41sMqcmC47sJeFxr3FMsa",
+          "nativeBaseUnits": "875140668289100000001",
+          "usdcExact": {
+            "numerator": "16257488194806610700018577",
+            "denominator": "5000000000000000000000"
+          }
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "asset": "NEAR",
+          "transactionHash": "AjYP9rD5hkBdeupHBp99fPhXCq6GQbR5Sv5GZg37Ja86",
+          "nativeBaseUnits": "875381892168500000001",
+          "usdcExact": {
+            "numerator": "16261969410814224500018577",
+            "denominator": "5000000000000000000000"
+          }
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "asset": "NEAR",
+          "transactionHash": "8YGwnW3XrKuybU1a3c26RDjbAPCFf6zG2bo784JnDbMp",
+          "nativeBaseUnits": "870289754447900000001",
+          "usdcExact": {
+            "numerator": "16167372768378638300018577",
+            "denominator": "5000000000000000000000"
+          }
+        }
+      ],
+      "totalActualUsdcExact": {
+        "numerator": "48689115625356061000055731",
+        "denominator": "5000000000000000000000"
+      },
+      "totalActualUsdcBaseUnitsCeil": "9738",
+      "realizedFeeBpsCeil": "10",
+      "exceedsOriginalFeePolicy": false,
+      "maxExpectedFeeBps": "1000",
+      "priceAssumption": "one-nominal-test-USDC-per-USD",
+      "evidenceSource": "caller-supplied-receipt-observations",
+      "settlementObligation": "unchanged-by-accounting",
+      "actualCostRecordHash": "0x72e72f9a672ba2e82be812b0e40a09e06297f776ce6685f9756d5579acf5d12c"
+    },
+    "onchainSettlement": "three-matching-direct-asset-transfers",
+    "operatorClaim": "completed-local-purchase-association"
+  },
+  "boundaries": [
+    "Public facts are verified against the configured execution, NEAR and Ethereum consensus RPC providers; this is not a light client or an SSZ state-proof verifier.",
+    "Quote association, human approval references, historical gas estimates and absence of duplicate claims in other journals are operator assertions, not trustless onchain enforcement.",
+    "Demonstration prices are approved order assumptions, not independently authenticated current market prices; test USDC is valued at one nominal USD unit.",
+    "The two disposable roles may be controlled by one demonstrator. Settlement is sequential and non-atomic; no pooled portfolio token is issued."
+  ]
+}

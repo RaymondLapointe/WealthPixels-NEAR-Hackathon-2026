@@ -8,6 +8,14 @@ WealthPixels is building a portfolio purchasing protocol designed to make divers
 
 **Verifiable Execution** is a supporting, enduring product principle: independently checkable evidence connecting approved purchase terms, payment, transaction authorizations, individual asset deliveries and settlement. Present verification relies on public RPC responses and disclosed local approval records; it is not fully trustless.
 
+## Completed live portfolio purchase — November 11, 2026
+
+**10 test USDC paid → 0.478697941598851124 LINK + 0.002400960384153661 native ETH delivered directly to the Investor.** Treasury principal inventory supplied both assets on Ethereum Sepolia; three NEAR Testnet Chain Signatures authorizations enabled the three settlements.
+
+Purchase `guided-purchase-20261111-003` completed with no outstanding delivery obligation. The [public manifest](evidence/guided-purchase-20261111-003.json) and [saved verification report](evidence/guided-purchase-20261111-003-verification-001.json) record all six transaction identities. At **2026-11-11T21:51:31.505Z**, the independent public verifier returned **exit 0 — VERIFIED**, passing all seven check groups, including historical payment finality before LINK delivery. Total recorded blockchain execution cost was **0.009738 nominal USDC, rounded up**, under the original approved demonstration rates; this is not a WealthPixels fee.
+
+This is a completed testnet proof of the purchase, authorization, direct delivery and verification mechanisms. Many-asset portfolios, other destination blockchains, tokenized securities and production custody/pricing remain product directions. The [submission checklist](docs/WealthPixels_Hackathon_Submission_Checklist.md) tracks remaining publication work.
+
 ## Getting Started — Choose Your Evaluation Path
 
 ### Quick Evaluation — No Credentials Required
@@ -16,7 +24,7 @@ WealthPixels is building a portfolio purchasing protocol designed to make divers
 
 **No Investor or Treasury credential files, private keys, funded testnet accounts or transaction approvals are required for Quick Evaluation.**
 
-From a fresh checkout's root directory, use Node **22.23.4** (or a supported Node 22 patch **>=22.22.2 <23**) and npm:
+After reading the Judge Story, run the offline evaluation from a fresh checkout's root directory. Use Node **22.23.4** (or a supported Node 22 patch **>=22.22.2 <23**) and npm:
 
 ~~~text
 npm ci
@@ -27,7 +35,17 @@ npm run purchase:dry-run
 
 Installation needs internet or a populated npm cache. Tests and the fixture-based three-leg simulation run offline, without RPC calls or Windows-specific setup. The simulation uses an isolated temporary journal to model Investor USDC payment and Treasury LINK/native ETH delivery. Its simulated approvals, signatures and completed state are **not real blockchain execution or a completed live portfolio purchase**.
 
-Inspect the [public evidence documentation and verification limits](evidence/README.md), the completed [two-way LINK manifest](evidence/sepolia-link.json) and [native ETH smoke-test summary](evidence/native-eth-smoke.json). Verify the completed LINK transfers using public RPCs:
+Expected offline results: tests pass, TypeScript exits 0, and the dry-run reports `finalStatus: "completed"`, no outstanding fixture obligations, three simulated NEAR submissions and three simulated Ethereum submissions. Fixture quantities differ from the live purchase because their price inputs are synthetic.
+
+Locate the [completed purchase manifest](evidence/guided-purchase-20261111-003.json), [successful saved report](evidence/guided-purchase-20261111-003-verification-001.json) and [public evidence documentation](evidence/README.md). Then independently verify the recorded live purchase using public RPC reads:
+
+~~~text
+npm run verify:purchase -- --manifest evidence/guided-purchase-20261111-003.json --expected-quote-hash 0x12f47956df63129eeb2ae6a8f388f2274e777ee5d62f0eb395f0cc21bfeda4a1 --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io --beacon-rpc https://ethereum-sepolia-beacon-api.publicnode.com
+~~~
+
+Expected result when the required history is available: **verified / VERIFIED**, exit **0**, with all seven check groups passed. The saved run passed; a new run must retrieve its own public evidence. Exit **2** means incomplete or unavailable history, and exit **1** means invalid/contradictory evidence or a CLI/I/O error. The command omits `--report` so it cannot overwrite the saved report. No new purchase is executed.
+
+Earlier, separate milestones remain available in the [public evidence documentation and verification limits](evidence/README.md), the completed [two-way LINK manifest](evidence/sepolia-link.json) and [native ETH smoke-test summary](evidence/native-eth-smoke.json). Verify the completed LINK transfers using public RPCs:
 
 ~~~text
 npm run verify:evidence -- --manifest evidence/sepolia-link.json --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io
@@ -35,13 +53,7 @@ npm run verify:evidence -- --manifest evidence/sepolia-link.json --near-rpc http
 
 This reads public data without signing or broadcasting. Success exits **0**; invalid evidence, failed checks or unavailable RPC data exit **1**. The native ETH summary is available for inspection but is not an input schema accepted by either manifest verifier.
 
-A completed live portfolio purchase manifest is not yet published. Check the explicitly pending placeholder offline:
-
-~~~text
-npm run verify:purchase -- --manifest evidence/portfolio-purchase.pending.json
-~~~
-
-Expected result: **incomplete / PENDING**, exit **2**, with no RPC requests. Public verification depends on RPC connectivity and historical data availability; future completed-purchase verification also requires historical Ethereum Beacon data whose availability remains unresolved. Missing evidence must remain incomplete. See the [purchase evidence section below](#public-portfolio-purchase-evidence-task-03e) for the eventual completed-manifest interface.
+Public verification depends on RPC connectivity and retained historical Ethereum execution, NEAR and Beacon data. Historical finality passed for this purchase on November 11; future availability is not guaranteed. The preserved `portfolio-purchase.pending.json` is a historical placeholder, not this completed purchase.
 
 ### Advanced Live Reproduction — Optional
 
@@ -53,21 +65,21 @@ Configure credential references privately, keep credential files outside the rep
 
 ## Demonstration status
 
-WealthPixels has demonstrated treasury-owned test LINK delivered to an investor EVM address, followed by an investor-authorized return transfer. Each address is derived from a different NEAR testnet account.
+**Current status, November 11, 2026:** the three-leg 10-USDC portfolio purchase is completed and publicly verified as recorded above. Journal revision 47 records completion; the private journal is unnecessary for judge verification and is not distributed.
 
-**Current status, November 10, 2026:** both live LINK transfers remain confirmed: Treasury delivered exactly 1 LINK, and Investor independently authorized a 0.1 LINK return through its separate NEAR account. The completed [public two-leg evidence](evidence/sepolia-link.json) contains both NEAR and Sepolia transaction hashes. Treasury also delivered exactly **0.000001 native ETH** through its NEAR authority; [public native smoke evidence](evidence/native-eth-smoke.json) records the successful receipt, exact balance movements and costs. The portfolio purchase coordinator and evidence verifier are tested offline; no live portfolio purchase has executed. The [readiness corrections](docs/Portfolio_Purchase_Readiness_Corrections_20261110.md) implement the USDC-only gas ceiling, guarded unpaid expiry and complete NEAR upfront funding reserves. An approved demonstration price set, fresh readiness checks and separate live approvals remain prerequisites. The earlier [readiness snapshot](docs/Native_ETH_Milestone_and_Portfolio_Readiness_20261110.md) remains preserved as historical evidence.
+Earlier milestones remain separate: [two-way LINK evidence](evidence/sepolia-link.json) records a 1 LINK Treasury delivery and 0.1 LINK Investor return; [native smoke evidence](evidence/native-eth-smoke.json) records a 0.000001 ETH delivery. The [readiness corrections](docs/Portfolio_Purchase_Readiness_Corrections_20261110.md) and [November 10 snapshot](docs/Native_ETH_Milestone_and_Portfolio_Readiness_20261110.md) are historical development records, not current balances or permission to repeat transfers.
 
 The hackathon demonstrator may control both disposable testnet roles on one computer. Separate accounts and authorizations demonstrate protocol behavior, **not independent production custody**.
 
 ## Portfolio purchase development: Task 03B
 
-The next live demonstration targets **10 test USDC**, with an illustrative 50% native ETH / 50% LINK allocation from Treasury principal inventory. The amount is configurable; 10 USDC is a demonstration target, with no production minimum implied. The earlier 100-USDC planning example is superseded. The completed live evidence above proves the two LINK transfers; a portfolio purchase has not yet executed.
+The completed live demonstration invested **10 test USDC**, with a 50% native ETH / 50% LINK allocation from Treasury principal inventory. The amount is configurable; 10 USDC implies no production minimum. The earlier 100-USDC planning example is superseded. The purchase manifest above is distinct from the older two-way LINK test.
 
-Task 03B introduced exact six-decimal USDC parsing, immutable allocation terms, Investor-to-Treasury USDC intents, quote-sized Treasury-to-Investor LINK intents, and fee accounting. Task 03D-2 now connects these to the purchase operator CLI, durable atomic payment claims and sequential settlement. `npm test` includes 1, 5, 10, 20 and 100 USDC cases. The purchase lifecycle has been demonstrated with labelled offline fixtures; no live portfolio purchase has executed.
+Task 03B introduced exact six-decimal USDC parsing, immutable allocation terms, Investor-to-Treasury USDC intents, quote-sized Treasury-to-Investor LINK intents, and fee accounting. Task 03D-2 now connects these to the purchase operator CLI, durable atomic payment claims and sequential settlement. `npm test` includes 1, 5, 10, 20 and 100 USDC cases. The purchase lifecycle has both labelled offline fixture coverage and the separately recorded completed live purchase.
 
 Before payment authorization, total expected system execution costs must be at most `MAX_EXPECTED_FEE_BPS = 1000` (10%) of the investment. This includes all three EVM transactions and all three NEAR MPC signing operations, regardless of payer. Calculations use exact rational USDC equivalents, at least 20% gas buffers, documented conversion inputs and separate expected-fee assumptions and maximum reserves. Missing, expired or unverified inputs fail closed; offline price fixtures cannot authorize payment. Fee-estimation work is a WealthPixels operating expense. The 10% threshold is an economic eligibility safeguard, not a WealthPixels fee charged to the Investor, and makes no claim about production economic viability.
 
-Task 03D-1 binds approved demonstration prices and all six expected costs into an immutable quote. Task 03D-2 adds public cost/funding collectors, role-specific execution, finalized payment claiming, durable settlement obligations, bounded recovery and actual fee accounting. After accepted payment, fee increases and quote expiration leave delivery obligations outstanding. Task 03E adds separate public purchase evidence export and independent verification; no live portfolio purchase is claimed.
+Task 03D-1 binds approved demonstration prices and all six expected costs into an immutable quote. Task 03D-2 adds public cost/funding collectors, role-specific execution, finalized payment claiming, durable settlement obligations, bounded recovery and actual fee accounting. After accepted payment, fee increases and quote expiration leave delivery obligations outstanding. Task 03E adds separate public purchase evidence export and independent verification, used for the completed November 11 purchase.
 
 Official Sepolia USDC is [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://developers.circle.com/stablecoins/usdc-contract-addresses), with six decimals. The November 10 read-only snapshot found **20 test USDC at Investor**, sufficient for the 10-USDC payment without another faucet request. The implementation uses a direct Investor transfer, requiring no spender allowance. Fresh token, funding, pricing and fee-eligibility checks remain mandatory before live preparation.
 
@@ -77,7 +89,7 @@ See the [Task 03B implementation report](docs/Task03B_ERC20_Intents_and_Fee_Elig
 
 Native ETH modules now construct exact EIP-1559 value transfers with empty calldata, bind the quantity to allocation terms, check confirmed/pending nonce and Treasury value-plus-maximum-fee funds, and retain a positive operating reserve (default 0.001 ETH). Fresh estimates must retain at least the 20% gas buffer within protective limits. Signature verification recovers the full trusted MPC-derived Treasury public key. Separate unsigned-digest signing approval and signed-hash broadcast approval, durable attempt markers, exclusive state locks, the unchanged 15-minute preparation window and public reconciliation preserve the execution boundaries.
 
-Offline receipt tests reconstruct exact signed bytes, check canonical receipt/parent blocks and at least two confirmations, account for actual gas and verify delivered ETH as an increase over the Investor's existing balance. Unexpected balance activity requires reconciliation. Synthetic fixture tests remain distinct from the separately completed [live native smoke test](evidence/native-eth-smoke.json). The Task 03D-2 purchase CLI exposes native delivery within the paid-purchase sequence; a live portfolio purchase remains pending.
+Offline receipt tests reconstruct exact signed bytes, check canonical receipt/parent blocks and at least two confirmations, account for actual gas and verify delivered ETH as an increase over the Investor's existing balance. Unexpected balance activity requires reconciliation. Synthetic fixture tests remain distinct from the separately completed [live native smoke test](evidence/native-eth-smoke.json). The Task 03D-2 purchase CLI completed native delivery within the paid-purchase sequence on November 11.
 
 Task 03C verified ETH/USD and LINK/USD Sepolia feed addresses, eight decimals and one-hour heartbeats against Chainlink's official directory. A timestamped CoinGecko NEAR/USD HTTPS source remains a candidate with access/rate-limit caveats. This research is preserved in [Task 03C results](docs/Task03C_Native_ETH_and_Pricing_Readiness.md). The Task 03D-1 amendment makes approved demonstration prices the hackathon baseline; live price collectors remain future integrations.
 
@@ -110,7 +122,7 @@ It prints a synthetic 10-USDC quote and all six fee components. It performs no R
 
 ## Purchase execution and recovery: Task 03D-2
 
-The implemented sequence is Investor USDC payment, canonical **finalized** payment verification and atomic claim, Treasury LINK delivery, then Treasury native ETH delivery with a fresh nonce. Each leg requires separate exact-digest MPC signing approval and exact-signed-hash broadcast approval. The production driver reuses the existing signers, trusted full derived public keys, EIP-1559 builders and one-attempt transports. No completed live purchase is claimed.
+The implemented sequence is Investor USDC payment, canonical **finalized** payment verification and atomic claim, Treasury LINK delivery, then Treasury native ETH delivery with a fresh nonce. Each leg requires separate exact-digest MPC signing approval and exact-signed-hash broadcast approval. The production driver reuses the existing signers, trusted full derived public keys, EIP-1559 builders and one-attempt transports. The November 11 purchase exercised this sequence; its public evidence is linked above.
 
 One ignored journal holds one active purchase, its immutable quote and inventory reservation, per-leg attempts, original bytes/timestamps, public NEAR outcomes, receipt observations, actual fees and outstanding obligations. Payment identity is `chainId:transactionHash:TransferLogIndex`; its unique claim and finalized paid state commit together under the workspace lock. This local quote/payment association is not trustless onchain enforcement.
 
@@ -141,29 +153,28 @@ Read the [Task 03D-2 report and operator sequence](docs/Task03D2_Purchase_Execut
 
 WealthPixels' purchase proposition is a small USDC payment followed by delivery of individual native ETH and LINK assets from Treasury principal inventory directly to the Investor's NEAR-controlled Ethereum address. The Investor receives no pooled portfolio token. Pricing comes through the replaceable `PriceProvider` interface; the hackathon uses explicitly approved demonstration assumptions, not production real-time market data. The demonstrator may operate both accounts, and the three transactions settle sequentially rather than atomically.
 
-The new public manifest contains the immutable approved quote/prices, six expected costs, separate public authorities and signing hashes, three Ethereum hashes/parameters/receipt references, asset movements, actual execution costs and final settlement. It excludes credentials, executable transaction bytes, local file paths, raw runtime state and the operator's journal. The complete live purchase manifest does not exist yet; [the pending placeholder](evidence/portfolio-purchase.pending.json) makes that explicit.
+The new public manifest contains the immutable approved quote/prices, six expected costs, separate public authorities and signing hashes, three Ethereum hashes/parameters/receipt references, asset movements, actual execution costs and final settlement. It excludes credentials, executable transaction bytes, local file paths, raw runtime state and the operator's journal. The [completed live manifest](evidence/guided-purchase-20261111-003.json) and [verified report](evidence/guided-purchase-20261111-003-verification-001.json) now provide this evidence. The older [pending placeholder](evidence/portfolio-purchase.pending.json) remains unchanged for historical and offline pending-status checks.
 
-Current credential-free commands:
+Offline evidence-regression commands:
 
 ~~~text
 npm test
 npm run typecheck
 npm run purchase:dry-run
 npm run test:purchase-evidence
-npm run verify:purchase -- --manifest evidence/portfolio-purchase.pending.json
 ~~~
 
-The final command currently reports **incomplete / PENDING**, makes no network requests and exits **2**; it is not a passing purchase proof. Tests and the dry-run use explicitly labelled fixtures and do not execute a live purchase. Once a real completed manifest has been exported and published after approval, keep it inside this checkout's `evidence/` directory and use its actual purchase-specific filename. Replace both placeholders below with that file and the separately preserved approved quote hash:
+Tests and dry-runs use labelled fixtures. To verify the real completed purchase, use its actual file and approved quote hash:
 
 ~~~text
-npm run verify:purchase -- --manifest evidence/ACTUAL_COMPLETED_PURCHASE_MANIFEST.json --expected-quote-hash ACTUAL_APPROVED_QUOTE_HASH --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io --beacon-rpc https://ethereum-sepolia-beacon-api.publicnode.com
+npm run verify:purchase -- --manifest evidence/guided-purchase-20261111-003.json --expected-quote-hash 0x12f47956df63129eeb2ae6a8f388f2274e777ee5d62f0eb395f0cc21bfeda4a1 --near-rpc https://archival-rpc.testnet.fastnear.com --evm-rpc https://rpc.sepolia.ethpandaops.io --beacon-rpc https://ethereum-sepolia-beacon-api.publicnode.com
 ~~~
 
 The `--expected-quote-hash` option pins the independently retained approval; omit it only when that hash is unavailable. Optional `--report evidence/NEW_REPORT.json` preserves success, failure or partial checks without overwriting prior evidence. Exit **0** means every implemented public check passed, **2** means incomplete/unavailable history, and **1** means contradictory/invalid evidence. No signing identity, funding or operator journal is required. `npm run purchase:export-evidence -- --help` describes the separate operator-only extraction of public fields after completion.
 
 Verification reconstructs exact signed bytes from public transactions, matches all three direct NEAR MPC signatures against the full trusted derived keys, and checks official token contracts, USDC six-decimal payment, LINK events, native value/gas, canonical historical balances, finality, order, nonces and actual fees. Historical finalized payment **before** LINK release is checked through Ethereum consensus state anchored by the LINK execution block's parent Beacon root. Beacon REST access is another interface to Ethereum, not another blockchain integration. Missing archive data produces incomplete verification; cached fixtures and today's finalized tag cannot replace it.
 
-Historical `eth_call`, `eth_getBalance`, code/nonces, logs, receipts and exact-state Beacon checkpoint/block/envelope history require archive-capable public services. A November 7 probe passed for recent consensus history but failed for an approximately two-day-old state on the default provider; two documented alternatives also failed. Durable judge reproducibility remains conditional on resolving that retention dependency. Requests are paced and bounded; endpoints are configurable and no paid account is required by the software. Public RPC access queries public state; it grants no asset authority. NEAR account signing authority authorizes an MPC request. An RPC provider can relay already-signed bytes but cannot independently authorize the transfer.
+Historical `eth_call`, `eth_getBalance`, code/nonces, logs, receipts and exact-state Beacon checkpoint/block/envelope history require archive-capable public services. A November 7 probe passed for recent consensus history but failed for an approximately two-day-old state on the default provider; two documented alternatives also failed. This purchase passed all historical finality checks on November 11; later independent reproduction still depends on providers retaining the required history. Requests are paced and bounded; endpoints are configurable and no paid account is required by the software. Public RPC access queries public state; it grants no asset authority. NEAR account signing authority authorizes an MPC request. An RPC provider can relay already-signed bytes but cannot independently authorize the transfer.
 
 Verification trusts configured RPC responses; it is not a light client or a BLS/SSZ state-proof verifier. Operator approvals, quote association and original gas estimates remain disclosed local assertions. It does not prove independent production custody, global uniqueness across other journals or trustless/atomic settlement. See [purchase evidence format and limits](evidence/README.md) and the [Task 03E completion report](docs/Task03E_Public_Purchase_Evidence_and_Verification.md).
 
@@ -183,7 +194,7 @@ The native example is **offline preparation only**, using synthetic observations
 
 The normal 15-minute preparation rule remains. Expired signed recovery requires the exact intent, original timestamp acknowledgment and signed-hash approval, plus a new preserved audit within 30 seconds and fresh public checks. It cannot re-sign, replace, alter fees or resend an uncertain attempt. An immutable submission deadline now reaches the MPC adapter's final check immediately before `send_tx`, so slow authority reads cannot extend either native preparation or purchase fee eligibility.
 
-The bounded archive review examined two new providers' official documentation and found no qualified public Sepolia Beacon archive route; **zero new probes** were made and the earlier failed requests were not repeated. The historical dependency remains unresolved. A live purchase can be verified promptly while required recent history remains available, with no guarantee of later independent retrieval. Missing history always remains incomplete; an earlier report or cached response does not replace a new verification.
+The bounded archive review examined two new providers' official documentation and found no qualified public Sepolia Beacon archive route; **zero new probes** were made and the earlier failed requests were not repeated. That review remains a historical availability finding. The completed purchase subsequently passed historical finality verification on November 11, with no guarantee of later independent retrieval. Missing history always remains incomplete; an earlier report or cached response does not replace a new verification.
 
 The [Task 03F-A report](docs/Task03FA_Native_Test_and_Live_Readiness.md) preserves its historical fee-bound timing baseline. The [current operator runbook](docs/Task03FA_Live_Operator_Runbook.md) gives the command/approval sequence with version-2 fixed purchase acceptance and independent 60-second execution freshness. No live native test or portfolio purchase was prepared or executed in the original Task 03F-A increment.
 
@@ -222,7 +233,7 @@ The isolated [Experiment B MPC diagnostic](docs/ExperimentB_Implementation_Repor
 | Mode | Command / status | Credentials or funding |
 | --- | --- | --- |
 | Offline automated tests | npm test or npm run test:offline | None |
-| Public transaction verification | npm run verify:evidence | None; public RPC access |
+| Public purchase verification | Exact `npm run verify:purchase` command above | None; public archival RPC access |
 | Optional live reproduction | Separately approved operator workflow | Two disposable NEAR testnet identities and test funds |
 
 ### 1. Offline tests
@@ -260,7 +271,7 @@ See [evidence format and verification limits](evidence/README.md). Public MPC in
 
 ### 3. Optional live reproduction
 
-Judges do not need to run this mode. The operator CLI completed both live transfers, and its offline execution tests use mocks. Any further funding, live MPC signing or EVM broadcasting requires separate approval.
+Judges do not need to run this mode. The operator CLI completed the three-leg portfolio purchase and the earlier separate transfer tests; offline execution tests use mocks. Any further funding, live MPC signing or EVM broadcasting requires separate approval.
 
 The recommended setup is **one laptop, one Windows user, two disposable NEAR accounts, two separate credential files, and a fresh explicitly selected process for each role**. Each signing invocation must select one `--role` and one explicit `--credential` path. It cannot load a directory or both role files. The current live adapter pins the reviewed WealthPixels public identities; using different identities requires a separately reviewed public configuration change.
 
@@ -282,7 +293,7 @@ See the [revised Task 02B runbook](docs/Task02B1_Account_Setup_and_Derivation.md
 
 ## Existing Solidity application
 
-The pre-existing contracts implement a contract-custodied USDC-to-WETH/WBTC purchase. They are reference code, not the NEAR-controlled LINK transfer milestone. No Solidity source or original test has been rewritten.
+The pre-existing contracts implement a contract-custodied USDC-to-WETH/WBTC purchase. They are reference code, separate from the new NEAR-authorized direct-asset portfolio workflow. No Solidity source or original test has been rewritten.
 
 Optional compilation:
 
@@ -300,11 +311,21 @@ It requires a privately configured MAINNET_RPC_URL and simulates deployments/tra
 
 ## Reproducibility and source history
 
-- SDK: exact-pinned near-api-js 7.4.0; Ethers 6.16.0; Hardhat 3.1.0.
-- Pre-NEAR baseline: 8e38b987d7dd3a373a1bb1f003bb575d12b0ec8b.
-- Task 02A checkpoint: e332575412e167fa47090f62d3428fcc1a1b6e06.
-- Runtime/dependencies/generated files and local secrets are excluded from Git.
-- Account availability in prior reports is a timestamped observation, not a reservation or proof of ownership.
-- Public reuse/submission of the pre-existing code still needs the owner's authorization and accurate disclosure.
+**Pre-existing baseline:** the contract-custodied 60/40 USDC-to-WETH/WBTC implementation is legacy reference code, identified as 2024 work in the [initial assessment](docs/WealthPixels_NEAR_Codebase_Assessment_and_Codex_Kickoff.md). It was imported at commit `8e38b987d7dd3a373a1bb1f003bb575d12b0ec8b` on November 1, 2026 (local time). That import date does not establish when the original code was authored. Its contracts, original portfolio test and Hardhat configuration are unchanged since that baseline.
+
+**Built for this hackathon:** NEAR integration starts at `e332575412e167fa47090f62d3428fcc1a1b6e06` on November 2. November 2–11 work adds NEAR role derivation and MPC authorization, USDC/LINK/native ETH execution, principal-inventory purchase coordination, exact quote/fee approvals, recovery controls, offline tests and independent public evidence verification. The verified November 11 purchase demonstrates this new integration; the legacy Solidity product is not claimed as new work.
+
+The [official rules](https://nearhackathon.com/HACKATHON.md) allow work since October 19, 2026, and require disclosure of reused code. Compare the imported baseline to this checkout locally:
+
+~~~text
+git diff --stat 8e38b987d7dd3a373a1bb1f003bb575d12b0ec8b HEAD
+git diff 8e38b987d7dd3a373a1bb1f003bb575d12b0ec8b HEAD -- src scripts test package.json
+~~~
+
+No Git remote is configured in the packaging checkout. A public comparison URL and baseline/submission tags remain [release checklist items](docs/WealthPixels_Hackathon_Submission_Checklist.md); no repository URL is invented here.
+
+Reused dependencies/tooling are declared in [package.json](package.json) and locked in [package-lock.json](package-lock.json): near-api-js 7.4.0, Ethers, Hardhat, OpenZeppelin, Chainlink contracts, TypeScript/tsx, Mocha/Chai and dotenv. Existing WealthPixels code is the baseline above. Codex assisted implementation, tests and documentation. Dependency licenses remain their own.
+
+**License/publication prerequisite:** package metadata says ISC while the legacy Solidity files carry MIT headers; no root LICENSE file is present. The owner must confirm reuse rights and select/document the repository license before public release. This packaging does not relicense existing code. Runtime journals, protected credentials and generated dependencies remain excluded from Git.
 
 Windows developers may retain scripts/with-node22.ps1 as a convenience. An open editor can lock native Hardhat libraries and block npm ci; close the relevant project/editor before a clean reinstall rather than requiring judges to use that launcher.

@@ -1,0 +1,2538 @@
+{
+  "schemaVersion": 1,
+  "kind": "wealthpixels-portfolio-purchase",
+  "mode": "live",
+  "status": "complete",
+  "recordedAt": "2026-11-11T21:49:43.071Z",
+  "operatorModel": "single-operator-demo",
+  "settlementModel": "non-atomic-principal-inventory",
+  "disclosures": {
+    "custody": "The hackathon demonstrator may control both testnet roles; this does not establish production custody independence.",
+    "quoteAssociation": "Quote association and human approvals are operator-recorded local claims, not trustless onchain enforcement or proof of global payment uniqueness.",
+    "pricing": "Approved demonstration prices are historical assumptions; they are not current production market prices or evidence of production economic viability.",
+    "fixture": "Live execution claims require independent public NEAR and Sepolia verification; local validation alone is not blockchain proof."
+  },
+  "authorities": {
+    "near": {
+      "networkId": "testnet",
+      "contractId": "v1.signer-prod.testnet",
+      "domainId": 0,
+      "derivationPath": "wealthpixels/sepolia/v1",
+      "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3"
+    },
+    "roles": {
+      "treasury": {
+        "accountId": "wealthpixels-treasury.testnet",
+        "accessPublicKey": "ed25519:8y8NfEhTLWFYgMCKhGLQBPVPZaEBjQvdphf29ta6BQJ1",
+        "evmAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87"
+      },
+      "investor": {
+        "accountId": "wealthpixels-investor.testnet",
+        "accessPublicKey": "ed25519:HYbgeU5vRTw686L5xxp3JtsyzrcBrQcpR3MtBq197DWc",
+        "evmAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820"
+      }
+    }
+  },
+  "quote": {
+    "schemaVersion": 2,
+    "kind": "purchase-quote",
+    "purchaseId": "guided-purchase-20261111-003",
+    "purpose": "prepayment",
+    "createdAt": "2026-11-11T20:57:49.975Z",
+    "requestedExpiresAt": "2026-11-11T21:27:49.975Z",
+    "expiresAt": "2026-11-11T21:01:35.900Z",
+    "policy": {
+      "maxExpectedFeeBps": {
+        "$bigint": "1000"
+      },
+      "maxEstimateAgeMs": 60000,
+      "nominalQuoteWindowMs": 1800000,
+      "execution": {
+        "gasLimitCap": {
+          "$bigint": "180000"
+        },
+        "maxFeePerGasCap": {
+          "$bigint": "30000000000"
+        },
+        "maxTotalFeeWei": {
+          "$bigint": "3600000000000000"
+        },
+        "gasBufferBps": {
+          "$bigint": "2000"
+        },
+        "operatingReserveWei": {
+          "$bigint": "1000000000000000"
+        },
+        "usdcPaymentGasLimitCap": {
+          "$bigint": "200000"
+        }
+      }
+    },
+    "prices": {
+      "schemaVersion": 1,
+      "kind": "normalized-price-set",
+      "purchaseId": "guided-purchase-20261111-003",
+      "providerId": "coinbase-exchange-last-trade-demonstration",
+      "mode": "approved-demonstration",
+      "validFrom": "2026-11-11T20:56:35.900Z",
+      "expiresAt": "2026-11-11T21:01:35.900Z",
+      "prices": {
+        "ETH": {
+          "asset": "ETH",
+          "quoteCurrency": "USD",
+          "numerator": {
+            "$bigint": "20825"
+          },
+          "denominator": {
+            "$bigint": "10"
+          },
+          "sourceUrl": "https://api.exchange.coinbase.com/products/ETH-USD/ticker",
+          "sourceReference": "Coinbase Exchange ETH-USD last trade 854099912 at 2026-11-11T20:56:35.366300640Z",
+          "originalObservedAt": "2026-11-11T20:56:35.366Z",
+          "effectiveAt": "2026-11-11T20:57:09.826Z",
+          "expiresAt": "2026-11-11T21:01:35.900Z"
+        },
+        "LINK": {
+          "asset": "LINK",
+          "quoteCurrency": "USD",
+          "numerator": {
+            "$bigint": "10445"
+          },
+          "denominator": {
+            "$bigint": "1000"
+          },
+          "sourceUrl": "https://api.exchange.coinbase.com/products/LINK-USD/ticker",
+          "sourceReference": "Coinbase Exchange LINK-USD last trade 145256947 at 2026-11-11T20:56:34.434301320Z",
+          "originalObservedAt": "2026-11-11T20:56:34.434Z",
+          "effectiveAt": "2026-11-11T20:57:09.826Z",
+          "expiresAt": "2026-11-11T21:01:35.900Z"
+        },
+        "NEAR": {
+          "asset": "NEAR",
+          "quoteCurrency": "USD",
+          "numerator": {
+            "$bigint": "37154"
+          },
+          "denominator": {
+            "$bigint": "10000"
+          },
+          "sourceUrl": "https://api.exchange.coinbase.com/products/NEAR-USD/ticker",
+          "sourceReference": "Coinbase Exchange NEAR-USD last trade 36473764 at 2026-11-11T20:56:27.551829128Z",
+          "originalObservedAt": "2026-11-11T20:56:27.551Z",
+          "effectiveAt": "2026-11-11T20:57:09.826Z",
+          "expiresAt": "2026-11-11T21:01:35.900Z"
+        }
+      },
+      "approval": {
+        "approvedDigest": "0x95b8b8b6d269d03ee7885d28f3c3b92430bf94b1a1eecd9666b1ae106ec7d52d",
+        "reference": "guided-price-human-approval",
+        "approvedAt": "2026-11-11T20:57:09.826Z"
+      },
+      "setHash": "0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd"
+    },
+    "terms": {
+      "schemaVersion": 1,
+      "kind": "purchase-allocation-terms",
+      "chainId": {
+        "$bigint": "11155111"
+      },
+      "investmentUsdcBaseUnits": {
+        "$bigint": "10000000"
+      },
+      "usdcTokenAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "usdcDecimals": 6,
+      "investorAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+      "treasuryAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+      "mpc": {
+        "rootPublicKey": "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3",
+        "domainId": 0,
+        "path": "wealthpixels/sepolia/v1"
+      },
+      "allocationBps": {
+        "eth": {
+          "$bigint": "5000"
+        },
+        "link": {
+          "$bigint": "5000"
+        }
+      },
+      "prices": {
+        "ETH": {
+          "numerator": {
+            "$bigint": "20825"
+          },
+          "denominator": {
+            "$bigint": "10"
+          },
+          "source": "coinbase-exchange-last-trade-demonstration:https://api.exchange.coinbase.com/products/ETH-USD/ticker:Coinbase Exchange ETH-USD last trade 854099912 at 2026-11-11T20:56:35.366300640Z:0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd"
+        },
+        "LINK": {
+          "numerator": {
+            "$bigint": "10445"
+          },
+          "denominator": {
+            "$bigint": "1000"
+          },
+          "source": "coinbase-exchange-last-trade-demonstration:https://api.exchange.coinbase.com/products/LINK-USD/ticker:Coinbase Exchange LINK-USD last trade 145256947 at 2026-11-11T20:56:34.434301320Z:0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd"
+        }
+      },
+      "quantities": {
+        "ethWei": {
+          "$bigint": "2400960384153661"
+        },
+        "linkBaseUnits": {
+          "$bigint": "478697941598851124"
+        }
+      },
+      "rounding": {
+        "ethRemainder": {
+          "$bigint": "96750000000000"
+        },
+        "ethDenominator": {
+          "$bigint": "208250000000000"
+        },
+        "linkRemainder": {
+          "$bigint": "98200000000000"
+        },
+        "linkDenominator": {
+          "$bigint": "104450000000000"
+        }
+      },
+      "termsHash": "0x7997b6c6d3678c6b2acdc84beea9ec2a6ada348343b03f01f0124c6b070b188c"
+    },
+    "costs": {
+      "schemaVersion": 1,
+      "kind": "six-cost-observations",
+      "purchaseId": "guided-purchase-20261111-003",
+      "termsHash": "0x7997b6c6d3678c6b2acdc84beea9ec2a6ada348343b03f01f0124c6b070b188c",
+      "mode": "live",
+      "sampledAt": "2026-11-11T20:57:47.207Z",
+      "expiresAt": "2026-11-11T20:58:36.000Z",
+      "reference": "Three public simulations and gas estimates; original observation deadlines retained",
+      "evmObservation": {
+        "chainId": {
+          "$bigint": "11155111"
+        },
+        "blockNumber": {
+          "$bigint": "12114240"
+        },
+        "blockHash": "0x09eecdb6533258f0720f855adb2a2d8ea42e685e2d6c6e44c88c309dd3f8f31a",
+        "sourceUrl": "https://rpc.sepolia.ethpandaops.io/",
+        "reference": "Pinned canonical block 0x09eecdb6533258f0720f855adb2a2d8ea42e685e2d6c6e44c88c309dd3f8f31a; USDC implementation 0xDa317C1d3E835dD5F1BE459006471aCAA1289068 code 0xf4898b096a273d86cda13cce6503404da4005565fae6026a94919b231229d85b"
+      },
+      "nearObservation": {
+        "networkId": "testnet",
+        "blockHeight": {
+          "$bigint": "277267300"
+        },
+        "blockHash": "CBvqQ3aVhoD5eRJ9bAe45WXU8WM3oZM4sHiDEMKLZ3Bc",
+        "sourceUrl": "https://test.rpc.fastnear.com/",
+        "reference": "Finalized MPC, accounts, protocol storage, FunctionCall receipt pricing and gas_price observations at CBvqQ3aVhoD5eRJ9bAe45WXU8WM3oZM4sHiDEMKLZ3Bc",
+        "gasPriceYoctoNear": {
+          "$bigint": "100000000"
+        },
+        "fundingInputs": {
+          "protocolVersion": 88,
+          "requestBytes": 154,
+          "receiptSendGas": "108059500000",
+          "receiptExecutionGas": "108059500000",
+          "functionCallSendGas": "200000000000",
+          "functionCallExecutionGas": "780000000000",
+          "functionCallByteSendGas": "47683715",
+          "functionCallByteExecutionGas": "2235934",
+          "blockGasPriceYocto": "100000000",
+          "receiptPurchaseFloorYocto": "1000000000",
+          "gasRefundPenalty": {
+            "numerator": "0",
+            "denominator": "100"
+          },
+          "minimumGasRefundPenalty": "0"
+        }
+      },
+      "assetIdentity": {
+        "usdcImplementation": {
+          "address": "0xDa317C1d3E835dD5F1BE459006471aCAA1289068",
+          "codeHash": "0xf4898b096a273d86cda13cce6503404da4005565fae6026a94919b231229d85b"
+        }
+      },
+      "evm": [
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "senderAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+          "recipientAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+          "asset": "USDC",
+          "tokenAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+          "decimals": 6,
+          "amountBaseUnits": {
+            "$bigint": "10000000"
+          },
+          "estimatedGas": {
+            "$bigint": "154151"
+          },
+          "observedBaseFeePerGasWei": {
+            "$bigint": "17"
+          },
+          "assumedBaseFeePerGasWei": {
+            "$bigint": "34"
+          },
+          "maxFeePerGasWei": {
+            "$bigint": "5000"
+          },
+          "maxPriorityFeePerGasWei": {
+            "$bigint": "1000"
+          }
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "senderAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+          "recipientAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+          "asset": "LINK",
+          "tokenAddress": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+          "decimals": 18,
+          "amountBaseUnits": {
+            "$bigint": "478697941598851124"
+          },
+          "estimatedGas": {
+            "$bigint": "42982"
+          },
+          "observedBaseFeePerGasWei": {
+            "$bigint": "17"
+          },
+          "assumedBaseFeePerGasWei": {
+            "$bigint": "34"
+          },
+          "maxFeePerGasWei": {
+            "$bigint": "5000"
+          },
+          "maxPriorityFeePerGasWei": {
+            "$bigint": "1000"
+          }
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "senderAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+          "recipientAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+          "asset": "ETH",
+          "tokenAddress": null,
+          "decimals": 18,
+          "amountBaseUnits": {
+            "$bigint": "2400960384153661"
+          },
+          "estimatedGas": {
+            "$bigint": "21000"
+          },
+          "observedBaseFeePerGasWei": {
+            "$bigint": "17"
+          },
+          "assumedBaseFeePerGasWei": {
+            "$bigint": "34"
+          },
+          "maxFeePerGasWei": {
+            "$bigint": "5000"
+          },
+          "maxPriorityFeePerGasWei": {
+            "$bigint": "1000"
+          }
+        }
+      ],
+      "near": [
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "accountId": "wealthpixels-investor.testnet",
+          "contractId": "v1.signer-prod.testnet",
+          "domainId": 0,
+          "derivationPath": "wealthpixels/sepolia/v1",
+          "estimatedExecutionGas": {
+            "$bigint": "10000000000000"
+          },
+          "transactionOverheadGas": {
+            "$bigint": "1000000000000"
+          },
+          "executionAssumptionReference": "Historical successful MPC receipt benchmark <10 Tgas plus 1 Tgas explicit overhead; https://testnet.nearblocks.io/txns/8Lf5NwoqSgoJjmHpM1AbjxUwAKww4HXeSJ6n9N3acoXs; estimate receives >=20% buffer; not an upper execution guarantee",
+          "attachedGas": {
+            "$bigint": "100000000000000"
+          },
+          "attachedDepositYoctoNear": {
+            "$bigint": "1"
+          }
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "accountId": "wealthpixels-treasury.testnet",
+          "contractId": "v1.signer-prod.testnet",
+          "domainId": 0,
+          "derivationPath": "wealthpixels/sepolia/v1",
+          "estimatedExecutionGas": {
+            "$bigint": "10000000000000"
+          },
+          "transactionOverheadGas": {
+            "$bigint": "1000000000000"
+          },
+          "executionAssumptionReference": "Historical successful MPC receipt benchmark <10 Tgas plus 1 Tgas explicit overhead; https://testnet.nearblocks.io/txns/8Lf5NwoqSgoJjmHpM1AbjxUwAKww4HXeSJ6n9N3acoXs; estimate receives >=20% buffer; not an upper execution guarantee",
+          "attachedGas": {
+            "$bigint": "100000000000000"
+          },
+          "attachedDepositYoctoNear": {
+            "$bigint": "1"
+          }
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "accountId": "wealthpixels-treasury.testnet",
+          "contractId": "v1.signer-prod.testnet",
+          "domainId": 0,
+          "derivationPath": "wealthpixels/sepolia/v1",
+          "estimatedExecutionGas": {
+            "$bigint": "10000000000000"
+          },
+          "transactionOverheadGas": {
+            "$bigint": "1000000000000"
+          },
+          "executionAssumptionReference": "Historical successful MPC receipt benchmark <10 Tgas plus 1 Tgas explicit overhead; https://testnet.nearblocks.io/txns/8Lf5NwoqSgoJjmHpM1AbjxUwAKww4HXeSJ6n9N3acoXs; estimate receives >=20% buffer; not an upper execution guarantee",
+          "attachedGas": {
+            "$bigint": "100000000000000"
+          },
+          "attachedDepositYoctoNear": {
+            "$bigint": "1"
+          }
+        }
+      ]
+    },
+    "feeAssessment": {
+      "kind": "fee-estimate-v1",
+      "snapshot": {
+        "chainId": {
+          "$bigint": "11155111"
+        },
+        "quoteTermsHash": "0x7997b6c6d3678c6b2acdc84beea9ec2a6ada348343b03f01f0124c6b070b188c",
+        "investmentUsdcBaseUnits": {
+          "$bigint": "10000000"
+        },
+        "mode": "live",
+        "sampledAt": "2026-11-11T20:57:47.207Z",
+        "asOf": "2026-11-11T20:57:49.975Z",
+        "expiresAt": "2026-11-11T20:58:36.000Z",
+        "estimateReference": "Three public simulations and gas estimates; original observation deadlines retained",
+        "maxExpectedFeeBps": {
+          "$bigint": "1000"
+        },
+        "maxEstimateAgeMs": 60000,
+        "rates": {
+          "ETH": {
+            "asset": "ETH",
+            "usdNumerator": {
+              "$bigint": "20825"
+            },
+            "usdDenominator": {
+              "$bigint": "10"
+            },
+            "sourceUrl": "https://api.exchange.coinbase.com/products/ETH-USD/ticker",
+            "reference": "coinbase-exchange-last-trade-demonstration:0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd:original=2026-11-11T20:56:35.366Z:Coinbase Exchange ETH-USD last trade 854099912 at 2026-11-11T20:56:35.366300640Z",
+            "evidence": "approved-demonstration",
+            "approvalReference": "guided-price-human-approval",
+            "observedAt": "2026-11-11T20:57:09.826Z",
+            "expiresAt": "2026-11-11T21:01:35.900Z"
+          },
+          "NEAR": {
+            "asset": "NEAR",
+            "usdNumerator": {
+              "$bigint": "37154"
+            },
+            "usdDenominator": {
+              "$bigint": "10000"
+            },
+            "sourceUrl": "https://api.exchange.coinbase.com/products/NEAR-USD/ticker",
+            "reference": "coinbase-exchange-last-trade-demonstration:0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd:original=2026-11-11T20:56:27.551Z:Coinbase Exchange NEAR-USD last trade 36473764 at 2026-11-11T20:56:27.551829128Z",
+            "evidence": "approved-demonstration",
+            "approvalReference": "guided-price-human-approval",
+            "observedAt": "2026-11-11T20:57:09.826Z",
+            "expiresAt": "2026-11-11T21:01:35.900Z"
+          }
+        },
+        "evm": [
+          {
+            "leg": "investor-usdc-payment",
+            "payer": "investor",
+            "estimatedGas": {
+              "$bigint": "154151"
+            },
+            "gasBufferBps": {
+              "$bigint": "2000"
+            },
+            "assumedBaseFeePerGasWei": {
+              "$bigint": "34"
+            },
+            "assumedPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            },
+            "maxPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            },
+            "maxFeePerGasWei": {
+              "$bigint": "5000"
+            },
+            "gasLimitCap": {
+              "$bigint": "200000"
+            },
+            "maxTotalFeeWei": {
+              "$bigint": "3600000000000000"
+            }
+          },
+          {
+            "leg": "treasury-link-delivery",
+            "payer": "treasury",
+            "estimatedGas": {
+              "$bigint": "42982"
+            },
+            "gasBufferBps": {
+              "$bigint": "2000"
+            },
+            "assumedBaseFeePerGasWei": {
+              "$bigint": "34"
+            },
+            "assumedPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            },
+            "maxPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            },
+            "maxFeePerGasWei": {
+              "$bigint": "5000"
+            },
+            "gasLimitCap": {
+              "$bigint": "180000"
+            },
+            "maxTotalFeeWei": {
+              "$bigint": "3600000000000000"
+            }
+          },
+          {
+            "leg": "treasury-eth-delivery",
+            "payer": "treasury",
+            "estimatedGas": {
+              "$bigint": "21000"
+            },
+            "gasBufferBps": {
+              "$bigint": "2000"
+            },
+            "assumedBaseFeePerGasWei": {
+              "$bigint": "34"
+            },
+            "assumedPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            },
+            "maxPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            },
+            "maxFeePerGasWei": {
+              "$bigint": "5000"
+            },
+            "gasLimitCap": {
+              "$bigint": "180000"
+            },
+            "maxTotalFeeWei": {
+              "$bigint": "3600000000000000"
+            }
+          }
+        ],
+        "near": [
+          {
+            "leg": "investor-usdc-payment",
+            "payer": "investor",
+            "estimatedExecutionGas": {
+              "$bigint": "10000000000000"
+            },
+            "transactionOverheadGas": {
+              "$bigint": "1000000000000"
+            },
+            "gasBufferBps": {
+              "$bigint": "2000"
+            },
+            "assumedGasPriceYoctoNear": {
+              "$bigint": "100000000"
+            },
+            "attachedGas": {
+              "$bigint": "100000000000000"
+            },
+            "attachedDepositYoctoNear": {
+              "$bigint": "1"
+            },
+            "fundingModel": {
+              "protocolVersion": 88,
+              "requestBytes": 154,
+              "receiptSendGas": "108059500000",
+              "receiptExecutionGas": "108059500000",
+              "functionCallSendGas": "200000000000",
+              "functionCallExecutionGas": "780000000000",
+              "functionCallByteSendGas": "47683715",
+              "functionCallByteExecutionGas": "2235934",
+              "blockGasPriceYocto": "100000000",
+              "receiptPurchaseFloorYocto": "1000000000",
+              "gasRefundPenalty": {
+                "numerator": "0",
+                "denominator": "100"
+              },
+              "minimumGasRefundPenalty": "0",
+              "pricingPolicy": "near-protocol-88-mpc-function-call-v1",
+              "attachedGas": "100000000000000",
+              "depositYocto": "1",
+              "priceGrowthNumerator": "2",
+              "priceGrowthDenominator": "1",
+              "sendGas": "315402792110",
+              "receiptGas": "100888403833836",
+              "assumedBlockGasPriceYocto": "200000000",
+              "receiptPurchasePriceYocto": "1000000000",
+              "receiptBurnPriceYocto": "200000000",
+              "estimatedFullAttachmentBurnYocto": "20240761325189200000000",
+              "upfrontGasYocto": "100951484392258000000000",
+              "requiredSpendableYocto": "100951484392258000000001",
+              "estimatedRefundFeeYocto": "0",
+              "refundScheduleSource": "nearcore-2.14.0-parameters-and-protocol-85-88-zero-penalty",
+              "refundPolicy": "near-protocol-88-explicit-zero-refund-penalty"
+            }
+          },
+          {
+            "leg": "treasury-link-delivery",
+            "payer": "treasury",
+            "estimatedExecutionGas": {
+              "$bigint": "10000000000000"
+            },
+            "transactionOverheadGas": {
+              "$bigint": "1000000000000"
+            },
+            "gasBufferBps": {
+              "$bigint": "2000"
+            },
+            "assumedGasPriceYoctoNear": {
+              "$bigint": "100000000"
+            },
+            "attachedGas": {
+              "$bigint": "100000000000000"
+            },
+            "attachedDepositYoctoNear": {
+              "$bigint": "1"
+            },
+            "fundingModel": {
+              "protocolVersion": 88,
+              "requestBytes": 154,
+              "receiptSendGas": "108059500000",
+              "receiptExecutionGas": "108059500000",
+              "functionCallSendGas": "200000000000",
+              "functionCallExecutionGas": "780000000000",
+              "functionCallByteSendGas": "47683715",
+              "functionCallByteExecutionGas": "2235934",
+              "blockGasPriceYocto": "100000000",
+              "receiptPurchaseFloorYocto": "1000000000",
+              "gasRefundPenalty": {
+                "numerator": "0",
+                "denominator": "100"
+              },
+              "minimumGasRefundPenalty": "0",
+              "pricingPolicy": "near-protocol-88-mpc-function-call-v1",
+              "attachedGas": "100000000000000",
+              "depositYocto": "1",
+              "priceGrowthNumerator": "2",
+              "priceGrowthDenominator": "1",
+              "sendGas": "315402792110",
+              "receiptGas": "100888403833836",
+              "assumedBlockGasPriceYocto": "200000000",
+              "receiptPurchasePriceYocto": "1000000000",
+              "receiptBurnPriceYocto": "200000000",
+              "estimatedFullAttachmentBurnYocto": "20240761325189200000000",
+              "upfrontGasYocto": "100951484392258000000000",
+              "requiredSpendableYocto": "100951484392258000000001",
+              "estimatedRefundFeeYocto": "0",
+              "refundScheduleSource": "nearcore-2.14.0-parameters-and-protocol-85-88-zero-penalty",
+              "refundPolicy": "near-protocol-88-explicit-zero-refund-penalty"
+            }
+          },
+          {
+            "leg": "treasury-eth-delivery",
+            "payer": "treasury",
+            "estimatedExecutionGas": {
+              "$bigint": "10000000000000"
+            },
+            "transactionOverheadGas": {
+              "$bigint": "1000000000000"
+            },
+            "gasBufferBps": {
+              "$bigint": "2000"
+            },
+            "assumedGasPriceYoctoNear": {
+              "$bigint": "100000000"
+            },
+            "attachedGas": {
+              "$bigint": "100000000000000"
+            },
+            "attachedDepositYoctoNear": {
+              "$bigint": "1"
+            },
+            "fundingModel": {
+              "protocolVersion": 88,
+              "requestBytes": 154,
+              "receiptSendGas": "108059500000",
+              "receiptExecutionGas": "108059500000",
+              "functionCallSendGas": "200000000000",
+              "functionCallExecutionGas": "780000000000",
+              "functionCallByteSendGas": "47683715",
+              "functionCallByteExecutionGas": "2235934",
+              "blockGasPriceYocto": "100000000",
+              "receiptPurchaseFloorYocto": "1000000000",
+              "gasRefundPenalty": {
+                "numerator": "0",
+                "denominator": "100"
+              },
+              "minimumGasRefundPenalty": "0",
+              "pricingPolicy": "near-protocol-88-mpc-function-call-v1",
+              "attachedGas": "100000000000000",
+              "depositYocto": "1",
+              "priceGrowthNumerator": "2",
+              "priceGrowthDenominator": "1",
+              "sendGas": "315402792110",
+              "receiptGas": "100888403833836",
+              "assumedBlockGasPriceYocto": "200000000",
+              "receiptPurchasePriceYocto": "1000000000",
+              "receiptBurnPriceYocto": "200000000",
+              "estimatedFullAttachmentBurnYocto": "20240761325189200000000",
+              "upfrontGasYocto": "100951484392258000000000",
+              "requiredSpendableYocto": "100951484392258000000001",
+              "estimatedRefundFeeYocto": "0",
+              "refundScheduleSource": "nearcore-2.14.0-parameters-and-protocol-85-88-zero-penalty",
+              "refundPolicy": "near-protocol-88-explicit-zero-refund-penalty"
+            }
+          }
+        ]
+      },
+      "feeAssessmentHash": "0xf629130970b500f352a2076207b9b70e2d5d41b83537cdaadfd79fa31e798c98",
+      "maxExpectedFeeBps": {
+        "$bigint": "1000"
+      },
+      "expectedCosts": [
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "asset": "ETH",
+          "bufferedGas": {
+            "$bigint": "184982"
+          },
+          "expectedNativeBaseUnits": {
+            "$bigint": "191271388"
+          },
+          "maximumNativeReserveBaseUnits": {
+            "$bigint": "924910000"
+          },
+          "expectedUsdcExact": {
+            "numerator": {
+              "$bigint": "39832266551"
+            },
+            "denominator": {
+              "$bigint": "100000000000"
+            }
+          },
+          "maximumReserveUsdcExact": {
+            "numerator": {
+              "$bigint": "77045003"
+            },
+            "denominator": {
+              "$bigint": "40000000"
+            }
+          }
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "asset": "ETH",
+          "bufferedGas": {
+            "$bigint": "51579"
+          },
+          "expectedNativeBaseUnits": {
+            "$bigint": "53332686"
+          },
+          "maximumNativeReserveBaseUnits": {
+            "$bigint": "257895000"
+          },
+          "expectedUsdcExact": {
+            "numerator": {
+              "$bigint": "22213063719"
+            },
+            "denominator": {
+              "$bigint": "200000000000"
+            }
+          },
+          "maximumReserveUsdcExact": {
+            "numerator": {
+              "$bigint": "42965307"
+            },
+            "denominator": {
+              "$bigint": "80000000"
+            }
+          }
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "asset": "ETH",
+          "bufferedGas": {
+            "$bigint": "25200"
+          },
+          "expectedNativeBaseUnits": {
+            "$bigint": "26056800"
+          },
+          "maximumNativeReserveBaseUnits": {
+            "$bigint": "126000000"
+          },
+          "expectedUsdcExact": {
+            "numerator": {
+              "$bigint": "27131643"
+            },
+            "denominator": {
+              "$bigint": "500000000"
+            }
+          },
+          "maximumReserveUsdcExact": {
+            "numerator": {
+              "$bigint": "52479"
+            },
+            "denominator": {
+              "$bigint": "200000"
+            }
+          }
+        },
+        {
+          "leg": "investor-usdc-payment",
+          "payer": "investor",
+          "asset": "NEAR",
+          "bufferedGas": {
+            "$bigint": "13200000000000"
+          },
+          "expectedNativeBaseUnits": {
+            "$bigint": "1320000000000000000001"
+          },
+          "maximumNativeReserveBaseUnits": {
+            "$bigint": "100951484392258000000001"
+          },
+          "expectedUsdcExact": {
+            "numerator": {
+              "$bigint": "24521640000000000000018577"
+            },
+            "denominator": {
+              "$bigint": "5000000000000000000000"
+            }
+          },
+          "maximumReserveUsdcExact": {
+            "numerator": {
+              "$bigint": "1875375725554976866000018577"
+            },
+            "denominator": {
+              "$bigint": "5000000000000000000000"
+            }
+          }
+        },
+        {
+          "leg": "treasury-link-delivery",
+          "payer": "treasury",
+          "asset": "NEAR",
+          "bufferedGas": {
+            "$bigint": "13200000000000"
+          },
+          "expectedNativeBaseUnits": {
+            "$bigint": "1320000000000000000001"
+          },
+          "maximumNativeReserveBaseUnits": {
+            "$bigint": "100951484392258000000001"
+          },
+          "expectedUsdcExact": {
+            "numerator": {
+              "$bigint": "24521640000000000000018577"
+            },
+            "denominator": {
+              "$bigint": "5000000000000000000000"
+            }
+          },
+          "maximumReserveUsdcExact": {
+            "numerator": {
+              "$bigint": "1875375725554976866000018577"
+            },
+            "denominator": {
+              "$bigint": "5000000000000000000000"
+            }
+          }
+        },
+        {
+          "leg": "treasury-eth-delivery",
+          "payer": "treasury",
+          "asset": "NEAR",
+          "bufferedGas": {
+            "$bigint": "13200000000000"
+          },
+          "expectedNativeBaseUnits": {
+            "$bigint": "1320000000000000000001"
+          },
+          "maximumNativeReserveBaseUnits": {
+            "$bigint": "100951484392258000000001"
+          },
+          "expectedUsdcExact": {
+            "numerator": {
+              "$bigint": "24521640000000000000018577"
+            },
+            "denominator": {
+              "$bigint": "5000000000000000000000"
+            }
+          },
+          "maximumReserveUsdcExact": {
+            "numerator": {
+              "$bigint": "1875375725554976866000018577"
+            },
+            "denominator": {
+              "$bigint": "5000000000000000000000"
+            }
+          }
+        }
+      ],
+      "totalExpectedUsdcExact": {
+        "numerator": {
+          "$bigint": "73567738256350525000055731"
+        },
+        "denominator": {
+          "$bigint": "5000000000000000000000"
+        }
+      },
+      "totalExpectedUsdcBaseUnitsCeil": {
+        "$bigint": "14714"
+      },
+      "expectedFeeBpsCeil": {
+        "$bigint": "15"
+      },
+      "totalMaximumReserveUsdcBaseUnitsCeil": {
+        "$bigint": "1125229"
+      },
+      "eligible": true,
+      "expiresAt": "2026-11-11T20:58:36.000Z",
+      "priceAssumption": "one-nominal-test-USDC-per-USD",
+      "executionProof": "none-caller-supplied-estimates"
+    },
+    "transactions": [
+      {
+        "leg": "investor-usdc-payment",
+        "role": "investor",
+        "nearAccountId": "wealthpixels-investor.testnet",
+        "senderAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+        "recipientAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+        "asset": "USDC",
+        "tokenAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+        "decimals": 6,
+        "amountBaseUnits": {
+          "$bigint": "10000000"
+        },
+        "signingApproval": "exact-unsigned-digest",
+        "broadcastApproval": "exact-signed-hash",
+        "transactionPreparationRequired": true
+      },
+      {
+        "leg": "treasury-link-delivery",
+        "role": "treasury",
+        "nearAccountId": "wealthpixels-treasury.testnet",
+        "senderAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+        "recipientAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+        "asset": "LINK",
+        "tokenAddress": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+        "decimals": 18,
+        "amountBaseUnits": {
+          "$bigint": "478697941598851124"
+        },
+        "signingApproval": "exact-unsigned-digest",
+        "broadcastApproval": "exact-signed-hash",
+        "transactionPreparationRequired": true
+      },
+      {
+        "leg": "treasury-eth-delivery",
+        "role": "treasury",
+        "nearAccountId": "wealthpixels-treasury.testnet",
+        "senderAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+        "recipientAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+        "asset": "ETH",
+        "tokenAddress": null,
+        "decimals": 18,
+        "amountBaseUnits": {
+          "$bigint": "2400960384153661"
+        },
+        "signingApproval": "exact-unsigned-digest",
+        "broadcastApproval": "exact-signed-hash",
+        "transactionPreparationRequired": true
+      }
+    ],
+    "executionAuthorized": false,
+    "quoteHash": "0x12f47956df63129eeb2ae6a8f388f2274e777ee5d62f0eb395f0cc21bfeda4a1"
+  },
+  "quoteApproval": {
+    "kind": "investor-quote-approval",
+    "role": "investor",
+    "quoteHash": "0x12f47956df63129eeb2ae6a8f388f2274e777ee5d62f0eb395f0cc21bfeda4a1",
+    "reference": "guided-investor-quote-approval",
+    "approvedAt": "2026-11-11T20:58:23.887Z",
+    "approvalHash": "0x645f8ee8c521c766342bd06a86c6adf497f6b30c834cb0e9e5d8ed3b655c9149"
+  },
+  "paymentAuthorization": {
+    "kind": "payment-authorization",
+    "quoteHash": "0x12f47956df63129eeb2ae6a8f388f2274e777ee5d62f0eb395f0cc21bfeda4a1",
+    "priceSetHash": "0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd",
+    "checkedAt": "2026-11-11T20:59:49.252Z",
+    "unsignedHash": "0xca0777146e29faf9ecaa95d337164754fe73e0056a334a363c340ad4b171daaa",
+    "reference": "guided-investor-mpc-approval",
+    "eligibility": {
+      "kind": "prepayment-eligibility",
+      "quoteHash": "0x12f47956df63129eeb2ae6a8f388f2274e777ee5d62f0eb395f0cc21bfeda4a1",
+      "priceSetHash": "0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd",
+      "checkedAt": "2026-11-11T20:59:49.252Z",
+      "expiresAt": "2026-11-11T21:00:36.000Z",
+      "freshCosts": {
+        "schemaVersion": 1,
+        "kind": "six-cost-observations",
+        "purchaseId": "guided-purchase-20261111-003",
+        "termsHash": "0x7997b6c6d3678c6b2acdc84beea9ec2a6ada348343b03f01f0124c6b070b188c",
+        "mode": "live",
+        "sampledAt": "2026-11-11T20:59:46.876Z",
+        "expiresAt": "2026-11-11T21:00:36.000Z",
+        "reference": "Three public simulations and gas estimates; original observation deadlines retained",
+        "evmObservation": {
+          "chainId": {
+            "$bigint": "11155111"
+          },
+          "blockNumber": {
+            "$bigint": "12114250"
+          },
+          "blockHash": "0xd5a053fafe83843c0c986a780f481985ea85035819763222543ec96a4a92473e",
+          "sourceUrl": "https://rpc.sepolia.ethpandaops.io/",
+          "reference": "Pinned canonical block 0xd5a053fafe83843c0c986a780f481985ea85035819763222543ec96a4a92473e; USDC implementation 0xDa317C1d3E835dD5F1BE459006471aCAA1289068 code 0xf4898b096a273d86cda13cce6503404da4005565fae6026a94919b231229d85b"
+        },
+        "nearObservation": {
+          "networkId": "testnet",
+          "blockHeight": {
+            "$bigint": "277267522"
+          },
+          "blockHash": "4uY1Dx25WFS7jVix1YWC24U6n6BXmjxeyHa2FtQQtYkS",
+          "sourceUrl": "https://test.rpc.fastnear.com/",
+          "reference": "Finalized MPC, accounts, protocol storage, FunctionCall receipt pricing and gas_price observations at 4uY1Dx25WFS7jVix1YWC24U6n6BXmjxeyHa2FtQQtYkS",
+          "gasPriceYoctoNear": {
+            "$bigint": "100000000"
+          },
+          "fundingInputs": {
+            "protocolVersion": 88,
+            "requestBytes": 154,
+            "receiptSendGas": "108059500000",
+            "receiptExecutionGas": "108059500000",
+            "functionCallSendGas": "200000000000",
+            "functionCallExecutionGas": "780000000000",
+            "functionCallByteSendGas": "47683715",
+            "functionCallByteExecutionGas": "2235934",
+            "blockGasPriceYocto": "100000000",
+            "receiptPurchaseFloorYocto": "1000000000",
+            "gasRefundPenalty": {
+              "numerator": "0",
+              "denominator": "100"
+            },
+            "minimumGasRefundPenalty": "0"
+          }
+        },
+        "assetIdentity": {
+          "usdcImplementation": {
+            "address": "0xDa317C1d3E835dD5F1BE459006471aCAA1289068",
+            "codeHash": "0xf4898b096a273d86cda13cce6503404da4005565fae6026a94919b231229d85b"
+          }
+        },
+        "evm": [
+          {
+            "leg": "investor-usdc-payment",
+            "payer": "investor",
+            "senderAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+            "recipientAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+            "asset": "USDC",
+            "tokenAddress": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+            "decimals": 6,
+            "amountBaseUnits": {
+              "$bigint": "10000000"
+            },
+            "estimatedGas": {
+              "$bigint": "154151"
+            },
+            "observedBaseFeePerGasWei": {
+              "$bigint": "16"
+            },
+            "assumedBaseFeePerGasWei": {
+              "$bigint": "32"
+            },
+            "maxFeePerGasWei": {
+              "$bigint": "5000"
+            },
+            "maxPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            }
+          },
+          {
+            "leg": "treasury-link-delivery",
+            "payer": "treasury",
+            "senderAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+            "recipientAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+            "asset": "LINK",
+            "tokenAddress": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+            "decimals": 18,
+            "amountBaseUnits": {
+              "$bigint": "478697941598851124"
+            },
+            "estimatedGas": {
+              "$bigint": "42982"
+            },
+            "observedBaseFeePerGasWei": {
+              "$bigint": "16"
+            },
+            "assumedBaseFeePerGasWei": {
+              "$bigint": "32"
+            },
+            "maxFeePerGasWei": {
+              "$bigint": "5000"
+            },
+            "maxPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            }
+          },
+          {
+            "leg": "treasury-eth-delivery",
+            "payer": "treasury",
+            "senderAddress": "0x7548b35f4cb051bEEc61550FC93cB7D1E9028C87",
+            "recipientAddress": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+            "asset": "ETH",
+            "tokenAddress": null,
+            "decimals": 18,
+            "amountBaseUnits": {
+              "$bigint": "2400960384153661"
+            },
+            "estimatedGas": {
+              "$bigint": "21000"
+            },
+            "observedBaseFeePerGasWei": {
+              "$bigint": "16"
+            },
+            "assumedBaseFeePerGasWei": {
+              "$bigint": "32"
+            },
+            "maxFeePerGasWei": {
+              "$bigint": "5000"
+            },
+            "maxPriorityFeePerGasWei": {
+              "$bigint": "1000"
+            }
+          }
+        ],
+        "near": [
+          {
+            "leg": "investor-usdc-payment",
+            "payer": "investor",
+            "accountId": "wealthpixels-investor.testnet",
+            "contractId": "v1.signer-prod.testnet",
+            "domainId": 0,
+            "derivationPath": "wealthpixels/sepolia/v1",
+            "estimatedExecutionGas": {
+              "$bigint": "10000000000000"
+            },
+            "transactionOverheadGas": {
+              "$bigint": "1000000000000"
+            },
+            "executionAssumptionReference": "Historical successful MPC receipt benchmark <10 Tgas plus 1 Tgas explicit overhead; https://testnet.nearblocks.io/txns/8Lf5NwoqSgoJjmHpM1AbjxUwAKww4HXeSJ6n9N3acoXs; estimate receives >=20% buffer; not an upper execution guarantee",
+            "attachedGas": {
+              "$bigint": "100000000000000"
+            },
+            "attachedDepositYoctoNear": {
+              "$bigint": "1"
+            }
+          },
+          {
+            "leg": "treasury-link-delivery",
+            "payer": "treasury",
+            "accountId": "wealthpixels-treasury.testnet",
+            "contractId": "v1.signer-prod.testnet",
+            "domainId": 0,
+            "derivationPath": "wealthpixels/sepolia/v1",
+            "estimatedExecutionGas": {
+              "$bigint": "10000000000000"
+            },
+            "transactionOverheadGas": {
+              "$bigint": "1000000000000"
+            },
+            "executionAssumptionReference": "Historical successful MPC receipt benchmark <10 Tgas plus 1 Tgas explicit overhead; https://testnet.nearblocks.io/txns/8Lf5NwoqSgoJjmHpM1AbjxUwAKww4HXeSJ6n9N3acoXs; estimate receives >=20% buffer; not an upper execution guarantee",
+            "attachedGas": {
+              "$bigint": "100000000000000"
+            },
+            "attachedDepositYoctoNear": {
+              "$bigint": "1"
+            }
+          },
+          {
+            "leg": "treasury-eth-delivery",
+            "payer": "treasury",
+            "accountId": "wealthpixels-treasury.testnet",
+            "contractId": "v1.signer-prod.testnet",
+            "domainId": 0,
+            "derivationPath": "wealthpixels/sepolia/v1",
+            "estimatedExecutionGas": {
+              "$bigint": "10000000000000"
+            },
+            "transactionOverheadGas": {
+              "$bigint": "1000000000000"
+            },
+            "executionAssumptionReference": "Historical successful MPC receipt benchmark <10 Tgas plus 1 Tgas explicit overhead; https://testnet.nearblocks.io/txns/8Lf5NwoqSgoJjmHpM1AbjxUwAKww4HXeSJ6n9N3acoXs; estimate receives >=20% buffer; not an upper execution guarantee",
+            "attachedGas": {
+              "$bigint": "100000000000000"
+            },
+            "attachedDepositYoctoNear": {
+              "$bigint": "1"
+            }
+          }
+        ]
+      },
+      "feeAssessment": {
+        "kind": "fee-estimate-v1",
+        "snapshot": {
+          "chainId": {
+            "$bigint": "11155111"
+          },
+          "quoteTermsHash": "0x7997b6c6d3678c6b2acdc84beea9ec2a6ada348343b03f01f0124c6b070b188c",
+          "investmentUsdcBaseUnits": {
+            "$bigint": "10000000"
+          },
+          "mode": "live",
+          "sampledAt": "2026-11-11T20:59:46.876Z",
+          "asOf": "2026-11-11T20:59:49.252Z",
+          "expiresAt": "2026-11-11T21:00:36.000Z",
+          "estimateReference": "Three public simulations and gas estimates; original observation deadlines retained",
+          "maxExpectedFeeBps": {
+            "$bigint": "1000"
+          },
+          "maxEstimateAgeMs": 60000,
+          "rates": {
+            "ETH": {
+              "asset": "ETH",
+              "usdNumerator": {
+                "$bigint": "20825"
+              },
+              "usdDenominator": {
+                "$bigint": "10"
+              },
+              "sourceUrl": "https://api.exchange.coinbase.com/products/ETH-USD/ticker",
+              "reference": "coinbase-exchange-last-trade-demonstration:0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd:original=2026-11-11T20:56:35.366Z:Coinbase Exchange ETH-USD last trade 854099912 at 2026-11-11T20:56:35.366300640Z",
+              "evidence": "approved-demonstration",
+              "approvalReference": "guided-price-human-approval",
+              "observedAt": "2026-11-11T20:57:09.826Z",
+              "expiresAt": "2026-11-11T21:01:35.900Z"
+            },
+            "NEAR": {
+              "asset": "NEAR",
+              "usdNumerator": {
+                "$bigint": "37154"
+              },
+              "usdDenominator": {
+                "$bigint": "10000"
+              },
+              "sourceUrl": "https://api.exchange.coinbase.com/products/NEAR-USD/ticker",
+              "reference": "coinbase-exchange-last-trade-demonstration:0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd:original=2026-11-11T20:56:27.551Z:Coinbase Exchange NEAR-USD last trade 36473764 at 2026-11-11T20:56:27.551829128Z",
+              "evidence": "approved-demonstration",
+              "approvalReference": "guided-price-human-approval",
+              "observedAt": "2026-11-11T20:57:09.826Z",
+              "expiresAt": "2026-11-11T21:01:35.900Z"
+            }
+          },
+          "evm": [
+            {
+              "leg": "investor-usdc-payment",
+              "payer": "investor",
+              "estimatedGas": {
+                "$bigint": "154151"
+              },
+              "gasBufferBps": {
+                "$bigint": "2000"
+              },
+              "assumedBaseFeePerGasWei": {
+                "$bigint": "32"
+              },
+              "assumedPriorityFeePerGasWei": {
+                "$bigint": "1000"
+              },
+              "maxPriorityFeePerGasWei": {
+                "$bigint": "1000"
+              },
+              "maxFeePerGasWei": {
+                "$bigint": "5000"
+              },
+              "gasLimitCap": {
+                "$bigint": "200000"
+              },
+              "maxTotalFeeWei": {
+                "$bigint": "3600000000000000"
+              }
+            },
+            {
+              "leg": "treasury-link-delivery",
+              "payer": "treasury",
+              "estimatedGas": {
+                "$bigint": "42982"
+              },
+              "gasBufferBps": {
+                "$bigint": "2000"
+              },
+              "assumedBaseFeePerGasWei": {
+                "$bigint": "32"
+              },
+              "assumedPriorityFeePerGasWei": {
+                "$bigint": "1000"
+              },
+              "maxPriorityFeePerGasWei": {
+                "$bigint": "1000"
+              },
+              "maxFeePerGasWei": {
+                "$bigint": "5000"
+              },
+              "gasLimitCap": {
+                "$bigint": "180000"
+              },
+              "maxTotalFeeWei": {
+                "$bigint": "3600000000000000"
+              }
+            },
+            {
+              "leg": "treasury-eth-delivery",
+              "payer": "treasury",
+              "estimatedGas": {
+                "$bigint": "21000"
+              },
+              "gasBufferBps": {
+                "$bigint": "2000"
+              },
+              "assumedBaseFeePerGasWei": {
+                "$bigint": "32"
+              },
+              "assumedPriorityFeePerGasWei": {
+                "$bigint": "1000"
+              },
+              "maxPriorityFeePerGasWei": {
+                "$bigint": "1000"
+              },
+              "maxFeePerGasWei": {
+                "$bigint": "5000"
+              },
+              "gasLimitCap": {
+                "$bigint": "180000"
+              },
+              "maxTotalFeeWei": {
+                "$bigint": "3600000000000000"
+              }
+            }
+          ],
+          "near": [
+            {
+              "leg": "investor-usdc-payment",
+              "payer": "investor",
+              "estimatedExecutionGas": {
+                "$bigint": "10000000000000"
+              },
+              "transactionOverheadGas": {
+                "$bigint": "1000000000000"
+              },
+              "gasBufferBps": {
+                "$bigint": "2000"
+              },
+              "assumedGasPriceYoctoNear": {
+                "$bigint": "100000000"
+              },
+              "attachedGas": {
+                "$bigint": "100000000000000"
+              },
+              "attachedDepositYoctoNear": {
+                "$bigint": "1"
+              },
+              "fundingModel": {
+                "protocolVersion": 88,
+                "requestBytes": 154,
+                "receiptSendGas": "108059500000",
+                "receiptExecutionGas": "108059500000",
+                "functionCallSendGas": "200000000000",
+                "functionCallExecutionGas": "780000000000",
+                "functionCallByteSendGas": "47683715",
+                "functionCallByteExecutionGas": "2235934",
+                "blockGasPriceYocto": "100000000",
+                "receiptPurchaseFloorYocto": "1000000000",
+                "gasRefundPenalty": {
+                  "numerator": "0",
+                  "denominator": "100"
+                },
+                "minimumGasRefundPenalty": "0",
+                "pricingPolicy": "near-protocol-88-mpc-function-call-v1",
+                "attachedGas": "100000000000000",
+                "depositYocto": "1",
+                "priceGrowthNumerator": "2",
+                "priceGrowthDenominator": "1",
+                "sendGas": "315402792110",
+                "receiptGas": "100888403833836",
+                "assumedBlockGasPriceYocto": "200000000",
+                "receiptPurchasePriceYocto": "1000000000",
+                "receiptBurnPriceYocto": "200000000",
+                "estimatedFullAttachmentBurnYocto": "20240761325189200000000",
+                "upfrontGasYocto": "100951484392258000000000",
+                "requiredSpendableYocto": "100951484392258000000001",
+                "estimatedRefundFeeYocto": "0",
+                "refundScheduleSource": "nearcore-2.14.0-parameters-and-protocol-85-88-zero-penalty",
+                "refundPolicy": "near-protocol-88-explicit-zero-refund-penalty"
+              }
+            },
+            {
+              "leg": "treasury-link-delivery",
+              "payer": "treasury",
+              "estimatedExecutionGas": {
+                "$bigint": "10000000000000"
+              },
+              "transactionOverheadGas": {
+                "$bigint": "1000000000000"
+              },
+              "gasBufferBps": {
+                "$bigint": "2000"
+              },
+              "assumedGasPriceYoctoNear": {
+                "$bigint": "100000000"
+              },
+              "attachedGas": {
+                "$bigint": "100000000000000"
+              },
+              "attachedDepositYoctoNear": {
+                "$bigint": "1"
+              },
+              "fundingModel": {
+                "protocolVersion": 88,
+                "requestBytes": 154,
+                "receiptSendGas": "108059500000",
+                "receiptExecutionGas": "108059500000",
+                "functionCallSendGas": "200000000000",
+                "functionCallExecutionGas": "780000000000",
+                "functionCallByteSendGas": "47683715",
+                "functionCallByteExecutionGas": "2235934",
+                "blockGasPriceYocto": "100000000",
+                "receiptPurchaseFloorYocto": "1000000000",
+                "gasRefundPenalty": {
+                  "numerator": "0",
+                  "denominator": "100"
+                },
+                "minimumGasRefundPenalty": "0",
+                "pricingPolicy": "near-protocol-88-mpc-function-call-v1",
+                "attachedGas": "100000000000000",
+                "depositYocto": "1",
+                "priceGrowthNumerator": "2",
+                "priceGrowthDenominator": "1",
+                "sendGas": "315402792110",
+                "receiptGas": "100888403833836",
+                "assumedBlockGasPriceYocto": "200000000",
+                "receiptPurchasePriceYocto": "1000000000",
+                "receiptBurnPriceYocto": "200000000",
+                "estimatedFullAttachmentBurnYocto": "20240761325189200000000",
+                "upfrontGasYocto": "100951484392258000000000",
+                "requiredSpendableYocto": "100951484392258000000001",
+                "estimatedRefundFeeYocto": "0",
+                "refundScheduleSource": "nearcore-2.14.0-parameters-and-protocol-85-88-zero-penalty",
+                "refundPolicy": "near-protocol-88-explicit-zero-refund-penalty"
+              }
+            },
+            {
+              "leg": "treasury-eth-delivery",
+              "payer": "treasury",
+              "estimatedExecutionGas": {
+                "$bigint": "10000000000000"
+              },
+              "transactionOverheadGas": {
+                "$bigint": "1000000000000"
+              },
+              "gasBufferBps": {
+                "$bigint": "2000"
+              },
+              "assumedGasPriceYoctoNear": {
+                "$bigint": "100000000"
+              },
+              "attachedGas": {
+                "$bigint": "100000000000000"
+              },
+              "attachedDepositYoctoNear": {
+                "$bigint": "1"
+              },
+              "fundingModel": {
+                "protocolVersion": 88,
+                "requestBytes": 154,
+                "receiptSendGas": "108059500000",
+                "receiptExecutionGas": "108059500000",
+                "functionCallSendGas": "200000000000",
+                "functionCallExecutionGas": "780000000000",
+                "functionCallByteSendGas": "47683715",
+                "functionCallByteExecutionGas": "2235934",
+                "blockGasPriceYocto": "100000000",
+                "receiptPurchaseFloorYocto": "1000000000",
+                "gasRefundPenalty": {
+                  "numerator": "0",
+                  "denominator": "100"
+                },
+                "minimumGasRefundPenalty": "0",
+                "pricingPolicy": "near-protocol-88-mpc-function-call-v1",
+                "attachedGas": "100000000000000",
+                "depositYocto": "1",
+                "priceGrowthNumerator": "2",
+                "priceGrowthDenominator": "1",
+                "sendGas": "315402792110",
+                "receiptGas": "100888403833836",
+                "assumedBlockGasPriceYocto": "200000000",
+                "receiptPurchasePriceYocto": "1000000000",
+                "receiptBurnPriceYocto": "200000000",
+                "estimatedFullAttachmentBurnYocto": "20240761325189200000000",
+                "upfrontGasYocto": "100951484392258000000000",
+                "requiredSpendableYocto": "100951484392258000000001",
+                "estimatedRefundFeeYocto": "0",
+                "refundScheduleSource": "nearcore-2.14.0-parameters-and-protocol-85-88-zero-penalty",
+                "refundPolicy": "near-protocol-88-explicit-zero-refund-penalty"
+              }
+            }
+          ]
+        },
+        "feeAssessmentHash": "0x1a3ed129e5db5ef73ced934d688f9c6875466c49cd7dbbe736ea9caedf601861",
+        "maxExpectedFeeBps": {
+          "$bigint": "1000"
+        },
+        "expectedCosts": [
+          {
+            "leg": "investor-usdc-payment",
+            "payer": "investor",
+            "asset": "ETH",
+            "bufferedGas": {
+              "$bigint": "184982"
+            },
+            "expectedNativeBaseUnits": {
+              "$bigint": "190901424"
+            },
+            "maximumNativeReserveBaseUnits": {
+              "$bigint": "924910000"
+            },
+            "expectedUsdcExact": {
+              "numerator": {
+                "$bigint": "9938805387"
+              },
+              "denominator": {
+                "$bigint": "25000000000"
+              }
+            },
+            "maximumReserveUsdcExact": {
+              "numerator": {
+                "$bigint": "77045003"
+              },
+              "denominator": {
+                "$bigint": "40000000"
+              }
+            }
+          },
+          {
+            "leg": "treasury-link-delivery",
+            "payer": "treasury",
+            "asset": "ETH",
+            "bufferedGas": {
+              "$bigint": "51579"
+            },
+            "expectedNativeBaseUnits": {
+              "$bigint": "53229528"
+            },
+            "maximumNativeReserveBaseUnits": {
+              "$bigint": "257895000"
+            },
+            "expectedUsdcExact": {
+              "numerator": {
+                "$bigint": "5542524603"
+              },
+              "denominator": {
+                "$bigint": "50000000000"
+              }
+            },
+            "maximumReserveUsdcExact": {
+              "numerator": {
+                "$bigint": "42965307"
+              },
+              "denominator": {
+                "$bigint": "80000000"
+              }
+            }
+          },
+          {
+            "leg": "treasury-eth-delivery",
+            "payer": "treasury",
+            "asset": "ETH",
+            "bufferedGas": {
+              "$bigint": "25200"
+            },
+            "expectedNativeBaseUnits": {
+              "$bigint": "26006400"
+            },
+            "maximumNativeReserveBaseUnits": {
+              "$bigint": "126000000"
+            },
+            "expectedUsdcExact": {
+              "numerator": {
+                "$bigint": "6769791"
+              },
+              "denominator": {
+                "$bigint": "125000000"
+              }
+            },
+            "maximumReserveUsdcExact": {
+              "numerator": {
+                "$bigint": "52479"
+              },
+              "denominator": {
+                "$bigint": "200000"
+              }
+            }
+          },
+          {
+            "leg": "investor-usdc-payment",
+            "payer": "investor",
+            "asset": "NEAR",
+            "bufferedGas": {
+              "$bigint": "13200000000000"
+            },
+            "expectedNativeBaseUnits": {
+              "$bigint": "1320000000000000000001"
+            },
+            "maximumNativeReserveBaseUnits": {
+              "$bigint": "100951484392258000000001"
+            },
+            "expectedUsdcExact": {
+              "numerator": {
+                "$bigint": "24521640000000000000018577"
+              },
+              "denominator": {
+                "$bigint": "5000000000000000000000"
+              }
+            },
+            "maximumReserveUsdcExact": {
+              "numerator": {
+                "$bigint": "1875375725554976866000018577"
+              },
+              "denominator": {
+                "$bigint": "5000000000000000000000"
+              }
+            }
+          },
+          {
+            "leg": "treasury-link-delivery",
+            "payer": "treasury",
+            "asset": "NEAR",
+            "bufferedGas": {
+              "$bigint": "13200000000000"
+            },
+            "expectedNativeBaseUnits": {
+              "$bigint": "1320000000000000000001"
+            },
+            "maximumNativeReserveBaseUnits": {
+              "$bigint": "100951484392258000000001"
+            },
+            "expectedUsdcExact": {
+              "numerator": {
+                "$bigint": "24521640000000000000018577"
+              },
+              "denominator": {
+                "$bigint": "5000000000000000000000"
+              }
+            },
+            "maximumReserveUsdcExact": {
+              "numerator": {
+                "$bigint": "1875375725554976866000018577"
+              },
+              "denominator": {
+                "$bigint": "5000000000000000000000"
+              }
+            }
+          },
+          {
+            "leg": "treasury-eth-delivery",
+            "payer": "treasury",
+            "asset": "NEAR",
+            "bufferedGas": {
+              "$bigint": "13200000000000"
+            },
+            "expectedNativeBaseUnits": {
+              "$bigint": "1320000000000000000001"
+            },
+            "maximumNativeReserveBaseUnits": {
+              "$bigint": "100951484392258000000001"
+            },
+            "expectedUsdcExact": {
+              "numerator": {
+                "$bigint": "24521640000000000000018577"
+              },
+              "denominator": {
+                "$bigint": "5000000000000000000000"
+              }
+            },
+            "maximumReserveUsdcExact": {
+              "numerator": {
+                "$bigint": "1875375725554976866000018577"
+              },
+              "denominator": {
+                "$bigint": "5000000000000000000000"
+              }
+            }
+          }
+        ],
+        "totalExpectedUsdcExact": {
+          "numerator": {
+            "$bigint": "73567732805177700000055731"
+          },
+          "denominator": {
+            "$bigint": "5000000000000000000000"
+          }
+        },
+        "totalExpectedUsdcBaseUnitsCeil": {
+          "$bigint": "14714"
+        },
+        "expectedFeeBpsCeil": {
+          "$bigint": "15"
+        },
+        "totalMaximumReserveUsdcBaseUnitsCeil": {
+          "$bigint": "1125229"
+        },
+        "eligible": true,
+        "expiresAt": "2026-11-11T21:00:36.000Z",
+        "priceAssumption": "one-nominal-test-USDC-per-USD",
+        "executionProof": "none-caller-supplied-estimates"
+      },
+      "executionAuthorized": false,
+      "eligibilityHash": "0xe2b8ee7b2eac2ce0f5575250d02985c5aec7fea84f2f97e115da1fcb81655e57"
+    },
+    "authorizationHash": "0x0c84c34e8ed5f0fdc309dd3b63658fa706d38f960fb079b41e306bb0553dd12b"
+  },
+  "legs": [
+    {
+      "leg": "usdc-payment",
+      "role": "investor",
+      "nearTransactionHash": "Ay4eMaZPUqThzG5gxDTn4ep41sMqcmC47sJeFxr3FMsa",
+      "evmTransactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+      "unsignedHash": "0xca0777146e29faf9ecaa95d337164754fe73e0056a334a363c340ad4b171daaa",
+      "preparedAt": "2026-11-11T20:58:56.614Z",
+      "signingApproval": {
+        "digest": "0xca0777146e29faf9ecaa95d337164754fe73e0056a334a363c340ad4b171daaa",
+        "reference": "guided-investor-mpc-approval",
+        "at": "2026-11-11T20:59:50.188Z"
+      },
+      "broadcast": {
+        "signedHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+        "at": "2026-11-11T21:01:14.111Z",
+        "auditHash": "0x218890fb39d611edd5b355af247769baef90a07e466220dbece4ae278d4f74b4",
+        "recovery": false,
+        "expiredPreparationAcknowledgment": null
+      },
+      "transaction": {
+        "chainId": {
+          "$bigint": "11155111"
+        },
+        "type": 2,
+        "nonce": 1,
+        "to": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+        "value": {
+          "$bigint": "0"
+        },
+        "data": "0xa9059cbb0000000000000000000000007548b35f4cb051beec61550fc93cb7d1e9028c870000000000000000000000000000000000000000000000000000000000989680",
+        "gasLimit": {
+          "$bigint": "184982"
+        },
+        "maxFeePerGas": {
+          "$bigint": "5000"
+        },
+        "maxPriorityFeePerGas": {
+          "$bigint": "1000"
+        }
+      },
+      "receipt": {
+        "blockNumber": {
+          "$bigint": "12114259"
+        },
+        "blockHash": "0x6081bb9bf75fe6864407ef2be6b30450250a9db5898bbe0dbb0af7c74da956dd",
+        "gasUsed": {
+          "$bigint": "151779"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1017"
+        },
+        "actualFeeWei": {
+          "$bigint": "154359243"
+        },
+        "finality": "finalized",
+        "before": {
+          "senderToken": {
+            "$bigint": "20000000"
+          },
+          "recipientToken": {
+            "$bigint": "0"
+          },
+          "senderEth": {
+            "$bigint": "50000999956182840"
+          },
+          "recipientEth": {
+            "$bigint": "99998978855947440"
+          }
+        },
+        "after": {
+          "senderToken": {
+            "$bigint": "10000000"
+          },
+          "recipientToken": {
+            "$bigint": "10000000"
+          },
+          "senderEth": {
+            "$bigint": "50000999801823597"
+          },
+          "recipientEth": {
+            "$bigint": "99998978855947440"
+          }
+        },
+        "tokenDeltas": {
+          "sender": {
+            "$bigint": "-10000000"
+          },
+          "recipient": {
+            "$bigint": "10000000"
+          }
+        },
+        "paymentClaim": {
+          "chainId": {
+            "$bigint": "11155111"
+          },
+          "transactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+          "logIndex": {
+            "$bigint": "91"
+          }
+        }
+      }
+    },
+    {
+      "leg": "link-delivery",
+      "role": "treasury",
+      "nearTransactionHash": "AjYP9rD5hkBdeupHBp99fPhXCq6GQbR5Sv5GZg37Ja86",
+      "evmTransactionHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+      "unsignedHash": "0x18779b2d29fc4bc2938e2ca9fceaf3a692843efa9c787add6a92ff338d304193",
+      "preparedAt": "2026-11-11T21:36:27.104Z",
+      "signingApproval": {
+        "digest": "0x18779b2d29fc4bc2938e2ca9fceaf3a692843efa9c787add6a92ff338d304193",
+        "reference": "guided-link-mpc-approval",
+        "at": "2026-11-11T21:37:19.653Z"
+      },
+      "broadcast": {
+        "signedHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+        "at": "2026-11-11T21:38:25.427Z",
+        "auditHash": "0x6e34b0e353aa4cd27335d068196593626cb011e3ec0e81ce7ff8819f1c97641e",
+        "recovery": false,
+        "expiredPreparationAcknowledgment": null
+      },
+      "transaction": {
+        "chainId": {
+          "$bigint": "11155111"
+        },
+        "type": 2,
+        "nonce": 2,
+        "to": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+        "value": {
+          "$bigint": "0"
+        },
+        "data": "0xa9059cbb00000000000000000000000007fe574edb1b2f537f9be452312c15a5b942782000000000000000000000000000000000000000000000000006a4ad3ddbb5d034",
+        "gasLimit": {
+          "$bigint": "51579"
+        },
+        "maxFeePerGas": {
+          "$bigint": "5000"
+        },
+        "maxPriorityFeePerGas": {
+          "$bigint": "1000"
+        }
+      },
+      "receipt": {
+        "blockNumber": {
+          "$bigint": "12114445"
+        },
+        "blockHash": "0x5b441385d88fef7ac81b7ba2ca5e5e6d390cfc3e2b6d86de0699174014256162",
+        "gasUsed": {
+          "$bigint": "42982"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1018"
+        },
+        "actualFeeWei": {
+          "$bigint": "43755676"
+        },
+        "finality": "two-confirmations",
+        "before": {
+          "senderToken": {
+            "$bigint": "24100000000000000000"
+          },
+          "recipientToken": {
+            "$bigint": "900000000000000000"
+          },
+          "senderEth": {
+            "$bigint": "99998978855947440"
+          },
+          "recipientEth": {
+            "$bigint": "50000999801823597"
+          }
+        },
+        "after": {
+          "senderToken": {
+            "$bigint": "23621302058401148876"
+          },
+          "recipientToken": {
+            "$bigint": "1378697941598851124"
+          },
+          "senderEth": {
+            "$bigint": "99998978812191764"
+          },
+          "recipientEth": {
+            "$bigint": "50000999801823597"
+          }
+        },
+        "tokenDeltas": {
+          "sender": {
+            "$bigint": "-478697941598851124"
+          },
+          "recipient": {
+            "$bigint": "478697941598851124"
+          }
+        }
+      }
+    },
+    {
+      "leg": "eth-delivery",
+      "role": "treasury",
+      "nearTransactionHash": "8YGwnW3XrKuybU1a3c26RDjbAPCFf6zG2bo784JnDbMp",
+      "evmTransactionHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+      "unsignedHash": "0xe99647c66107b3ae49ca424aa027b7408b063125793f636f912aeb1db639176d",
+      "preparedAt": "2026-11-11T21:39:59.602Z",
+      "signingApproval": {
+        "digest": "0xe99647c66107b3ae49ca424aa027b7408b063125793f636f912aeb1db639176d",
+        "reference": "guided-eth-mpc-approval",
+        "at": "2026-11-11T21:40:40.562Z"
+      },
+      "broadcast": {
+        "signedHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+        "at": "2026-11-11T21:45:33.334Z",
+        "auditHash": "0x95509cfd1f0cbad21e9a263e9ad0fc9d90c90e3664f8b94c2313f2072f111b0f",
+        "recovery": false,
+        "expiredPreparationAcknowledgment": null
+      },
+      "transaction": {
+        "chainId": {
+          "$bigint": "11155111"
+        },
+        "type": 2,
+        "nonce": 3,
+        "to": "0x07FE574EdB1B2f537F9be452312C15A5b9427820",
+        "value": {
+          "$bigint": "2400960384153661"
+        },
+        "data": "0x",
+        "gasLimit": {
+          "$bigint": "25200"
+        },
+        "maxFeePerGas": {
+          "$bigint": "5000"
+        },
+        "maxPriorityFeePerGas": {
+          "$bigint": "1000"
+        }
+      },
+      "receipt": {
+        "blockNumber": {
+          "$bigint": "12114479"
+        },
+        "blockHash": "0x12a3152324aa033687695732a467439b91c568ab119471c623185e73a899315d",
+        "gasUsed": {
+          "$bigint": "21000"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1017"
+        },
+        "actualFeeWei": {
+          "$bigint": "21357000"
+        },
+        "finality": "two-confirmations",
+        "before": {
+          "senderEth": {
+            "$bigint": "99998978812191764"
+          },
+          "recipientEth": {
+            "$bigint": "50000999801823597"
+          }
+        },
+        "after": {
+          "senderEth": {
+            "$bigint": "97598018406681103"
+          },
+          "recipientEth": {
+            "$bigint": "52401960185977258"
+          }
+        },
+        "nativeDeltas": {
+          "sender": {
+            "$bigint": "-2400960405510661"
+          },
+          "recipient": {
+            "$bigint": "2400960384153661"
+          }
+        }
+      }
+    }
+  ],
+  "settlement": {
+    "status": "completed",
+    "paidAt": "2026-11-11T21:35:37.060Z",
+    "completedAt": "2026-11-11T21:46:08.630Z",
+    "paymentClaim": "11155111:0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f:91",
+    "outstandingObligations": []
+  },
+  "actualCosts": {
+    "evm": [
+      {
+        "leg": "investor-usdc-payment",
+        "payer": "investor",
+        "transactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+        "executionStatus": "success",
+        "gasUsed": {
+          "$bigint": "151779"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1017"
+        }
+      },
+      {
+        "leg": "treasury-link-delivery",
+        "payer": "treasury",
+        "transactionHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+        "executionStatus": "success",
+        "gasUsed": {
+          "$bigint": "42982"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1018"
+        }
+      },
+      {
+        "leg": "treasury-eth-delivery",
+        "payer": "treasury",
+        "transactionHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+        "executionStatus": "success",
+        "gasUsed": {
+          "$bigint": "21000"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1017"
+        }
+      }
+    ],
+    "near": [
+      {
+        "leg": "investor-usdc-payment",
+        "payer": "investor",
+        "transactionHash": "Ay4eMaZPUqThzG5gxDTn4ep41sMqcmC47sJeFxr3FMsa",
+        "transactionTokensBurntYoctoNear": {
+          "$bigint": "31540279211000000000"
+        },
+        "receiptOutcomes": [
+          {
+            "receiptId": "Bc7J3j7UeLaeH774ynYkcuT3iaCLD7ncq1KCXGv3Fk2U",
+            "tokensBurntYoctoNear": {
+              "$bigint": "463144771437900000000"
+            }
+          },
+          {
+            "receiptId": "ArBEzNTNjmhA3m5ukH7FgtqWmgkXPDpDa8fSm1ayQmsZ",
+            "tokensBurntYoctoNear": {
+              "$bigint": "380455617640200000000"
+            }
+          },
+          {
+            "receiptId": "EQFVz4uHbS5dcFfGqvBBiYb7337M8nw91xbYXke9CKbK",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          },
+          {
+            "receiptId": "F4sTYeVJk1MfhndbZM8ekrEGWWFsi41q8e899zzRFJS1",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          }
+        ],
+        "originalAttachedDepositYoctoNear": {
+          "$bigint": "1"
+        },
+        "refundedDepositYoctoNear": {
+          "$bigint": "0"
+        },
+        "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+      },
+      {
+        "leg": "treasury-link-delivery",
+        "payer": "treasury",
+        "transactionHash": "AjYP9rD5hkBdeupHBp99fPhXCq6GQbR5Sv5GZg37Ja86",
+        "transactionTokensBurntYoctoNear": {
+          "$bigint": "31540279211000000000"
+        },
+        "receiptOutcomes": [
+          {
+            "receiptId": "4oWLygmjcES4n8mGEngHAFFJ8osaxL6TF9UHDj9bDvQU",
+            "tokensBurntYoctoNear": {
+              "$bigint": "463375262969700000000"
+            }
+          },
+          {
+            "receiptId": "9rVMBthng2D9e4oEDm1YXEVWZDhHiwRHhH1NxXRyGbfG",
+            "tokensBurntYoctoNear": {
+              "$bigint": "380466349987800000000"
+            }
+          },
+          {
+            "receiptId": "GiQjZNvtZero2Jn5jfFFMNEvoL4B2zczg4jRqarWQVSf",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          },
+          {
+            "receiptId": "429DbpukC8gmJAX6B69phBrdpTX3wxmaVbm2Qn7DVdfu",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          }
+        ],
+        "originalAttachedDepositYoctoNear": {
+          "$bigint": "1"
+        },
+        "refundedDepositYoctoNear": {
+          "$bigint": "0"
+        },
+        "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+      },
+      {
+        "leg": "treasury-eth-delivery",
+        "payer": "treasury",
+        "transactionHash": "8YGwnW3XrKuybU1a3c26RDjbAPCFf6zG2bo784JnDbMp",
+        "transactionTokensBurntYoctoNear": {
+          "$bigint": "31540279211000000000"
+        },
+        "receiptOutcomes": [
+          {
+            "receiptId": "FWQyYZ78ic5LK23YeQPDPgjWgngNvtcHp42S1k6GMr1c",
+            "tokensBurntYoctoNear": {
+              "$bigint": "463061252177100000000"
+            }
+          },
+          {
+            "receiptId": "EjWL2uRBYuYC1sbRD34C9qhWkn1MD2DbonoAbm45PVQ9",
+            "tokensBurntYoctoNear": {
+              "$bigint": "375688223059800000000"
+            }
+          },
+          {
+            "receiptId": "Fg9MDCbU29HhggakiRyZhymv4S9JUzLTnRcmegg6R1C2",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          },
+          {
+            "receiptId": "NKkg3jkHhjaerSbCVvMqDCoFpJNdEcuds7UJr3zq5zn",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          }
+        ],
+        "originalAttachedDepositYoctoNear": {
+          "$bigint": "1"
+        },
+        "refundedDepositYoctoNear": {
+          "$bigint": "0"
+        },
+        "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+      }
+    ]
+  },
+  "realizedCosts": {
+    "schemaVersion": 1,
+    "kind": "authorized-purchase-actual-costs",
+    "context": "locked-approved-order-assumptions",
+    "purchaseId": "guided-purchase-20261111-003",
+    "chainId": {
+      "$bigint": "11155111"
+    },
+    "quoteTermsHash": "0x7997b6c6d3678c6b2acdc84beea9ec2a6ada348343b03f01f0124c6b070b188c",
+    "investmentUsdcBaseUnits": {
+      "$bigint": "10000000"
+    },
+    "authorization": {
+      "quoteHash": "0x12f47956df63129eeb2ae6a8f388f2274e777ee5d62f0eb395f0cc21bfeda4a1",
+      "priceSetHash": "0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd",
+      "checkedAt": "2026-11-11T20:59:49.252Z",
+      "authorizationHash": "0x0c84c34e8ed5f0fdc309dd3b63658fa706d38f960fb079b41e306bb0553dd12b"
+    },
+    "originalPrices": {
+      "schemaVersion": 1,
+      "kind": "normalized-price-set",
+      "purchaseId": "guided-purchase-20261111-003",
+      "providerId": "coinbase-exchange-last-trade-demonstration",
+      "mode": "approved-demonstration",
+      "validFrom": "2026-11-11T20:56:35.900Z",
+      "expiresAt": "2026-11-11T21:01:35.900Z",
+      "prices": {
+        "ETH": {
+          "asset": "ETH",
+          "quoteCurrency": "USD",
+          "numerator": {
+            "$bigint": "20825"
+          },
+          "denominator": {
+            "$bigint": "10"
+          },
+          "sourceUrl": "https://api.exchange.coinbase.com/products/ETH-USD/ticker",
+          "sourceReference": "Coinbase Exchange ETH-USD last trade 854099912 at 2026-11-11T20:56:35.366300640Z",
+          "originalObservedAt": "2026-11-11T20:56:35.366Z",
+          "effectiveAt": "2026-11-11T20:57:09.826Z",
+          "expiresAt": "2026-11-11T21:01:35.900Z"
+        },
+        "LINK": {
+          "asset": "LINK",
+          "quoteCurrency": "USD",
+          "numerator": {
+            "$bigint": "10445"
+          },
+          "denominator": {
+            "$bigint": "1000"
+          },
+          "sourceUrl": "https://api.exchange.coinbase.com/products/LINK-USD/ticker",
+          "sourceReference": "Coinbase Exchange LINK-USD last trade 145256947 at 2026-11-11T20:56:34.434301320Z",
+          "originalObservedAt": "2026-11-11T20:56:34.434Z",
+          "effectiveAt": "2026-11-11T20:57:09.826Z",
+          "expiresAt": "2026-11-11T21:01:35.900Z"
+        },
+        "NEAR": {
+          "asset": "NEAR",
+          "quoteCurrency": "USD",
+          "numerator": {
+            "$bigint": "37154"
+          },
+          "denominator": {
+            "$bigint": "10000"
+          },
+          "sourceUrl": "https://api.exchange.coinbase.com/products/NEAR-USD/ticker",
+          "sourceReference": "Coinbase Exchange NEAR-USD last trade 36473764 at 2026-11-11T20:56:27.551829128Z",
+          "originalObservedAt": "2026-11-11T20:56:27.551Z",
+          "effectiveAt": "2026-11-11T20:57:09.826Z",
+          "expiresAt": "2026-11-11T21:01:35.900Z"
+        }
+      },
+      "approval": {
+        "approvedDigest": "0x95b8b8b6d269d03ee7885d28f3c3b92430bf94b1a1eecd9666b1ae106ec7d52d",
+        "reference": "guided-price-human-approval",
+        "approvedAt": "2026-11-11T20:57:09.826Z"
+      },
+      "setHash": "0x9161ed26aab031ff67fdec60541456477232a275e8a6b3b0858fbfe9ae1130bd"
+    },
+    "asOf": "2026-11-11T21:46:08.630Z",
+    "evm": [
+      {
+        "leg": "investor-usdc-payment",
+        "payer": "investor",
+        "transactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+        "executionStatus": "success",
+        "gasUsed": {
+          "$bigint": "151779"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1017"
+        }
+      },
+      {
+        "leg": "treasury-link-delivery",
+        "payer": "treasury",
+        "transactionHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+        "executionStatus": "success",
+        "gasUsed": {
+          "$bigint": "42982"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1018"
+        }
+      },
+      {
+        "leg": "treasury-eth-delivery",
+        "payer": "treasury",
+        "transactionHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+        "executionStatus": "success",
+        "gasUsed": {
+          "$bigint": "21000"
+        },
+        "effectiveGasPriceWei": {
+          "$bigint": "1017"
+        }
+      }
+    ],
+    "near": [
+      {
+        "leg": "investor-usdc-payment",
+        "payer": "investor",
+        "transactionHash": "Ay4eMaZPUqThzG5gxDTn4ep41sMqcmC47sJeFxr3FMsa",
+        "transactionTokensBurntYoctoNear": {
+          "$bigint": "31540279211000000000"
+        },
+        "receiptOutcomes": [
+          {
+            "receiptId": "Bc7J3j7UeLaeH774ynYkcuT3iaCLD7ncq1KCXGv3Fk2U",
+            "tokensBurntYoctoNear": {
+              "$bigint": "463144771437900000000"
+            }
+          },
+          {
+            "receiptId": "ArBEzNTNjmhA3m5ukH7FgtqWmgkXPDpDa8fSm1ayQmsZ",
+            "tokensBurntYoctoNear": {
+              "$bigint": "380455617640200000000"
+            }
+          },
+          {
+            "receiptId": "EQFVz4uHbS5dcFfGqvBBiYb7337M8nw91xbYXke9CKbK",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          },
+          {
+            "receiptId": "F4sTYeVJk1MfhndbZM8ekrEGWWFsi41q8e899zzRFJS1",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          }
+        ],
+        "originalAttachedDepositYoctoNear": {
+          "$bigint": "1"
+        },
+        "refundedDepositYoctoNear": {
+          "$bigint": "0"
+        },
+        "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+      },
+      {
+        "leg": "treasury-link-delivery",
+        "payer": "treasury",
+        "transactionHash": "AjYP9rD5hkBdeupHBp99fPhXCq6GQbR5Sv5GZg37Ja86",
+        "transactionTokensBurntYoctoNear": {
+          "$bigint": "31540279211000000000"
+        },
+        "receiptOutcomes": [
+          {
+            "receiptId": "4oWLygmjcES4n8mGEngHAFFJ8osaxL6TF9UHDj9bDvQU",
+            "tokensBurntYoctoNear": {
+              "$bigint": "463375262969700000000"
+            }
+          },
+          {
+            "receiptId": "9rVMBthng2D9e4oEDm1YXEVWZDhHiwRHhH1NxXRyGbfG",
+            "tokensBurntYoctoNear": {
+              "$bigint": "380466349987800000000"
+            }
+          },
+          {
+            "receiptId": "GiQjZNvtZero2Jn5jfFFMNEvoL4B2zczg4jRqarWQVSf",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          },
+          {
+            "receiptId": "429DbpukC8gmJAX6B69phBrdpTX3wxmaVbm2Qn7DVdfu",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          }
+        ],
+        "originalAttachedDepositYoctoNear": {
+          "$bigint": "1"
+        },
+        "refundedDepositYoctoNear": {
+          "$bigint": "0"
+        },
+        "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+      },
+      {
+        "leg": "treasury-eth-delivery",
+        "payer": "treasury",
+        "transactionHash": "8YGwnW3XrKuybU1a3c26RDjbAPCFf6zG2bo784JnDbMp",
+        "transactionTokensBurntYoctoNear": {
+          "$bigint": "31540279211000000000"
+        },
+        "receiptOutcomes": [
+          {
+            "receiptId": "FWQyYZ78ic5LK23YeQPDPgjWgngNvtcHp42S1k6GMr1c",
+            "tokensBurntYoctoNear": {
+              "$bigint": "463061252177100000000"
+            }
+          },
+          {
+            "receiptId": "EjWL2uRBYuYC1sbRD34C9qhWkn1MD2DbonoAbm45PVQ9",
+            "tokensBurntYoctoNear": {
+              "$bigint": "375688223059800000000"
+            }
+          },
+          {
+            "receiptId": "Fg9MDCbU29HhggakiRyZhymv4S9JUzLTnRcmegg6R1C2",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          },
+          {
+            "receiptId": "NKkg3jkHhjaerSbCVvMqDCoFpJNdEcuds7UJr3zq5zn",
+            "tokensBurntYoctoNear": {
+              "$bigint": "0"
+            }
+          }
+        ],
+        "originalAttachedDepositYoctoNear": {
+          "$bigint": "1"
+        },
+        "refundedDepositYoctoNear": {
+          "$bigint": "0"
+        },
+        "depositAccounting": "conservative-one-yocto-deposit-counted-as-cost-refund-not-proven"
+      }
+    ],
+    "costs": [
+      {
+        "leg": "investor-usdc-payment",
+        "payer": "investor",
+        "asset": "ETH",
+        "transactionHash": "0x39b905c753e842495f3ac7a7585f11130c37e290c9c816cb1ce323c9c4c1418f",
+        "nativeBaseUnits": {
+          "$bigint": "154359243"
+        },
+        "usdcExact": {
+          "numerator": {
+            "$bigint": "128581249419"
+          },
+          "denominator": {
+            "$bigint": "400000000000"
+          }
+        }
+      },
+      {
+        "leg": "treasury-link-delivery",
+        "payer": "treasury",
+        "asset": "ETH",
+        "transactionHash": "0x5c5360ffa9e39f588c4c6ad6464f3507b006895978d44c05b281ee4f120ae6de",
+        "nativeBaseUnits": {
+          "$bigint": "43755676"
+        },
+        "usdcExact": {
+          "numerator": {
+            "$bigint": "9112119527"
+          },
+          "denominator": {
+            "$bigint": "100000000000"
+          }
+        }
+      },
+      {
+        "leg": "treasury-eth-delivery",
+        "payer": "treasury",
+        "asset": "ETH",
+        "transactionHash": "0xac8536ac4f9d7616a0a7195166cee218d150471f0a980efe0fe7041c6f970d07",
+        "nativeBaseUnits": {
+          "$bigint": "21357000"
+        },
+        "usdcExact": {
+          "numerator": {
+            "$bigint": "17790381"
+          },
+          "denominator": {
+            "$bigint": "400000000"
+          }
+        }
+      },
+      {
+        "leg": "investor-usdc-payment",
+        "payer": "investor",
+        "asset": "NEAR",
+        "transactionHash": "Ay4eMaZPUqThzG5gxDTn4ep41sMqcmC47sJeFxr3FMsa",
+        "nativeBaseUnits": {
+          "$bigint": "875140668289100000001"
+        },
+        "usdcExact": {
+          "numerator": {
+            "$bigint": "16257488194806610700018577"
+          },
+          "denominator": {
+            "$bigint": "5000000000000000000000"
+          }
+        }
+      },
+      {
+        "leg": "treasury-link-delivery",
+        "payer": "treasury",
+        "asset": "NEAR",
+        "transactionHash": "AjYP9rD5hkBdeupHBp99fPhXCq6GQbR5Sv5GZg37Ja86",
+        "nativeBaseUnits": {
+          "$bigint": "875381892168500000001"
+        },
+        "usdcExact": {
+          "numerator": {
+            "$bigint": "16261969410814224500018577"
+          },
+          "denominator": {
+            "$bigint": "5000000000000000000000"
+          }
+        }
+      },
+      {
+        "leg": "treasury-eth-delivery",
+        "payer": "treasury",
+        "asset": "NEAR",
+        "transactionHash": "8YGwnW3XrKuybU1a3c26RDjbAPCFf6zG2bo784JnDbMp",
+        "nativeBaseUnits": {
+          "$bigint": "870289754447900000001"
+        },
+        "usdcExact": {
+          "numerator": {
+            "$bigint": "16167372768378638300018577"
+          },
+          "denominator": {
+            "$bigint": "5000000000000000000000"
+          }
+        }
+      }
+    ],
+    "totalActualUsdcExact": {
+      "numerator": {
+        "$bigint": "48689115625356061000055731"
+      },
+      "denominator": {
+        "$bigint": "5000000000000000000000"
+      }
+    },
+    "totalActualUsdcBaseUnitsCeil": {
+      "$bigint": "9738"
+    },
+    "realizedFeeBpsCeil": {
+      "$bigint": "10"
+    },
+    "exceedsOriginalFeePolicy": false,
+    "maxExpectedFeeBps": {
+      "$bigint": "1000"
+    },
+    "priceAssumption": "one-nominal-test-USDC-per-USD",
+    "evidenceSource": "caller-supplied-receipt-observations",
+    "settlementObligation": "unchanged-by-accounting",
+    "actualCostRecordHash": "0x72e72f9a672ba2e82be812b0e40a09e06297f776ce6685f9756d5579acf5d12c"
+  },
+  "manifestHash": "0xc75b2734a25a4dc8d5c5f851ab6633389d244ed2a668294d03b27405f5d5c320"
+}
