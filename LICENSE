@@ -1,0 +1,66 @@
+WealthPixels Evaluation License 1.0
+November 2026 Prototype
+
+Copyright (c) 2026 2001456 Ontario Inc.
+
+1. Scope and ownership
+2001456 Ontario Inc. (the "Licensor") retains copyright ownership in its
+original November 2026 WealthPixels implementation and supporting tests,
+scripts, configuration, documentation and copyrightable evidence materials
+(the "Covered Materials"). The license also permits evaluation of
+company-owned inherited non-Solidity material as explained in NOTICE.
+Legacy MIT material, third-party material and previously valid license
+grants are preserved under section 4.
+
+2. Evaluation permission
+Subject to these terms, anyone, including hackathon judges, developers,
+individuals and organizations, may view, download, clone, copy, install,
+build, run and test the Covered Materials solely to evaluate the prototype.
+This includes human and automated hackathon evaluation, offline tests,
+purchase simulations, independent verification of public transaction
+evidence and reproduction using independently controlled testnet accounts.
+This license grants no authority to use another person's accounts or funds.
+
+You may make local evaluation copies and limited local modifications
+strictly necessary to configure, instrument, troubleshoot or test the
+prototype. These permissions do not authorize product development or
+incorporation into another product or service. You may publish evaluation
+findings and results without redistributing substantial covered source.
+Keep this license and applicable copyright and attribution notices in
+permitted copies.
+
+3. Reserved uses
+Except for the permissions above, GitHub's applicable terms, another
+applicable license or rights provided by law, no permission is granted to
+reuse, modify, redistribute, sublicense, sell, commercialize or incorporate
+the Covered Materials into another product or service. Production use,
+commercial development using the Covered Materials and offering them as a
+hosted service outside permitted evaluation require separate prior written
+authorization from the Licensor. Evaluation by a commercial organization
+is permitted; it does not authorize commercial exploitation.
+All rights not expressly granted are reserved.
+
+4. GitHub, legacy materials and independent development
+Nothing here limits rights granted to GitHub or its users under GitHub's
+applicable Terms of Service, including public viewing, forking and other
+uses through GitHub functionality. Those permissions prevail if a term
+here conflicts with them.
+
+The five legacy Solidity files identified in NOTICE retain their MIT
+licensing and existing notices; see LICENSES/MIT.txt. Third-party portions
+of inherited files, dependencies and other third-party content remain
+subject to their applicable rights and licenses. This license does not
+withdraw rights previously validly granted under MIT, ISC or another
+license, including in company-owned inherited material.
+
+No ownership is claimed over public blockchain facts, public transaction
+signatures, third-party technologies or independently developed software.
+Copyrightable WealthPixels contributions to evidence are covered only
+to the extent owned by the Licensor. This license does not restrict lawful
+independent development of similar ideas or rights that cannot lawfully
+be restricted.
+
+5. Disclaimer
+The Covered Materials are provided "AS IS", without warranties of any kind.
+To the extent permitted by law, the Licensor is not liable for claims,
+losses or damages arising from their use.

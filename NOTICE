@@ -1,0 +1,67 @@
+WealthPixels — Licensing and Provenance Notice
+
+New November 2026 implementation
+Copyright (c) 2026 2001456 Ontario Inc.
+
+The root LICENSE is the WealthPixels Evaluation License 1.0, a custom
+source-available, evaluation-only license, not an open-source license.
+It covers the company's original implementation in src/, scripts/ and
+test/near/, supporting configuration such as tsconfig.near.json, original
+documentation and copyrightable company contributions to evidence.
+The NEAR-specific implementation began at commit
+e332575412e167fa47090f62d3428fcc1a1b6e06 on November 2, 2026.
+
+The pre-existing baseline was imported at commit
+8e38b987d7dd3a373a1bb1f003bb575d12b0ec8b. Import dates do not establish
+original authorship dates. The 2026 notice above identifies the new
+implementation and does not replace or invent historical attribution.
+
+Legacy MIT Solidity materials
+The following five files existed at the imported baseline and retain
+their SPDX-License-Identifier: MIT headers and applicable MIT terms:
+
+- contracts/WealthPixel/WealthToken.sol
+- contracts/WealthPixel/PriceProvider.sol
+- contracts/WealthPixel/Interfaces/IPriceProvider.sol
+- contracts/WealthPixel/Interfaces/IWealth.sol
+- contracts/WealthPixel/Interfaces/IWealthToken.sol
+
+LICENSES/MIT.txt supplies the conventional MIT permission and disclaimer
+text. These files are excluded from the custom license's restrictions.
+All existing copyright, license and attribution notices remain applicable,
+including the OpenZeppelin attribution in IWealth.sol. No historical
+copyright-holder name or year has been added to those materials.
+
+Inherited non-Solidity material and prior grants
+The original test/portfolioSwap.test.ts, utils/constants.ts,
+hardhat.config.ts, tsconfig.json and other inherited baseline material
+are not represented as newly developed NEAR implementation. The
+company-owned portions are also available for prototype evaluation under
+the root LICENSE, subject to any applicable prior license grants.
+Company ownership is not asserted over third-party portions.
+
+Specifically, IWealth.sol retains its OpenZeppelin attribution and MIT
+terms; tsconfig.json retains its pinned tsconfig/bases attribution.
+These identified third-party portions and any separately licensed
+material retain their own terms and notices. The custom license does
+not override them.
+
+The imported package metadata declared ISC. That historical declaration
+does not identify every copyright holder or establish its scope for every
+file. The current "SEE LICENSE IN LICENSE" metadata identifies the custom
+license and its exceptions; it does not erase history or revoke any
+previously valid MIT, ISC or other grant.
+
+Third-party dependencies and public evidence
+Dependencies retain their own licenses and notices; see package.json,
+package-lock.json and the packages' license files. In particular,
+near-api-js declares MIT AND Apache-2.0, rather than an elective choice.
+Redistribution of third-party material must satisfy its own license.
+
+The custom license covers only copyrightable company contributions to
+evidence, such as original explanatory text or organization. Public
+transactions, signatures, blockchain facts and third-party contract
+bytecode in fixtures or evidence are not claimed as exclusive WealthPixels
+property and are not made subject to the custom license's restrictions.
+The root LICENSE expressly permits independent verification of the
+completed public evidence.

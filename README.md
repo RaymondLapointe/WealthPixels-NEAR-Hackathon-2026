@@ -259,8 +259,25 @@ Chainlink contracts, TypeScript/tsx, Mocha/Chai and dotenv. Existing WealthPixel
 baseline above; Codex assisted implementation, tests and documentation. Dependency licenses
 remain their own.
 
-**Licensing and reuse rights remain unresolved.** Package metadata says ISC, legacy
-Solidity files carry MIT headers and no root LICENSE file is present. The owner must
-confirm reuse rights and select/document the repository license before public release.
-This documentation does not select or modify a license. Runtime journals, protected
-credentials and generated dependencies remain excluded from Git.
+**Licensing.** Copyright (c) 2026 2001456 Ontario Inc. The new November 2026
+implementation and its supporting tests, scripts, documentation and copyrightable
+WealthPixels evidence contributions use the
+[WealthPixels Evaluation License 1.0](LICENSE), a custom source-available,
+evaluation-only license. It permits viewing, cloning, installation, execution, testing,
+purchase simulations, public-evidence verification and limited local changes needed for
+evaluation. GitHub's applicable viewing/forking rights are preserved. General reuse,
+modification, redistribution, sublicensing, product integration, production use and
+commercial development require separate written authorization, except where another
+applicable license or law permits them.
+
+The five legacy Solidity files retain their MIT terms and existing notices;
+[NOTICE](NOTICE) explains the scope and historical licensing, and
+[LICENSES/MIT.txt](LICENSES/MIT.txt) supplies the MIT text. Company-owned inherited
+non-Solidity material is available for evaluation, subject to prior grants.
+Third-party portions, dependencies and public blockchain facts retain their applicable
+rights. No previously valid license grant is withdrawn, and lawful independent development
+of similar ideas remains unrestricted.
+
+Package metadata is `"license": "SEE LICENSE IN LICENSE"`, matching the root lockfile entry;
+dependency licenses are unchanged. Runtime journals, protected credentials and generated
+dependencies remain excluded from Git.

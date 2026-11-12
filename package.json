@@ -35,7 +35,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "SEE LICENSE IN LICENSE",
   "description": "",
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.3",
