@@ -306,6 +306,49 @@ Public execution, NEAR and Beacon RPC responses remain trust inputs. The verifie
 
 Review the completed purchase and its saved verification evidence, or run the credential-free public checks above. Any new purchase or later asset movement requires fresh, separate authorization. Preserve these completed records and all historical attempts; broader portfolios and multiple destination blockchains remain the product vision.
 
+## Pre-existing Work, Architectural Evolution and Hackathon Contribution
+
+WealthPixels began with the vision of making diversified investing as convenient as
+purchasing units in a traditional investment fund, while giving investors direct ownership
+of the individual underlying assets rather than shares representing claims on a pooled portfolio.
+
+An earlier Solidity proof of concept was developed to demonstrate stablecoin-funded portfolio purchases
+from pre-funded inventory within one blockchain ecosystem. The
+[original-code assessment](WealthPixels_NEAR_Codebase_Assessment_and_Codex_Kickoff.md)
+documents its contract-held inventory and USDC-to-WETH/WBTC workflow. The investment
+proposition and this proof of concept preceded the November 2026 hackathon.
+
+Smart contracts on a particular L1 or L2 generally hold and transfer assets represented
+on that blockchain. Incorporating assets native to other blockchain ecosystems would
+typically require wrapped or bridged representations. For WealthPixels, whose defining
+proposition is direct ownership of individual underlying assets, this constrained the
+broader ambition of portfolios spanning multiple networks.
+
+**The discovery of NEAR Chain Signatures introduced a compelling alternative.**
+A common authorization mechanism could support transactions involving assets on their
+respective native blockchains, without requiring those assets to be wrapped or bridged
+onto one network solely to participate in a portfolio. That realization was a key reason
+I began following NEAR conferences and exploring opportunities to participate in a NEAR
+hackathon. The aim was to explore an architecture capable of supporting the broader
+WealthPixels investment proposition.
+
+During the November 2026 NEAR Hackathon, we developed a new TypeScript-based execution
+architecture incorporating NEAR Chain Signatures, separate Investor and Treasury signing
+authorities, principal inventory execution, exact quotes, explicit transaction approvals,
+settlement and recovery controls, and independently checkable public execution evidence.
+The [source-history disclosure](../README.md#reproducibility-licensing-and-development-history)
+identifies the imported baseline and the start of this new implementation.
+
+The completed 10-test-USDC purchase demonstrates the purchasing, authorization, direct-delivery
+and verification mechanisms through native ETH and LINK delivered on Ethereum Sepolia.
+NEAR Testnet Chain Signatures authorized all three Ethereum transactions. Extending these
+capabilities to portfolios spanning multiple native destination blockchains remains future
+work; the demonstrated capability is the two-asset Sepolia purchase.
+
+**The original Solidity contracts and tests are preserved in the repository but were not used in the demonstrated ETH and LINK portfolio purchase.**
+
+**The investment proposition preceded the hackathon. NEAR Chain Signatures provided the architectural opportunity to extend that proposition beyond the boundaries of a single blockchain.**
+
 **Diversification Without Pooling.**
 
 **Ownership Without Blockchain Boundaries.**
