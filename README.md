@@ -248,10 +248,13 @@ git diff --stat 8e38b987d7dd3a373a1bb1f003bb575d12b0ec8b HEAD
 git diff 8e38b987d7dd3a373a1bb1f003bb575d12b0ec8b HEAD -- src scripts test package.json
 ```
 
-Baseline/submission tags or a dedicated submission branch and an actual public comparison
-link remain [release checklist items](docs/WealthPixels_Hackathon_Submission_Checklist.md).
-No Git remote is configured in this local checkout. Consult the
-[official hackathon rules](https://nearhackathon.com/HACKATHON.md) during submission preparation.
+Review the [GitHub source comparison](https://github.com/RaymondLapointe/WealthPixels-NEAR-Hackathon-2026/compare/pre-hackathon...hackathon-submission).
+The `pre-hackathon` base tag marks the imported pre-existing 2024 Solidity implementation;
+the `hackathon-submission` head tag marks the November 2026 NEAR implementation and its
+supporting evidence. The original Solidity contracts and portfolio test remain unchanged.
+
+See the [release checklist](docs/WealthPixels_Hackathon_Submission_Checklist.md) and
+[official hackathon rules](https://nearhackathon.com/HACKATHON.md) for submission preparation.
 
 Reused dependencies/tooling are declared in [package.json](package.json) and locked in
 [package-lock.json](package-lock.json): near-api-js 7.4.0, Ethers, Hardhat, OpenZeppelin,
