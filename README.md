@@ -66,9 +66,18 @@ This execution cost is **not a WealthPixels platform fee**. The purchase complet
 outstanding delivery obligation. Verification at **2026-11-11T21:51:31.505Z** included historical
 payment finality before LINK delivery.
 
-Inspect the [completed purchase manifest](evidence/guided-purchase-20261111-003.json),
+**Visual summary of the saved November 11, 2026 VERIFIED result**
+
+[![Visual summary of the saved November 11, 2026 VERIFIED result](docs/WealthPixels_Verifiable_Execution_Summary.png)](docs/WealthPixels_Verifiable_Execution_Summary.png)
+
+[Open the image at full size](docs/WealthPixels_Verifiable_Execution_Summary.png).
+Later independent reruns may be **incomplete** when required historical Beacon data is
+unavailable; each rerun must retrieve its own evidence.
+
+The original [completed purchase manifest](evidence/guided-purchase-20261111-003.json) and
 [successful saved verification report](evidence/guided-purchase-20261111-003-verification-001.json)
-and [public evidence documentation](evidence/README.md). The manifest preserves all three
+remain the **authoritative evidence**. See the [public evidence documentation](evidence/README.md).
+The manifest preserves all three
 NEAR authorization hashes and all three Ethereum transaction hashes; the Judge Story's
 [transaction table](docs/WealthPixels_Hackathon_Demo_Story.md#chapter-10--hackathon-evidence-and-verification)
 also lists them.
